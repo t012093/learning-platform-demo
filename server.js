@@ -27,6 +27,11 @@ const DEFAULT_PORTAL_STYLE = {
     bg: 'bg-slate-100',
     borderColor: 'border-slate-200',
 };
+const VIEW_STATE_ALIASES = {
+    PROGRAMMING_WEB: 'programming_web',
+    PROGRAMMING_AI: 'programming_ai',
+    PROGRAMMING_VIBE: 'programming_vibe',
+};
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -93,12 +98,17 @@ const parseJsonField = (value) => {
     }
 };
 
+const normalizeViewState = (value) => {
+    if (!value) return value;
+    return VIEW_STATE_ALIASES[value] || value;
+};
+
 const mapRowToLearningPortal = (row) => ({
     id: row.id,
     title: parseJsonField(row.title),
     subtitle: parseJsonField(row.subtitle),
     description: parseJsonField(row.description),
-    view: row.view_state,
+    view: normalizeViewState(row.view_state),
     icon: row.icon_key,
     color: row.color_class || DEFAULT_PORTAL_STYLE.color,
     bg: row.bg_class || DEFAULT_PORTAL_STYLE.bg,

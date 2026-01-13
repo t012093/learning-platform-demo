@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     User, LogOut, RotateCcw
 } from 'lucide-react';
 import { ViewState } from '../../../types';
 import { useLanguage } from '../../../context/LanguageContext';
+import { clearGeminiApiKey, getGeminiApiKeyInfo, setGeminiApiKey } from '../../../services/geminiService';
 
 interface ProfilePassportProps {
     onNavigate: (view: ViewState) => void;
@@ -12,17 +13,81 @@ interface ProfilePassportProps {
 const ProfilePassport: React.FC<ProfilePassportProps> = ({ onNavigate }) => {
     const { language } = useLanguage();
     const [isFlipped, setIsFlipped] = useState(false);
+    const [apiKeyInput, setApiKeyInput] = useState('');
+    const [apiKeyNotice, setApiKeyNotice] = useState<string | null>(null);
+    const [apiKeyInfo, setApiKeyInfo] = useState(getGeminiApiKeyInfo());
     const copy = {
         en: {
             studentId: 'Student ID',
-            identitySubtitle: 'Manage your identity and credentials.'
+            identitySubtitle: 'Manage your identity and credentials.',
+            apiKeyTitle: 'Gemini API Key',
+            apiKeyActive: 'Active',
+            apiKeyMissing: 'Missing',
+            apiKeyPlaceholder: 'Paste your Gemini API key',
+            apiKeySave: 'Save',
+            apiKeyClear: 'Clear',
+            apiKeySaved: 'API key saved locally.',
+            apiKeyCleared: 'API key cleared.',
+            apiKeyEmpty: 'Please enter an API key.',
+            apiKeySourceEnv: 'Source: Environment',
+            apiKeySourceLocal: 'Source: Browser storage',
+            apiKeySourceNone: 'Source: Not set',
+            apiKeyEnvHint: 'Environment key is active. Local key is ignored.',
+            apiKeyStorageHint: 'Stored only in this browser.'
         },
         jp: {
             studentId: '学生証',
-            identitySubtitle: '身分情報と資格を管理します。'
+            identitySubtitle: '身分情報と資格を管理します。',
+            apiKeyTitle: 'Gemini APIキー',
+            apiKeyActive: '設定済み',
+            apiKeyMissing: '未設定',
+            apiKeyPlaceholder: 'Gemini APIキーを貼り付け',
+            apiKeySave: '保存',
+            apiKeyClear: '削除',
+            apiKeySaved: 'APIキーを保存しました。',
+            apiKeyCleared: 'APIキーを削除しました。',
+            apiKeyEmpty: 'APIキーを入力してください。',
+            apiKeySourceEnv: '設定元: 環境変数',
+            apiKeySourceLocal: '設定元: ブラウザ保存',
+            apiKeySourceNone: '設定元: 未設定',
+            apiKeyEnvHint: '環境変数のキーが優先されます。',
+            apiKeyStorageHint: 'このブラウザ内にのみ保存されます。'
         }
     } as const;
     const t = copy[language];
+
+    useEffect(() => {
+        setApiKeyInfo(getGeminiApiKeyInfo());
+    }, []);
+
+    const maskedKey = apiKeyInfo.key
+        ? `${apiKeyInfo.key.slice(0, 4)}••••${apiKeyInfo.key.slice(-4)}`
+        : '—';
+
+    const apiKeySourceLabel = apiKeyInfo.source === 'env'
+        ? t.apiKeySourceEnv
+        : apiKeyInfo.source === 'local'
+        ? t.apiKeySourceLocal
+        : t.apiKeySourceNone;
+
+    const handleSaveApiKey = () => {
+        const trimmed = apiKeyInput.trim();
+        if (!trimmed) {
+            setApiKeyNotice(t.apiKeyEmpty);
+            return;
+        }
+        setGeminiApiKey(trimmed);
+        setApiKeyInput('');
+        setApiKeyInfo(getGeminiApiKeyInfo());
+        setApiKeyNotice(t.apiKeySaved);
+    };
+
+    const handleClearApiKey = () => {
+        clearGeminiApiKey();
+        setApiKeyInput('');
+        setApiKeyInfo(getGeminiApiKeyInfo());
+        setApiKeyNotice(t.apiKeyCleared);
+    };
 
     // Mock User Data
     const user = {
@@ -173,18 +238,45 @@ const ProfilePassport: React.FC<ProfilePassportProps> = ({ onNavigate }) => {
                                 {/* API Key Manager */}
                                 <div className="bg-slate-800/30 rounded-xl p-3 border border-white/5 space-y-2">
                                     <div className="flex justify-between items-center">
-                                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">API Key Usage</label>
-                                        <span className="text-[10px] text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded">Active</span>
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{t.apiKeyTitle}</label>
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${apiKeyInfo.key ? 'text-emerald-400 bg-emerald-400/10' : 'text-amber-300 bg-amber-300/10'}`}>
+                                            {apiKeyInfo.key ? t.apiKeyActive : t.apiKeyMissing}
+                                        </span>
                                     </div>
+                                    <p className="text-[9px] text-slate-500">{apiKeySourceLabel}</p>
                                     <div className="flex items-center gap-2 bg-black/40 p-2 rounded border border-white/10 text-xs">
-                                        <span className="font-mono text-slate-400 truncate flex-1">sk-••••••••••••••••</span>
-                                        <button className="text-[10px] bg-indigo-600 hover:bg-indigo-500 px-2 py-1 rounded text-white transition-colors">
-                                            Regenerate
+                                        <span className="font-mono text-slate-400 truncate flex-1">{maskedKey}</span>
+                                    </div>
+                                    <input
+                                        type="password"
+                                        value={apiKeyInput}
+                                        onChange={(e) => setApiKeyInput(e.target.value)}
+                                        placeholder={t.apiKeyPlaceholder}
+                                        className="w-full bg-slate-900/60 border border-white/10 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-indigo-400"
+                                    />
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleSaveApiKey}
+                                            className="flex-1 text-[10px] bg-indigo-600 hover:bg-indigo-500 px-2 py-2 rounded text-white transition-colors"
+                                        >
+                                            {t.apiKeySave}
+                                        </button>
+                                        <button
+                                            onClick={handleClearApiKey}
+                                            className="flex-1 text-[10px] bg-slate-700 hover:bg-slate-600 px-2 py-2 rounded text-white transition-colors"
+                                        >
+                                            {t.apiKeyClear}
                                         </button>
                                     </div>
-                                    <p className="text-[9px] text-slate-500">
-                                        Last used: 2 mins ago • Quota: 45%
-                                    </p>
+                                    {apiKeyInfo.source === 'env' && (
+                                        <p className="text-[9px] text-amber-300">{t.apiKeyEnvHint}</p>
+                                    )}
+                                    <p className="text-[9px] text-slate-500">{t.apiKeyStorageHint}</p>
+                                    {apiKeyNotice && (
+                                        <p className={`text-[9px] ${apiKeyNotice === t.apiKeyEmpty ? 'text-amber-300' : 'text-emerald-400'}`}>
+                                            {apiKeyNotice}
+                                        </p>
+                                    )}
                                 </div>
 
                                 {/* Account Actions */}

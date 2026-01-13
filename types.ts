@@ -9,6 +9,22 @@ export interface Course {
   completedLessons: number;
   thumbnail: string;
   color: string;
+  source?: 'curated' | 'generated';
+}
+
+export interface LearningPortal {
+  id: string;
+  title: LocalizedText;
+  subtitle: LocalizedText;
+  description: LocalizedText;
+  view: string;
+  icon: string;
+  color: string;
+  bg: string;
+  borderColor: string;
+  image: string;
+  isActive: boolean;
+  sortOrder: number;
 }
 
 export interface Message {

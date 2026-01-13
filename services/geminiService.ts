@@ -3,7 +3,78 @@ import { LessonRubric, AnalysisResult, GeneratedCourse, GeneratedChapter, Big5Pr
 import { retrieveBlenderContext } from './blenderRagService';
 import { retrieveBlenderImages } from './blenderImageRagService';
 
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY });
+const GEMINI_STORAGE_KEY = 'lumina.gemini_api_key';
+
+export type GeminiApiKeySource = 'env' | 'local' | 'none';
+
+const readLocalApiKey = (): string => {
+  if (typeof window === 'undefined') return '';
+  try {
+    return window.localStorage.getItem(GEMINI_STORAGE_KEY) || '';
+  } catch (error) {
+    console.warn('Failed to read local API key:', error);
+    return '';
+  }
+};
+
+const readEnvApiKey = (): string => {
+  const envKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+  return typeof envKey === 'string' ? envKey : '';
+};
+
+export const getGeminiApiKeyInfo = (): { key: string; source: GeminiApiKeySource } => {
+  const envKey = readEnvApiKey();
+  if (envKey) {
+    return { key: envKey, source: 'env' };
+  }
+  const localKey = readLocalApiKey();
+  if (localKey) {
+    return { key: localKey, source: 'local' };
+  }
+  return { key: '', source: 'none' };
+};
+
+export const hasGeminiApiKey = (): boolean => Boolean(getGeminiApiKeyInfo().key);
+
+export const setGeminiApiKey = (key: string) => {
+  if (typeof window === 'undefined') return;
+  const trimmed = key.trim();
+  try {
+    if (!trimmed) {
+      window.localStorage.removeItem(GEMINI_STORAGE_KEY);
+    } else {
+      window.localStorage.setItem(GEMINI_STORAGE_KEY, trimmed);
+    }
+  } catch (error) {
+    console.warn('Failed to store local API key:', error);
+  }
+};
+
+export const clearGeminiApiKey = () => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(GEMINI_STORAGE_KEY);
+  } catch (error) {
+    console.warn('Failed to clear local API key:', error);
+  }
+};
+
+let cachedKey = '';
+let aiClient: GoogleGenAI | null = null;
+
+const getAiClient = (): GoogleGenAI => {
+  const { key } = getGeminiApiKeyInfo();
+  if (!key) {
+    aiClient = null;
+    cachedKey = '';
+    throw new Error('Gemini API key is not set. Please add it in Profile settings.');
+  }
+  if (!aiClient || cachedKey !== key) {
+    aiClient = new GoogleGenAI({ apiKey: key });
+    cachedKey = key;
+  }
+  return aiClient;
+};
 
 // --- Configuration Interfaces ---
 export interface GenerateCourseConfig {
@@ -75,6 +146,7 @@ const truncateText = (text: string, maxLen: number = 200): string => {
 export const createChatSession = (systemInstruction?: string, modelType: 'standard' | 'pro' = 'standard'): Chat => {
   const defaultInstruction = `You are Lumina, a professional AI tutor. Your goal is to provide insightful guidance.`;
   const modelName = modelType === 'pro' ? 'gemini-3.0-pro' : 'gemini-2.5-flash';
+  const ai = getAiClient();
   return ai.chats.create({
     model: modelName,
     config: {
@@ -104,6 +176,7 @@ export const createScopingChat = (profile: Big5Profile | null): Chat => {
     - 十分な情報が集まったと判断したら、「完璧なプランが見えました！カリキュラムを生成しましょうか？」と提案してください。
   `;
 
+  const ai = getAiClient();
   return ai.chats.create({
     model: 'gemini-2.5-flash',
     config: { systemInstruction: instruction }
@@ -125,6 +198,7 @@ export const analyzeWriting = async (text: string, rubric: LessonRubric, modelTy
   const prompt = `Analyze this text: "${text}". Rubric: ${JSON.stringify(rubric)}. Return JSON.`;
   
   try {
+    const ai = getAiClient();
     const response = await ai.models.generateContent({
       model: modelName,
       contents: prompt,
@@ -163,6 +237,7 @@ const analyzeCorePersonality = async (scores: Big5Profile, modelName: string) =>
     3. growthTips: アドバイス1: 説明 | アドバイス2: 説明（各説明は25文字以内）
     4. learningStrategy: 戦略タイトル | 基本方針の説明（40文字以内） | ステップ1 | ステップ2 | ステップ3
   `;
+  const ai = getAiClient();
   const response = await ai.models.generateContent({ model: modelName, contents: prompt });
   const parts = (response.text || '').split('@@@').map(p => p.trim());
   const getVal = (key: string) => (parts.find(p => p.toLowerCase().includes(key.toLowerCase())) || '').split(':').slice(1).join(':').trim();
@@ -191,6 +266,7 @@ const analyzeCareer = async (scores: Big5Profile, modelName: string) => {
     @@@で区切り、careerCompatibility, role, bestSync, warning, hiddenTalentの順に、詳細な解説（各2〜3文）を含めて出力してください。
     role, bestSync, warningは「タイトル: 詳細解説」の形式にしてください。
   `;
+  const ai = getAiClient();
   const response = await ai.models.generateContent({ model: modelName, contents: prompt });
   const parts = (response.text || '').split('@@@').map(p => p.trim());
   
@@ -214,6 +290,7 @@ const analyzeCareer = async (scores: Big5Profile, modelName: string) => {
 
 const analyzeRelationships = async (scores: Big5Profile, modelName: string) => {
   const prompt = `あなたは「The Relationship Expert」です。日本語で回答。スコア: ${JSON.stringify(scores)}. style, idealPartner, adviceをパイプ|区切りで。`;
+  const ai = getAiClient();
   const response = await ai.models.generateContent({ model: modelName, contents: prompt });
   const val = (response.text || '').split('|').map(s => s.trim());
   return {
@@ -316,6 +393,7 @@ const generateCourseOutline = async (topic: string, strategy: PedagogicalStrateg
       3. Chapters: 4〜6個。各章の狙いを詳細に定義。
       回答はJSONのみ。
     `;
+    const ai = getAiClient();
     const response = await ai.models.generateContent({
         model: modelName,
         contents: prompt,
@@ -378,6 +456,7 @@ const generateChapterDetails = async (idx: number, ch: GeneratedChapter, topic: 
     STEP: ...
     `;
 
+    const ai = getAiClient();
     const response = await ai.models.generateContent({
         model: modelName,
         contents: prompt,
@@ -574,6 +653,7 @@ export const getMockBlenderCourse = (): GeneratedCourse => ({
 });
 
 export const generateAudioContent = async (speechScript: string): Promise<string> => {
+  const ai = getAiClient();
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
     contents: [{ role: "user", parts: [{ text: speechScript }] }],

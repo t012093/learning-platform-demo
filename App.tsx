@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { ViewState, GeneratedCourse } from './types';
+import { ViewState, GeneratedCourse, Course } from './types';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
-import { getCourseById } from './services/curriculumData';
+import { fetchGeneratedCourseById, saveGeneratedCourse } from './services/curriculumApi';
 
 // Common Components
 import Layout from './components/common/Layout';
@@ -133,11 +133,12 @@ import MultiFormatLessonView from './components/features/ai/MultiFormatLessonVie
 const AppContent: React.FC = () => {
   const { language, setLanguage } = useLanguage();
   const [currentView, setCurrentView] = useState<ViewState>(ViewState.DASHBOARD);
-  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   
   // AI Generated Course State
   const [generatedCourse, setGeneratedCourse] = useState<GeneratedCourse | null>(null);
   const [latestGeneratedForLibrary, setLatestGeneratedForLibrary] = useState<GeneratedCourse | null>(null);
+  const [generatedCourseBackView, setGeneratedCourseBackView] = useState<ViewState>(ViewState.MY_CONTENT);
 
   // Auth state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -152,8 +153,20 @@ const AppContent: React.FC = () => {
   // Blender State
   const [selectedBlenderStageId, setSelectedBlenderStageId] = useState<number>(1);
 
-  const handleCourseSelect = (courseId: string) => {
-    setSelectedCourseId(courseId);
+  const handleCourseSelect = async (course: Course) => {
+    if (course.source === 'generated') {
+      setGeneratedCourseBackView(ViewState.COURSES);
+      try {
+        const fullCourse = await fetchGeneratedCourseById(course.id);
+        setGeneratedCourse(fullCourse);
+        setCurrentView(ViewState.GENERATED_COURSE_PATH);
+      } catch (error) {
+        console.error('Failed to load generated course:', error);
+      }
+      return;
+    }
+
+    setSelectedCourse(course);
     setCurrentView(ViewState.COURSE_DETAILS);
   };
 
@@ -198,8 +211,19 @@ const AppContent: React.FC = () => {
   };
   
   const handleCourseGenerated = (course: GeneratedCourse) => {
+    setGeneratedCourseBackView(ViewState.MY_CONTENT);
     setGeneratedCourse(course);
     setLatestGeneratedForLibrary(course);
+    setCurrentView(ViewState.GENERATED_COURSE_PATH);
+
+    saveGeneratedCourse(course).catch((error) => {
+      console.error('Failed to save generated course:', error);
+    });
+  };
+
+  const handleGeneratedCourseSelect = (course: GeneratedCourse) => {
+    setGeneratedCourseBackView(ViewState.MY_CONTENT);
+    setGeneratedCourse(course);
     setCurrentView(ViewState.GENERATED_COURSE_PATH);
   };
 
@@ -230,11 +254,10 @@ const AppContent: React.FC = () => {
       case ViewState.COURSES:
         return <CourseList onSelectCourse={handleCourseSelect} />;
       case ViewState.COURSE_DETAILS:
-        const course = selectedCourseId ? getCourseById(selectedCourseId) : null;
-        if (!course) return <CourseList onSelectCourse={handleCourseSelect} />;
+        if (!selectedCourse) return <CourseList onSelectCourse={handleCourseSelect} />;
         return (
           <CoursePathView
-            course={course}
+            course={selectedCourse}
             onStartLesson={handleStartLessonAttempt}
             onBack={() => setCurrentView(ViewState.COURSES)}
           />
@@ -447,10 +470,10 @@ const AppContent: React.FC = () => {
       case ViewState.PROFILE:
         return <ProfilePassport onNavigate={setCurrentView} />;
       case ViewState.MY_CONTENT:
-        return <MyContent onNavigate={setCurrentView} onSelectCourse={handleCourseGenerated} newCourseForLibrary={latestGeneratedForLibrary} />;
+        return <MyContent onNavigate={setCurrentView} onSelectCourse={handleGeneratedCourseSelect} newCourseForLibrary={latestGeneratedForLibrary} />;
       case ViewState.GENERATED_COURSE_PATH:
-        if (!generatedCourse) return <MyContent onNavigate={setCurrentView} onSelectCourse={handleCourseGenerated} />;
-        return <GeneratedCourseView course={generatedCourse} onBack={() => setCurrentView(ViewState.MY_CONTENT)} onStartLesson={() => {
+        if (!generatedCourse) return <MyContent onNavigate={setCurrentView} onSelectCourse={handleGeneratedCourseSelect} />;
+        return <GeneratedCourseView course={generatedCourse} onBack={() => setCurrentView(generatedCourseBackView)} onStartLesson={() => {
             console.log("App: Switching to GENERATED_LESSON_VIEW");
             setCurrentView(ViewState.GENERATED_LESSON_VIEW);
           }} />;

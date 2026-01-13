@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Sparkles, Zap, BrainCircuit, Loader2, Brain, CheckCircle, ArrowRight, Send, Infinity, User, Bot, RefreshCw } from 'lucide-react';
-import { generateCourse, getMockBlenderCourse, createScopingChat, sendMessageStream } from '../../../services/geminiService';
+import { generateCourse, getMockBlenderCourse, createScopingChat, sendMessageStream, hasGeminiApiKey } from '../../../services/geminiService';
 import { GeneratedCourse, Big5Profile, AssessmentProfile, ViewState, Message } from '../../../types';
 import { useTheme } from '../../../context/ThemeContext';
 import { useLanguage } from '../../../context/LanguageContext';
@@ -65,6 +65,7 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [assessment, setAssessment] = useState<AssessmentProfile | null>(null);
+  const [hasApiKey, setHasApiKey] = useState(hasGeminiApiKey());
   const hasInitialized = useRef(false);
 
   const copy = {
@@ -86,6 +87,8 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
       generating: 'Generating...',
       resetChat: 'Reset Chat',
       resetMessage: 'Plan reset. Where should we begin?',
+      apiKeyMissing: 'Gemini API key is not set. Add it from Profile settings.',
+      apiKeyMissingHint: 'Add API key in Profile',
       errorChat: 'Failed to communicate with AI.',
       errorGenerate: 'Failed to generate curriculum.',
       invalidStream: 'Invalid stream response from AI.'
@@ -108,6 +111,8 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
       generating: '生成中...',
       resetChat: 'チャットをリセット',
       resetMessage: 'プランをリセットしました。何から始めましょうか？',
+      apiKeyMissing: 'Gemini APIキーが未設定です。プロフィール画面で入力してください。',
+      apiKeyMissingHint: 'APIキーを設定してください',
       errorChat: 'AIとの通信に失敗しました。',
       errorGenerate: 'カリキュラム生成に失敗しました。',
       invalidStream: 'AIから無効なストリーム応答を受信しました。'
@@ -147,9 +152,32 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
     ]);
   }, []);
 
+  const refreshApiKeyStatus = () => {
+    const next = hasGeminiApiKey();
+    setHasApiKey(next);
+    return next;
+  };
+
+  const initChatSession = () => {
+    const ready = refreshApiKeyStatus();
+    if (!ready) {
+      chatSession.current = null;
+      setError(t.apiKeyMissing);
+      return;
+    }
+    try {
+      chatSession.current = createScopingChat(assessment?.scores || null, modelType);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to init chat session:', err);
+      chatSession.current = null;
+      setError(t.apiKeyMissing);
+    }
+  };
+
   useEffect(() => {
-    chatSession.current = createScopingChat(assessment?.scores || null, modelType);
-  }, [assessment, modelType]);
+    initChatSession();
+  }, [assessment, modelType, language]);
 
   // Auto scroll chat
   useEffect(() => {
@@ -160,9 +188,13 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isAiTyping) return;
+    if (!refreshApiKeyStatus()) {
+      setError(t.apiKeyMissing);
+      return;
+    }
 
     if (!chatSession.current) {
-        chatSession.current = createScopingChat(assessment?.scores || null, modelType);
+        initChatSession();
     }
 
     const userMsg: Message = {
@@ -177,6 +209,9 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
     setIsAiTyping(true);
 
     try {
+        if (!chatSession.current) {
+            throw new Error(t.apiKeyMissing);
+        }
         const stream = await sendMessageStream(chatSession.current, inputValue);
         if (!stream || typeof (stream as any)[Symbol.asyncIterator] !== 'function') {
             throw new Error(t.invalidStream);
@@ -205,6 +240,10 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
   };
 
   const handleGenerate = async () => {
+    if (!refreshApiKeyStatus()) {
+      setError(t.apiKeyMissing);
+      return;
+    }
     // Extract the "Topic" from the last few messages or just use the whole history as intent
     const userMessages = messages.filter(m => m.role === 'user');
     const userHistory = userMessages.map(m => m.text).join('\n');
@@ -256,6 +295,7 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
   };
 
   const canGenerate = messages.length >= 3; // Minimum interaction required
+  const canGenerateWithKey = canGenerate && hasApiKey;
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center p-6 pt-12">
@@ -342,11 +382,12 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
                             onChange={(e) => setInputValue(e.target.value)}
                             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                             placeholder={t.inputPlaceholder}
-                            className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-indigo-500 transition-all pr-14"
+                            disabled={!hasApiKey || isAiTyping}
+                            className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-indigo-500 transition-all pr-14 disabled:bg-slate-100 disabled:text-slate-400"
                         />
                         <button 
                             onClick={handleSendMessage}
-                            disabled={!inputValue.trim() || isAiTyping}
+                            disabled={!hasApiKey || !inputValue.trim() || isAiTyping}
                             className="absolute right-2 top-2 p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:bg-slate-200 disabled:text-slate-400 transition-all"
                         >
                             <Send size={20} />
@@ -402,9 +443,9 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
                 <div className="pt-4">
                     <button 
                         onClick={handleGenerate}
-                        disabled={isGenerating || !canGenerate}
+                        disabled={isGenerating || !canGenerateWithKey}
                         className={`w-full py-5 rounded-[2rem] font-black text-sm uppercase tracking-widest transition-all shadow-xl flex flex-col items-center gap-1 ${ 
-                            !canGenerate || isGenerating
+                            !canGenerateWithKey || isGenerating
                             ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
                             : 'bg-slate-900 text-white hover:bg-slate-800 hover:-translate-y-1 active:scale-[0.98]'
                         }`}
@@ -417,7 +458,9 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
                         ) : (
                             <>
                                 <span>{t.generateLabel}</span>
-                                <span className="text-[8px] opacity-60 font-medium normal-case">{!canGenerate ? t.generateHintWaiting : t.generateHintReady}</span>
+                                <span className="text-[8px] opacity-60 font-medium normal-case">
+                                    {!hasApiKey ? t.apiKeyMissingHint : !canGenerate ? t.generateHintWaiting : t.generateHintReady}
+                                </span>
                             </>
                         )}
                     </button>
@@ -428,7 +471,7 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
                     <button 
                         onClick={() => {
                             setMessages([]);
-                            chatSession.current = createScopingChat(assessment?.scores || null, modelType);
+                            initChatSession();
                             setMessages([{ id: 'reset', role: 'model', text: t.resetMessage, timestamp: new Date() }]);
                         }}
                         className="text-slate-400 hover:text-indigo-600 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mx-auto transition-colors"

@@ -1,15 +1,18 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Course } from '../../../types';
 import { COURSES_DATA } from '../../../services/curriculumData';
+import { fetchGeneratedCourses } from '../../../services/curriculumApi';
 import { Briefcase } from 'lucide-react';
 import { useLanguage } from '../../../context/LanguageContext';
 
 interface CourseListProps {
-  onSelectCourse: (courseId: string) => void;
+  onSelectCourse: (course: Course) => void;
 }
 
 const CourseList: React.FC<CourseListProps> = ({ onSelectCourse }) => {
   const { language } = useLanguage();
+  const curatedCourses = COURSES_DATA.map(course => ({ ...course, source: 'curated' as const }));
+  const [courses, setCourses] = useState<Course[]>(curatedCourses);
   const copy = {
     en: {
       title: 'Curriculum',
@@ -29,6 +32,38 @@ const CourseList: React.FC<CourseListProps> = ({ onSelectCourse }) => {
     }
   } as const;
   const t = copy[language];
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCourses = async () => {
+      try {
+        const generated = await fetchGeneratedCourses();
+        if (!isMounted) return;
+        const generatedCourses = generated.map(course => ({
+          ...course,
+          source: course.source || 'generated',
+        }));
+        const seen = new Set<string>();
+        const merged = [...generatedCourses, ...curatedCourses].filter(course => {
+          if (seen.has(course.id)) return false;
+          seen.add(course.id);
+          return true;
+        });
+        setCourses(merged);
+      } catch (error) {
+        if (!isMounted) return;
+        console.error('Failed to load generated curricula:', error);
+        setCourses(curatedCourses);
+      }
+    };
+
+    loadCourses();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
@@ -53,10 +88,10 @@ const CourseList: React.FC<CourseListProps> = ({ onSelectCourse }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {COURSES_DATA.map((course) => (
+        {courses.map((course) => (
           <div 
             key={course.id} 
-            onClick={() => onSelectCourse(course.id)}
+            onClick={() => onSelectCourse(course)}
             className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group cursor-pointer flex flex-col h-full"
           >
             <div className="relative h-48 overflow-hidden">

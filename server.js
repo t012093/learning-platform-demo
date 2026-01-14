@@ -7,6 +7,7 @@ import pg from 'pg';
 import { generateAudioContent } from './scripts/gemini_tts_node.js';
 import { generateRequirements, generateRoadmap, generateCurriculum } from './server/geminiBackendService.js';
 import { ingestMaterial } from './server/ragService.js';
+import { createCurriculumGraph } from './server/graph/workflow.js';
 
 // ESM dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -27,7 +28,7 @@ const loadEnvFile = async (filename) => {
             let value = normalized.slice(separatorIndex + 1).trim();
             if (
                 (value.startsWith('"') && value.endsWith('"')) ||
-                (value.startsWith("'") && value.endsWith("'"))
+                (value.startsWith("'" ) && value.endsWith("'"))
             ) {
                 value = value.slice(1, -1);
             }
@@ -51,6 +52,8 @@ const pool = process.env.DATABASE_URL
 const phase1DatabaseUrl = process.env.DATABASE_URL_PHASE1;
 const phase1Pool = phase1DatabaseUrl ? new Pool({ connectionString: phase1DatabaseUrl }) : null;
 const PHASE1_USER_ID = process.env.PHASE1_USER_ID || '00000000-0000-0000-0000-000000000001';
+
+const curriculumGraph = createCurriculumGraph();
 
 const DEFAULT_COURSE_CARD = {
     category: 'AI Generated',
@@ -639,6 +642,7 @@ app.post('/api/curricula', async (req, res) => {
 });
 
 // Phase1 API (separate database, non-destructive to existing flows)
+// Integrated with LangGraph for multi-agent workflow
 app.post('/api/v2/ai/chat', async (req, res) => {
     const poolInstance = requirePhase1Pool(res);
     if (!poolInstance) return;
@@ -660,104 +664,101 @@ app.post('/api/v2/ai/chat', async (req, res) => {
         }
 
         if (!session) {
-            const requirementsDraft = await generateRequirements(message, attachments);
+            // Create new curriculum and version container
             const curriculumResult = await poolInstance.query(
                 'insert into curricula (user_id, title, description) values ($1, $2, $3) returning id',
-                [PHASE1_USER_ID, requirementsDraft.summary || 'Draft Curriculum', '']
+                [PHASE1_USER_ID, 'New Curriculum', '']
             );
             const curriculumId = curriculumResult.rows[0].id;
             const versionResult = await poolInstance.query(
                 'insert into curriculum_versions (curriculum_id, version, requirements, content_json) values ($1, $2, $3, $4) returning id',
-                [curriculumId, 1, JSON.stringify(requirementsDraft), JSON.stringify({})]
+                [curriculumId, 1, JSON.stringify({}), JSON.stringify({})]
             );
             const versionId = versionResult.rows[0].id;
-            const state = {
+            
+            // Initial state for graph
+            const initialState = {
+                user_id: PHASE1_USER_ID,
                 curriculum_id: curriculumId,
                 curriculum_version_id: versionId,
-                requirements: { draft: requirementsDraft },
-                attachments,
-                phase: 'collecting',
+                requirements: {}, roadmap: {}, curriculum: {},
+                pending_approval: 'none',
+                last_user_message: message,
+                attachments: attachments
             };
+
             const sessionResult = await poolInstance.query(
                 'insert into ai_sessions (user_id, curriculum_id, state_json, pending_approval, last_message_at) values ($1, $2, $3, $4, now()) returning *',
-                [PHASE1_USER_ID, curriculumId, JSON.stringify(state), 'requirements']
+                [PHASE1_USER_ID, curriculumId, JSON.stringify(initialState), 'none']
             );
             session = sessionResult.rows[0];
-        } else {
-            const state = normalizeStateJson(session.state_json);
-            if (!state.curriculum_version_id && session.curriculum_id) {
-                const latestVersion = await fetchLatestCurriculumVersion(
-                    poolInstance,
-                    session.curriculum_id
-                );
-                if (latestVersion) {
-                    state.curriculum_version_id = latestVersion.id;
-                }
-            }
-            if (!state.requirements || !state.requirements.draft) {
-                state.requirements = {
-                    ...(state.requirements || {}),
-                    draft: await generateRequirements(message, attachments, PHASE1_USER_ID),
-                };
-            }
-            state.last_user_message = message || state.last_user_message || '';
-            state.attachments = attachments;
-            const nextPending = session.pending_approval && session.pending_approval !== 'none'
-                ? session.pending_approval
-                : 'requirements';
-
-            const curriculumVersionId = state.curriculum_version_id;
-            const requirementsSeed = state.requirements?.approved || state.requirements?.draft;
-            if (nextPending === 'roadmap' && !state.roadmap?.draft && requirementsSeed) {
-                const roadmapDraft = await generateRoadmap(requirementsSeed);
-                state.roadmap = { ...(state.roadmap || {}), draft: roadmapDraft };
-                if (curriculumVersionId) {
-                    await poolInstance.query(
-                        'update curriculum_versions set roadmap = $1, updated_at = now() where id = $2',
-                        [JSON.stringify(roadmapDraft), curriculumVersionId]
-                    );
-                }
-            }
-            if (nextPending === 'curriculum' && !state.curriculum?.draft && requirementsSeed) {
-                const roadmapSeed = state.roadmap?.approved || state.roadmap?.draft || await generateRoadmap(requirementsSeed);
-                const versionRow = curriculumVersionId
-                    ? await fetchCurriculumVersion(poolInstance, curriculumVersionId)
-                    : null;
-                const curriculumDraft = await generateCurriculum(requirementsSeed, roadmapSeed, {
-                    curriculumId: state.curriculum_id || session.curriculum_id,
-                    version: versionRow?.version || 1,
-                });
-                state.curriculum = { ...(state.curriculum || {}), draft: curriculumDraft };
-                if (curriculumVersionId) {
-                    await poolInstance.query(
-                        'update curriculum_versions set content_json = $1, updated_at = now() where id = $2',
-                        [JSON.stringify(curriculumDraft), curriculumVersionId]
-                    );
-                }
-            }
-
-            await poolInstance.query(
-                'update ai_sessions set state_json = $1, pending_approval = $2, state_version = state_version + 1, last_message_at = now() where id = $3',
-                [JSON.stringify(state), nextPending, session.id]
-            );
-            session.state_json = state;
-            session.pending_approval = nextPending;
         }
 
-        const state = normalizeStateJson(session.state_json);
-        const pendingApproval = session.pending_approval || 'requirements';
+        // Prepare input for graph
+        const currentState = normalizeStateJson(session.state_json);
+        const inputState = {
+            ...currentState,
+            last_user_message: message,
+            attachments: attachments,
+            current_decision: null
+        };
+        
+        // Run Graph
+        const outputState = await curriculumGraph.invoke(inputState);
+        
+        // Update Session & DB
+        const nextPending = outputState.pending_approval || 'none';
+        
+        await poolInstance.query(
+            'update ai_sessions set state_json = $1, pending_approval = $2, state_version = state_version + 1, last_message_at = now() where id = $3',
+            [JSON.stringify(outputState), nextPending, session.id]
+        );
+
+        // Sync to relational tables
+        const versionId = outputState.curriculum_version_id;
+        if (versionId) {
+             const updates = [];
+             const values = [];
+             let idx = 1;
+             
+             if (outputState.requirements?.draft || outputState.requirements?.approved) {
+                 updates.push(`requirements = $${idx++}`);
+                 values.push(JSON.stringify(outputState.requirements.approved || outputState.requirements.draft));
+                 
+                 const summary = (outputState.requirements.approved || outputState.requirements.draft)?.summary;
+                 if (summary) {
+                     await poolInstance.query('update curricula set title = $1 where id = $2', [summary, outputState.curriculum_id]);
+                 }
+             }
+             if (outputState.roadmap?.draft || outputState.roadmap?.approved) {
+                 updates.push(`roadmap = $${idx++}`);
+                 values.push(JSON.stringify(outputState.roadmap.approved || outputState.roadmap.draft));
+             }
+             if (outputState.curriculum?.draft || outputState.curriculum?.approved) {
+                 updates.push(`content_json = $${idx++}`);
+                 values.push(JSON.stringify(outputState.curriculum.approved || outputState.curriculum.draft));
+             }
+             
+             if (updates.length > 0) {
+                 values.push(versionId);
+                 await poolInstance.query(
+                     `update curriculum_versions set ${updates.join(', ')}, updated_at = now() where id = $${idx}`,
+                     values
+                 );
+             }
+        }
 
         res.json({
             session_id: session.id,
-            curriculum_id: state.curriculum_id || session.curriculum_id,
-            curriculum_version_id: state.curriculum_version_id || null,
-            message: pendingApproval === 'none' ? 'Session active.' : `${pendingApproval} draft ready.`,
-            pending_approval: pendingApproval,
-            ui: buildApprovalUi(pendingApproval),
+            curriculum_id: outputState.curriculum_id || session.curriculum_id,
+            curriculum_version_id: outputState.curriculum_version_id,
+            message: nextPending === 'none' ? 'Session active.' : `${nextPending} draft ready.`,
+            pending_approval: nextPending,
+            ui: buildApprovalUi(nextPending),
             state_summary: {
-                requirements: state.requirements || {},
-                roadmap: state.roadmap || {},
-                curriculum: state.curriculum || {},
+                requirements: outputState.requirements || {},
+                roadmap: outputState.roadmap || {},
+                curriculum: outputState.curriculum || {},
             },
         });
     } catch (error) {
@@ -847,155 +848,88 @@ app.post('/api/v2/curricula/:id/decision', async (req, res) => {
     const feedbackText = typeof req.body?.feedback_text === 'string' ? req.body.feedback_text : null;
     const sessionId = typeof req.body?.session_id === 'string' ? req.body.session_id : '';
 
-    const allowedStages = new Set(['requirements', 'roadmap', 'curriculum']);
-    const allowedDecisions = new Set(['approved', 'revise']);
+    if (!sessionId) return res.status(400).json({ ok: false, error: 'session_id required' });
 
-    if (!sessionId) {
-        return res.status(400).json({ ok: false, error: 'session_id is required.' });
-    }
-    if (!allowedStages.has(stage) || !allowedDecisions.has(decision)) {
-        return res.status(400).json({ ok: false, error: 'Invalid stage or decision.' });
-    }
-
-    let client;
     try {
         await ensurePhase1User(poolInstance);
-        client = await poolInstance.connect();
-        await client.query('BEGIN');
-
-        const sessionResult = await client.query(
-            'select * from ai_sessions where id = $1 and user_id = $2 for update',
+        
+        const sessionResult = await poolInstance.query(
+            'select * from ai_sessions where id = $1 and user_id = $2',
             [sessionId, PHASE1_USER_ID]
         );
-        if (!sessionResult.rowCount) {
-            await client.query('ROLLBACK');
-            return res.status(404).json({ ok: false, error: 'Session not found.' });
-        }
-
+        if (!sessionResult.rowCount) return res.status(404).json({ ok: false, error: 'Session not found' });
         const session = sessionResult.rows[0];
-        const curriculumId = req.params.id;
-        if (session.curriculum_id && session.curriculum_id !== curriculumId) {
-            await client.query('ROLLBACK');
-            return res.status(400).json({ ok: false, error: 'Session curriculum mismatch.' });
-        }
 
-        const state = normalizeStateJson(session.state_json);
-        let curriculumVersionId = state.curriculum_version_id;
-        if (!curriculumVersionId) {
-            const latestVersion = await fetchLatestCurriculumVersion(client, curriculumId);
-            curriculumVersionId = latestVersion?.id;
-            if (curriculumVersionId) {
-                state.curriculum_version_id = curriculumVersionId;
-            }
-        }
-        if (!curriculumVersionId) {
-            await client.query('ROLLBACK');
-            return res.status(404).json({ ok: false, error: 'Curriculum version not found.' });
-        }
+        const currentState = normalizeStateJson(session.state_json);
+        const inputState = {
+            ...currentState,
+            current_decision: { stage, decision, feedback: feedbackText },
+            last_user_message: null
+        };
 
-        await client.query(
-            `insert into approvals
-                (curriculum_version_id, stage, decision, feedback_text, decided_by)
-             values ($1, $2, $3, $4, $5)`,
-            [curriculumVersionId, stage, decision, feedbackText, PHASE1_USER_ID]
-        );
+        const outputState = await curriculumGraph.invoke(inputState);
 
-        const stageState = state[stage] || {};
-        if (decision === 'approved') {
-            stageState.approved = stageState.draft || buildDraftSummary(stage, feedbackText || `${stage} approved`);
-        } else {
-            stageState.draft = buildDraftSummary(stage, feedbackText || `${stage} revise`);
-        }
-        state[stage] = stageState;
-
-        const requirementsSeed = state.requirements?.approved || state.requirements?.draft;
-        if (decision === 'approved' && stage === 'requirements' && requirementsSeed && !state.roadmap?.draft) {
-            const roadmapDraft = await generateRoadmap(requirementsSeed);
-            state.roadmap = { ...(state.roadmap || {}), draft: roadmapDraft };
-            await client.query(
-                'update curriculum_versions set roadmap = $1, updated_at = now() where id = $2',
-                [JSON.stringify(roadmapDraft), curriculumVersionId]
-            );
-        }
-        if (decision === 'approved' && stage === 'roadmap' && requirementsSeed && !state.curriculum?.draft) {
-            const roadmapSeed = state.roadmap?.approved || state.roadmap?.draft || await generateRoadmap(requirementsSeed);
-            const versionRow = await fetchCurriculumVersion(client, curriculumVersionId);
-            const curriculumDraft = await generateCurriculum(requirementsSeed, roadmapSeed, {
-                curriculumId,
-                version: versionRow?.version || 1,
-            }, PHASE1_USER_ID);
-            state.curriculum = { ...(state.curriculum || {}), draft: curriculumDraft };
-            await client.query(
-                'update curriculum_versions set content_json = $1, updated_at = now() where id = $2',
-                [JSON.stringify(curriculumDraft), curriculumVersionId]
-            );
-        }
-
-        const nextPending = decision === 'approved'
-            ? stage === 'requirements'
-                ? 'roadmap'
-                : stage === 'roadmap'
-                    ? 'curriculum'
-                    : 'none'
-            : stage;
-        state.pending_approval = nextPending;
-
+        const nextPending = outputState.pending_approval || 'none';
         const sessionStatus = stage === 'curriculum' && decision === 'approved' ? 'closed' : session.status;
 
-        await client.query(
-            'update ai_sessions set pending_approval = $1, state_json = $2, state_version = state_version + 1, status = $3 where id = $4',
-            [nextPending, JSON.stringify(state), sessionStatus, session.id]
+        await poolInstance.query(
+            'update ai_sessions set state_json = $1, pending_approval = $2, state_version = state_version + 1, status = $3, last_message_at = now() where id = $4',
+            [JSON.stringify(outputState), nextPending, sessionStatus, session.id]
         );
 
-        if (stage === 'requirements') {
-            await client.query(
-                'update curriculum_versions set requirements = $1, updated_at = now() where id = $2',
-                [JSON.stringify(stageState.approved || stageState.draft), curriculumVersionId]
-            );
-        }
-        if (stage === 'roadmap') {
-            await client.query(
-                'update curriculum_versions set roadmap = $1, updated_at = now() where id = $2',
-                [JSON.stringify(stageState.approved || stageState.draft), curriculumVersionId]
-            );
-        }
-        if (stage === 'curriculum' && decision === 'approved') {
-            await client.query(
-                'update curriculum_versions set status = $1, updated_at = now() where id = $2',
-                ['approved', curriculumVersionId]
-            );
-            await client.query(
-                'update curricula set current_version_id = $1, updated_at = now() where id = $2',
-                [curriculumVersionId, curriculumId]
-            );
-        }
+        const versionId = outputState.curriculum_version_id;
+        if (versionId) {
+             const updates = [];
+             const values = [];
+             let idx = 1;
+             
+             if (outputState.requirements?.draft || outputState.requirements?.approved) {
+                 updates.push(`requirements = $${idx++}`);
+                 values.push(JSON.stringify(outputState.requirements.approved || outputState.requirements.draft));
+             }
+             if (outputState.roadmap?.draft || outputState.roadmap?.approved) {
+                 updates.push(`roadmap = $${idx++}`);
+                 values.push(JSON.stringify(outputState.roadmap.approved || outputState.roadmap.draft));
+             }
+             if (outputState.curriculum?.draft || outputState.curriculum?.approved) {
+                 updates.push(`content_json = $${idx++}`);
+                 values.push(JSON.stringify(outputState.curriculum.approved || outputState.curriculum.draft));
+             }
+             if (stage === 'curriculum' && decision === 'approved') {
+                 updates.push(`status = $${idx++}`);
+                 values.push('approved');
+                 await poolInstance.query('update curricula set current_version_id = $1 where id = $2', [versionId, outputState.curriculum_id]);
+             }
 
-        await client.query('COMMIT');
+             if (updates.length > 0) {
+                 values.push(versionId);
+                 await poolInstance.query(
+                     `update curriculum_versions set ${updates.join(', ')}, updated_at = now() where id = $${idx}`,
+                     values
+                 );
+             }
+        }
+        
+        await poolInstance.query(
+            `insert into approvals (curriculum_version_id, stage, decision, feedback_text, decided_by) values ($1, $2, $3, $4, $5)`,
+            [versionId, stage, decision, feedbackText, PHASE1_USER_ID]
+        );
+
         res.json({
             ok: true,
-            curriculum_version_id: curriculumVersionId,
-            status: stage === 'curriculum' && decision === 'approved' ? 'approved' : 'draft',
+            curriculum_version_id: versionId,
+            status: sessionStatus === 'closed' ? 'approved' : 'draft',
             pending_approval: nextPending,
             state_summary: {
-                requirements: state.requirements || {},
-                roadmap: state.roadmap || {},
-                curriculum: state.curriculum || {},
+                requirements: outputState.requirements || {},
+                roadmap: outputState.roadmap || {},
+                curriculum: outputState.curriculum || {},
             },
         });
+
     } catch (error) {
-        if (client) {
-            try {
-                await client.query('ROLLBACK');
-            } catch (rollbackError) {
-                console.error('Rollback failed:', rollbackError);
-            }
-        }
-        console.error('Phase1 decision failed:', error);
-        res.status(500).json({ ok: false, error: 'Phase1 decision failed.' });
-    } finally {
-        if (client) {
-            client.release();
-        }
+        console.error('Decision failed:', error);
+        res.status(500).json({ ok: false, error: 'Decision failed' });
     }
 });
 

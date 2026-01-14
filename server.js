@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import pg from 'pg';
 import { generateAudioContent } from './scripts/gemini_tts_node.js';
 import { generateRequirements, generateRoadmap, generateCurriculum } from './server/geminiBackendService.js';
+import { ingestMaterial } from './server/ragService.js';
 
 // ESM dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -696,7 +697,7 @@ app.post('/api/v2/ai/chat', async (req, res) => {
             if (!state.requirements || !state.requirements.draft) {
                 state.requirements = {
                     ...(state.requirements || {}),
-                    draft: await generateRequirements(message, attachments),
+                    draft: await generateRequirements(message, attachments, PHASE1_USER_ID),
                 };
             }
             state.last_user_message = message || state.last_user_message || '';
@@ -922,7 +923,7 @@ app.post('/api/v2/curricula/:id/decision', async (req, res) => {
             const curriculumDraft = await generateCurriculum(requirementsSeed, roadmapSeed, {
                 curriculumId,
                 version: versionRow?.version || 1,
-            });
+            }, PHASE1_USER_ID);
             state.curriculum = { ...(state.curriculum || {}), draft: curriculumDraft };
             await client.query(
                 'update curriculum_versions set content_json = $1, updated_at = now() where id = $2',
@@ -1042,13 +1043,44 @@ app.post('/api/v2/rag/index', async (req, res) => {
 
     try {
         await ensurePhase1User(poolInstance);
+        
+        // Fetch material details
+        const matResult = await poolInstance.query(
+            'SELECT * FROM materials WHERE id = $1 AND user_id = $2',
+            [materialId, PHASE1_USER_ID]
+        );
+        if (!matResult.rowCount) {
+            return res.status(404).json({ ok: false, error: 'Material not found.' });
+        }
+        const material = matResult.rows[0];
+
         const result = await poolInstance.query(
             `insert into jobs (user_id, type, status, payload)
              values ($1, 'ingest', 'queued', $2)
              returning id, status`,
             [PHASE1_USER_ID, JSON.stringify({ material_id: materialId })]
         );
-        res.json({ job_id: result.rows[0].id, status: result.rows[0].status });
+        const jobId = result.rows[0].id;
+        
+        // Trigger ingestion in background
+        (async () => {
+            try {
+                await poolInstance.query('UPDATE jobs SET status = $1, updated_at = NOW() WHERE id = $2', ['running', jobId]);
+                
+                // For PDF/Text, we need the local path. 
+                // Assuming storage_path is relative to project root or accessible.
+                const filePath = path.resolve(__dirname, material.storage_path);
+                
+                await ingestMaterial(materialId, filePath, material.type === 'pdf' ? 'application/pdf' : 'text/plain', PHASE1_USER_ID);
+                
+                await poolInstance.query('UPDATE jobs SET status = $1, updated_at = NOW(), progress = 100 WHERE id = $2', ['done', jobId]);
+            } catch (err) {
+                console.error(`Ingestion job ${jobId} failed:`, err);
+                await poolInstance.query('UPDATE jobs SET status = $1, error = $2, updated_at = NOW() WHERE id = $3', ['error', err.message, jobId]);
+            }
+        })();
+
+        res.json({ job_id: jobId, status: 'queued' });
     } catch (error) {
         console.error('Failed to queue Phase1 job:', error);
         res.status(500).json({ ok: false, error: 'Failed to queue Phase1 job.' });

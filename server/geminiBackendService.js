@@ -1,4 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
+import { retrieveContext } from "./ragService.js";
 
 const getApiKey = () => {
   const key = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
@@ -200,13 +201,22 @@ const curriculumSchema = {
 /**
  * Generate Requirements Draft from user message and optional history.
  */
-export const generateRequirements = async (message, attachments = []) => {
+export const generateRequirements = async (message, attachments = [], userId) => {
   const genAI = getClient();
   if (!genAI) throw new Error("Gemini API Key missing");
+
+  let context = "";
+  if (userId) {
+      const docs = await retrieveContext(message, 3, userId);
+      if (docs.length > 0) {
+          context = `\nReference Materials:\n${docs.map(d => `- ${d}`).join('\n')}\n`;
+      }
+  }
 
   const prompt = `
     User Request: "${message}"
     Attachments: ${JSON.stringify(attachments)}
+    ${context}
     
     Generate a JSON object defining the curriculum requirements.
   `;
@@ -274,15 +284,25 @@ export const generateRoadmap = async (requirements) => {
 /**
  * Generate Full Curriculum from approved requirements and roadmap.
  */
-export const generateCurriculum = async (requirements, roadmap, options = {}) => {
+export const generateCurriculum = async (requirements, roadmap, options = {}, userId) => {
   const genAI = getClient();
   if (!genAI) throw new Error("Gemini API Key missing");
+
+  let context = "";
+  if (userId) {
+      // Use requirements goal as query
+      const docs = await retrieveContext(requirements.goal || "curriculum", 5, userId);
+      if (docs.length > 0) {
+          context = `\nReference Materials:\n${docs.map(d => `- ${d}`).join('\n')}\n`;
+      }
+  }
 
   const prompt = `
     Requirements: ${JSON.stringify(requirements)}
     Roadmap: ${JSON.stringify(roadmap)}
     Current Curriculum ID: ${options.curriculumId || 'new'}
     Version: ${options.version || 1}
+    ${context}
     
     Generate the full curriculum JSON.
   `;

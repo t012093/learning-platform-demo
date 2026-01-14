@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "tts-bundle.schema.json",
+  "title": "TtsBundleOutput",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tts_bundle"],
+  "properties": {
+    "tts_bundle": { "$ref": "#/$defs/ttsBundle" }
+  },
+  "$defs": {
+    "ttsBundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["language", "voice", "slides", "slide_timeline_sec"],
+      "properties": {
+        "language": { "type": "string", "minLength": 1 },
+        "voice": { "type": "string", "minLength": 1 },
+        "slides": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/ttsSlide" }
+        },
+        "slide_timeline_sec": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "number", "minimum": 0 }
+        }
+      }
+    },
+    "ttsSlide": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slide_id", "tts_script", "estimated_sec"],
+      "properties": {
+        "slide_id": { "type": "string", "minLength": 1 },
+        "tts_script": { "type": "string", "minLength": 1 },
+        "estimated_sec": { "type": "integer", "minimum": 1 },
+        "tts_prompt": { "$ref": "#/$defs/ttsPrompt" }
+      }
+    },
+    "ttsPrompt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["audio_profile", "scene", "director_notes", "context", "transcript"],
+      "properties": {
+        "audio_profile": { "type": "string", "minLength": 1 },
+        "scene": { "type": "string", "minLength": 1 },
+        "director_notes": { "type": "string", "minLength": 1 },
+        "context": { "type": "string", "minLength": 1 },
+        "transcript": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

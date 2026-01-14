@@ -20,4 +20,5 @@
 - `07_ingest_spec.md` : 素材取り込み仕様（Audio / YouTube / DB）
 - `08_migration_mapping.md` : 段階移行プラン + vibe_coding→GeneratedCourseマッピング案
 - `09_content_types_tts.md` : ドキュメント/スライド型 + TTS/音声同期仕様
-- `schemas/` : Doc/Slide/TTS用のJSON Schema
+- `schemas/` : Doc/Slide/TTS/VibeCoding用のJSON Schema
+- `local_postgres_phase1.sql` : Phase 1向けのローカルDBスキャフォールド（RLSなし、pgvectorは任意）

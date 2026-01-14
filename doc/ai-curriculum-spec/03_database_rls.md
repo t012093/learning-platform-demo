@@ -50,7 +50,7 @@ create table if not exists curriculum_versions (
   curriculum_id uuid not null references curricula(id) on delete cascade,
   version int not null,
   status text not null default 'draft' check (status in ('draft','approved','published')),
-  content_json jsonb not null,
+  content_json jsonb not null default '{}'::jsonb,
   requirements jsonb,
   roadmap jsonb,
   content_mix jsonb,
@@ -205,7 +205,7 @@ create table if not exists material_chunks (
 create table if not exists jobs (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id),
-  type text not null check (type in ('ingest','embed','pdf','generate')),
+  type text not null check (type in ('ingest','embed','pdf','audio','generate')),
   status text not null default 'queued' check (status in ('queued','running','done','error')),
   progress int not null default 0,
   payload jsonb,

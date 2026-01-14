@@ -1,4 +1,5 @@
 import { Course, GeneratedCourse } from '../types';
+import { isVibeCodingCurriculum, mapVibeCodingToGeneratedCourse } from './vibeCodingAdapter';
 
 type CurriculumListResponse = {
   ok: boolean;
@@ -12,9 +13,15 @@ type CurriculumDetailResponse = {
   error?: string;
 };
 
-const normalizeGeneratedCourse = (raw: GeneratedCourse): GeneratedCourse => {
-  const createdAt = raw?.createdAt ? new Date(raw.createdAt) : new Date();
-  return { ...raw, createdAt };
+const normalizeGeneratedCourse = (raw: unknown): GeneratedCourse => {
+  if (!raw || typeof raw !== 'object') {
+    throw new Error('Invalid curriculum payload.');
+  }
+  const normalized = isVibeCodingCurriculum(raw)
+    ? mapVibeCodingToGeneratedCourse(raw)
+    : (raw as GeneratedCourse);
+  const createdAt = normalized?.createdAt ? new Date(normalized.createdAt) : new Date();
+  return { ...normalized, createdAt };
 };
 
 export const fetchGeneratedCourses = async (): Promise<Course[]> => {

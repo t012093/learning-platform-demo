@@ -122,6 +122,7 @@
 
 ### POST /api/generate-audio
 **目的**: 音声生成（lesson単位でStorage保存）
+**補足**: `jobs.type=audio` を作成し、Worker が処理する
 
 ---
 

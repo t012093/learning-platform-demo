@@ -7,6 +7,7 @@
 - `lesson.unlock_rule`
 - `lesson.retry_policy`
 - `lesson.citations[]`（RAG利用時）
+- JSON Schema: `schemas/vibe_coding.schema.json`
 
 ## JSON例
 ```json

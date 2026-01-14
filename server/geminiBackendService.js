@@ -1,0 +1,323 @@
+import { GoogleGenAI, Type } from "@google/genai";
+
+const getApiKey = () => {
+  const key = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+  if (!key) {
+    console.warn("GEMINI_API_KEY is not set in environment variables.");
+    return "";
+  }
+  return key;
+};
+
+const getClient = () => {
+  const key = getApiKey();
+  if (!key) return null;
+  const genAI = new GoogleGenAI(key);
+  console.log("genAI keys:", Object.keys(genAI));
+  console.log("genAI constructor name:", genAI.constructor.name);
+  return genAI;
+};
+
+// --- Schemas ---
+
+const requirementsSchema = {
+  type: Type.OBJECT,
+  properties: {
+    summary: { type: Type.STRING, description: "Display title for the curriculum, e.g. 'Learn Python Basics (Beginner)'" },
+    goal: { type: Type.STRING, description: "The core learning goal, e.g. 'Master Python basics'" },
+    level: { type: Type.STRING, enum: ["beginner", "intermediate", "advanced"] },
+    target_audience: { type: Type.STRING },
+    constraints: { type: Type.ARRAY, items: { type: Type.STRING } },
+    success_criteria: { type: Type.ARRAY, items: { type: Type.STRING } },
+    materials: { 
+      type: Type.ARRAY, 
+      items: { 
+        type: Type.OBJECT, 
+        properties: {
+          material_id: { type: Type.STRING },
+          ref: { type: Type.STRING }
+        }
+      } 
+    }
+  },
+  required: ["summary", "goal", "level", "target_audience", "constraints", "success_criteria"]
+};
+
+const roadmapSchema = {
+  type: Type.OBJECT,
+  properties: {
+    title: { type: Type.STRING },
+    overview: { type: Type.STRING },
+    total_hours: { type: Type.NUMBER },
+    modules: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          module_id: { type: Type.STRING },
+          title: { type: Type.STRING },
+          objective: { type: Type.STRING },
+          estimated_hours: { type: Type.NUMBER },
+          order: { type: Type.NUMBER }
+        },
+        required: ["module_id", "title", "objective", "estimated_hours", "order"]
+      }
+    }
+  },
+  required: ["title", "overview", "total_hours", "modules"]
+};
+
+// Vibe Coding Template Schema (Partial for generation)
+const curriculumSchema = {
+  type: Type.OBJECT,
+  properties: {
+    title: { 
+      type: Type.OBJECT, 
+      properties: { jp: { type: Type.STRING }, en: { type: Type.STRING } },
+      required: ["jp", "en"]
+    },
+    description: { 
+      type: Type.OBJECT, 
+      properties: { jp: { type: Type.STRING }, en: { type: Type.STRING } },
+      required: ["jp", "en"]
+    },
+    content_mix: {
+      type: Type.OBJECT,
+      properties: {
+        doc: { type: Type.NUMBER },
+        chat: { type: Type.NUMBER },
+        exercise: { type: Type.NUMBER },
+        quiz: { type: Type.NUMBER },
+        project: { type: Type.NUMBER }
+      },
+      required: ["doc", "chat", "exercise", "quiz", "project"]
+    },
+    assessment_mix: {
+      type: Type.OBJECT,
+      properties: {
+        quiz: { type: Type.NUMBER },
+        project: { type: Type.NUMBER },
+        reflection: { type: Type.NUMBER },
+        oral: { type: Type.NUMBER }
+      },
+      required: ["quiz", "project", "reflection", "oral"]
+    },
+    modules: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          module_id: { type: Type.STRING },
+          title: { type: Type.STRING },
+          objective: { type: Type.STRING },
+          prereq_modules: { type: Type.ARRAY, items: { type: Type.STRING } },
+          estimated_hours: { type: Type.NUMBER },
+          deliverable: { type: Type.STRING },
+          assessment: { type: Type.STRING, enum: ["quiz", "project", "reflection", "oral"] },
+          module_ui_hints: {
+            type: Type.OBJECT,
+            properties: {
+              card_title: { type: Type.STRING },
+              card_text: { type: Type.STRING },
+              tags: { type: Type.ARRAY, items: { type: Type.STRING } },
+              difficulty: { type: Type.STRING, enum: ["easy", "medium", "hard"] }
+            },
+            required: ["card_title", "card_text", "tags", "difficulty"]
+          },
+          lessons: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                lesson_id: { type: Type.STRING },
+                summary: { type: Type.STRING },
+                estimated_min: { type: Type.NUMBER },
+                unlock_rule: { type: Type.STRING, enum: ["doc_completed", "manual", "immediate"] },
+                retry_policy: { type: Type.STRING, enum: ["review_then_retry", "none"] },
+                doc_blocks: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      type: { type: Type.STRING },
+                      content: { type: Type.STRING },
+                      items: { type: Type.ARRAY, items: { type: Type.STRING } }, // for bullets
+                      language: { type: Type.STRING } // for code
+                    },
+                    required: ["type"]
+                  }
+                },
+                exercises: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      prompt: { type: Type.STRING },
+                      expected: { type: Type.STRING }
+                    },
+                    required: ["prompt", "expected"]
+                  }
+                },
+                quiz: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      q: { type: Type.STRING },
+                      choices: { type: Type.ARRAY, items: { type: Type.STRING } },
+                      answer: { type: Type.NUMBER }
+                    },
+                    required: ["q", "choices", "answer"]
+                  }
+                },
+                ui_hints: {
+                  type: Type.OBJECT,
+                  properties: {
+                    card_title: { type: Type.STRING },
+                    card_text: { type: Type.STRING },
+                    cta: { type: Type.STRING },
+                    difficulty: { type: Type.STRING },
+                    time: { type: Type.STRING },
+                    tags: { type: Type.ARRAY, items: { type: Type.STRING } }
+                  },
+                  required: ["card_title", "card_text", "cta", "difficulty", "time", "tags"]
+                }
+              },
+              required: ["lesson_id", "summary", "estimated_min", "unlock_rule", "doc_blocks", "ui_hints"]
+            }
+          }
+        },
+        required: ["module_id", "title", "objective", "lessons", "module_ui_hints"]
+      }
+    }
+  },
+  required: ["title", "description", "content_mix", "assessment_mix", "modules"]
+};
+
+
+// --- Generators ---
+
+/**
+ * Generate Requirements Draft from user message and optional history.
+ */
+export const generateRequirements = async (message, attachments = []) => {
+  const genAI = getClient();
+  if (!genAI) throw new Error("Gemini API Key missing");
+
+  const prompt = `
+    User Request: "${message}"
+    Attachments: ${JSON.stringify(attachments)}
+    
+    Generate a JSON object defining the curriculum requirements.
+  `;
+
+  const result = await genAI.models.generateContent({
+    model: "gemini-2.0-flash",
+    systemInstruction: `
+      You are an expert Learning Concierge. 
+      Your goal is to analyze the user's request and extract structured learning requirements.
+      - Identify the topic, goal, and difficulty level.
+      - If the request is vague, infer the most likely intent (e.g. "learn python" -> "Python Basics").
+      - Set concrete constraints and success criteria.
+    `,
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: requirementsSchema
+    }
+  });
+
+  const text = result.text || result.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) {
+    console.error("Gemini full response:", JSON.stringify(result, null, 2));
+    throw new Error("No text in Gemini response");
+  }
+
+  return JSON.parse(text);
+};
+
+/**
+ * Generate Roadmap Draft from approved requirements.
+ */
+export const generateRoadmap = async (requirements) => {
+  const genAI = getClient();
+  if (!genAI) throw new Error("Gemini API Key missing");
+
+  const prompt = `
+    Requirements: ${JSON.stringify(requirements)}
+    
+    Generate a JSON object defining the roadmap with modules.
+  `;
+
+  const result = await genAI.models.generateContent({
+    model: "gemini-2.0-flash",
+    systemInstruction: `
+      You are a Curriculum Architect.
+      Create a high-level roadmap based on the provided requirements.
+      - Break down the goal into 3-5 logical modules.
+      - Assign estimated hours for each module.
+      - Ensure a logical progression (Foundations -> Practice -> Application).
+    `,
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: roadmapSchema
+    }
+  });
+
+  const text = result.text || result.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error("No text in Gemini response (roadmap)");
+
+  return JSON.parse(text);
+};
+
+/**
+ * Generate Full Curriculum from approved requirements and roadmap.
+ */
+export const generateCurriculum = async (requirements, roadmap, options = {}) => {
+  const genAI = getClient();
+  if (!genAI) throw new Error("Gemini API Key missing");
+
+  const prompt = `
+    Requirements: ${JSON.stringify(requirements)}
+    Roadmap: ${JSON.stringify(roadmap)}
+    Current Curriculum ID: ${options.curriculumId || 'new'}
+    Version: ${options.version || 1}
+    
+    Generate the full curriculum JSON.
+  `;
+
+  const result = await genAI.models.generateContent({
+    model: "gemini-2.0-flash",
+    systemInstruction: `
+      You are a Content Developer for 'Vibe Coding', a modern learning platform.
+      Generate a detailed curriculum JSON based on the roadmap.
+      
+      CRITICAL RULES:
+      - 'ui_template_id' must be 'vibe_coding'.
+      - Create detailed 'lessons' for each module in the roadmap.
+      - 'doc_blocks' should be rich and educational (markdown text, code snippets).
+      - 'quiz' should have 1-3 questions per lesson.
+      - 'unlock_rule' must be 'doc_completed'.
+      - 'content_mix' and 'assessment_mix' must sum to 1.0.
+      - Ensure 'lesson_id's are unique (e.g. m1-l1, m1-l2).
+    `,
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: curriculumSchema
+    }
+  });
+
+  const resText = result.text || result.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!resText) throw new Error("No text in Gemini response (curriculum)");
+
+  const data = JSON.parse(resText);
+  
+  // Post-processing to ensure required fixed fields that might be hallucinated or omitted
+  data.ui_template_id = "vibe_coding";
+  if (options.curriculumId) data.curriculum_id = options.curriculumId;
+  if (options.version) data.version = options.version;
+
+  return data;
+};

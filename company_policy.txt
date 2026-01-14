@@ -1,0 +1,15 @@
+
+Galaxy Corp Internal Policy (2026 Edition)
+
+1. Dress Code
+All employees must wear standard-issue silver jumpsuits on "Future Fridays".
+Regular business casual is permitted Monday through Thursday.
+
+2. Security Protocols
+- Password rotation is mandatory every 42 days.
+- Do not feed the server room hamsters after midnight.
+- Data breaches must be reported to the AI Sentinel within 30 seconds.
+
+3. Remote Work
+Remote work is allowed from any planet in the local solar system, provided latency is under 500ms.
+Mars colony employees must adjust their clocks to Earth time for meetings.

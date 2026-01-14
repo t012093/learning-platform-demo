@@ -54,7 +54,7 @@ const generateEmbedding = async (text) => {
         contents: [{ parts: [{ text }] }]
     });
 
-    return result.embedding.values; 
+    return result.embeddings[0].values; 
 };
 
 export const ingestMaterial = async (materialId, filePath, mimeType, userId) => {
@@ -78,7 +78,7 @@ export const ingestMaterial = async (materialId, filePath, mimeType, userId) => 
                     `INSERT INTO material_chunks 
                     (material_id, chunk_index, content, embedding, token_count)
                     VALUES ($1, $2, $3, $4, $5)`,
-                    [materialId, i, chunk, JSON.stringify(vector), chunk.length]
+                    [materialId, i, chunk, vector, chunk.length]
                 );
             }
             
@@ -93,10 +93,8 @@ export const ingestMaterial = async (materialId, filePath, mimeType, userId) => 
         }
     } catch (e) {
         console.error("Ingestion failed:", e);
-        const pool = getPool();
-        if (pool) {
-            await pool.query('UPDATE materials SET status = $1, error = $2 WHERE id = $3', ['error', e.message, materialId]);
-        }
+        // materials table doesn't have error column, so just log it.
+        throw e;
     }
 };
 
@@ -106,7 +104,6 @@ export const retrieveContext = async (query, limit = 5, userId) => {
     
     try {
         const queryVector = await generateEmbedding(query);
-        const vectorStr = JSON.stringify(queryVector);
 
         const result = await pool.query(
             `SELECT c.content, (c.embedding <=> $1) as distance
@@ -115,7 +112,7 @@ export const retrieveContext = async (query, limit = 5, userId) => {
              WHERE m.user_id = $2
              ORDER BY distance ASC
              LIMIT $3`,
-            [vectorStr, userId, limit]
+            [queryVector, userId, limit]
         );
         
         return result.rows.map(row => row.content);

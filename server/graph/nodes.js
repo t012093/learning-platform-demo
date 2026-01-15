@@ -266,14 +266,25 @@ async function interviewerNode(state) {
         console.log("   [ACTION] Generating Requirements Draft...");
         const draftInput = `${history}\n\n[Reference Analysis]\n${analysis}`;
         const draft = await generateRequirements(draftInput, attachments, user_id);
+        
+        const summaryText = `お待たせしました！資料の内容を分析し、ご要望に基づいた学習要件（Requirements）を作成しました。
+
+**【学習要件案】**
+**タイトル:** ${draft.summary}
+**ゴール:** ${draft.goal}
+**レベル:** ${draft.level}
+**ターゲット:** ${draft.target_audience}
+
+こちらでよろしいでしょうか？`;
+
         return {
             requirements: { ...requirements, draft },
             pending_approval: "requirements",
-            messages: [new AIMessage({ content: "お待たせしました！資料の内容を分析し、ご要望に基づいた学習要件（Requirements）を作成しました。こちらでよろしいでしょうか？" })],
+            messages: [new AIMessage({ content: summaryText })],
             next_actor: "end"
         };
     }
-
+    
     // 2. Continue Interview
     console.log("   [ACTION] Continuing Interview...");
     const result = await genAI.models.generateContent({
@@ -304,9 +315,8 @@ async function interviewerNode(state) {
     };
 }
 
-/**
- * Agent 2: Architect (Roadmap Design)
- */
+// ...
+
 async function architectNode(state) {
     console.log("--- Node: Architect Agent ---");
     const { requirements, roadmap, analysis } = state;
@@ -318,19 +328,27 @@ async function architectNode(state) {
             materials_analysis: analysis 
         };
         const draft = await generateRoadmap(contextRequirements);
+        
+        const modulesList = draft.modules.map(m => `**Module ${m.order}: ${m.title}**\n${m.objective} (${m.estimated_hours}h)`).join('\n\n');
+        const summaryText = `要件に基づき、ロードマップ（章立て）案を作成しました。
+        
+**【ロードマップ案】**
+**全体構成:** ${draft.title} (約${draft.total_hours}時間)
+
+${modulesList}
+
+こちらの構成で進めてよろしいでしょうか？`;
+
         return {
             roadmap: { ...roadmap, draft },
             pending_approval: "roadmap",
-            messages: [new AIMessage({ content: "要件に基づき、ロードマップ（章立て）案を作成しました。こちらの構成で進めてよろしいでしょうか？" })],
+            messages: [new AIMessage({ content: summaryText })],
             next_actor: "end"
         };
     }
     return { next_actor: "end" };
 }
 
-/**
- * Agent 3: Writer (Curriculum Writing)
- */
 async function writerNode(state) {
     console.log("--- Node: Writer Agent ---");
     const { requirements, roadmap, curriculum, user_id, curriculum_id, curriculum_version_id, analysis } = state;
@@ -345,10 +363,19 @@ async function writerNode(state) {
             curriculumId: curriculum_id,
             version: curriculum_version_id
         }, user_id);
+        
+        const summaryText = `ロードマップに従い、全レッスンの詳細を執筆しました！
+        
+**【カリキュラム完成版】**
+**タイトル:** ${draft.title.jp || draft.title.en}
+**レッスン数:** ${draft.modules.reduce((acc, m) => acc + m.lessons.length, 0)}
+
+最終確認をお願いします。承認すると学習を開始できます。`;
+
         return {
             curriculum: { ...curriculum, draft },
             pending_approval: "curriculum",
-            messages: [new AIMessage({ content: "ロードマップに従い、全レッスンの詳細を執筆しました！最終確認をお願いします。" })],
+            messages: [new AIMessage({ content: summaryText })],
             next_actor: "end"
         };
     }

@@ -37,9 +37,16 @@ export const analyzeDocumentWithGemini = async (filePath, mimeType) => {
     if (mimeType === 'audio') validMimeType = 'audio/mp3'; // Default to mp3 for generic audio
     
     const prompt = `
-      Please analyze this document in detail.
-      Summarize the key topics, learning goals, target audience, and structure.
-      If it's a technical blueprint or diagram, explain what it depicts.
+      You are an expert technical analyst.
+      Analyze this document/image in extreme detail.
+      
+      If it contains text, summarize it.
+      If it is a diagram, blueprint, or screenshot (e.g. Unity/Blender), DESCRIBE what is visually depicted.
+      - What objects/structures are visible?
+      - What technical concepts are implied (e.g. node graph, physics simulation, 3D model topology)?
+      - Infer the learning goal from the visual context.
+      
+      Output a comprehensive summary in Japanese.
     `;
 
     const result = await genAI.models.generateContent({

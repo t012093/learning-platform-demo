@@ -204,6 +204,17 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
           <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
             <div className="flex-1 flex flex-col min-w-0 bg-slate-50/30">
                 <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6">
+                    {/* Error Banner */}
+                    {error && (
+                        <div className="mx-14 mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                            <CloseIcon className="text-red-500 shrink-0" size={20} />
+                            <p className="text-xs font-bold text-red-600">{error}</p>
+                            <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-600">
+                                <CloseIcon size={16} />
+                            </button>
+                        </div>
+                    )}
+                    
                     {messages.map((msg) => (
                         <div key={msg.id} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
                             <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${msg.role === 'user' ? 'bg-slate-900 text-white' : 'bg-white text-indigo-600 border border-indigo-50'}`}>

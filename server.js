@@ -8,6 +8,7 @@ import { generateAudioContent } from './scripts/gemini_tts_node.js';
 import { generateRequirements, generateRoadmap, generateCurriculum } from './server/geminiBackendService.js';
 import { ingestMaterial } from './server/ragService.js';
 import { createCurriculumGraph } from './server/graph/workflow.js';
+import { jobWorker } from './server/jobWorker.js';
 
 // ESM dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -996,24 +997,7 @@ app.post('/api/v2/rag/index', async (req, res) => {
         );
         const jobId = result.rows[0].id;
         
-        // Trigger ingestion in background
-        (async () => {
-            try {
-                await poolInstance.query('UPDATE jobs SET status = $1, updated_at = NOW() WHERE id = $2', ['running', jobId]);
-                
-                // For PDF/Text, we need the local path. 
-                // Assuming storage_path is relative to project root or accessible.
-                const filePath = path.resolve(__dirname, material.storage_path);
-                
-                await ingestMaterial(materialId, filePath, material.type === 'pdf' ? 'application/pdf' : 'text/plain', PHASE1_USER_ID);
-                
-                await poolInstance.query('UPDATE jobs SET status = $1, updated_at = NOW(), progress = 100 WHERE id = $2', ['done', jobId]);
-            } catch (err) {
-                console.error(`Ingestion job ${jobId} failed:`, err);
-                await poolInstance.query('UPDATE jobs SET status = $1, error = $2, updated_at = NOW() WHERE id = $3', ['error', err.message, jobId]);
-            }
-        })();
-
+        // Job picked up by worker asynchronously
         res.json({ job_id: jobId, status: 'queued' });
     } catch (error) {
         console.error('Failed to queue Phase1 job:', error);
@@ -1107,6 +1091,8 @@ app.post('/api/generate-audio', async (req, res) => {
         }
     })();
 });
+
+jobWorker.start();
 
 app.listen(PORT, () => {
     console.log(`Audio Generation Server (Gemini TTS) running on http://localhost:${PORT}`);

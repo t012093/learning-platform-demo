@@ -2,6 +2,8 @@ import pg from 'pg';
 import { GoogleGenAI } from "@google/genai";
 import fs from 'fs/promises';
 import { createRequire } from 'module';
+import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+
 const require = createRequire(import.meta.url);
 const pdf = require('pdf-parse');
 
@@ -34,15 +36,12 @@ const extractText = async (filePath, mimeType) => {
     return await fs.readFile(filePath, 'utf8');
 };
 
-const chunkText = (text, chunkSize = 1000, overlap = 100) => {
-    const chunks = [];
-    let start = 0;
-    while (start < text.length) {
-        const end = Math.min(start + chunkSize, text.length);
-        chunks.push(text.slice(start, end));
-        start += chunkSize - overlap;
-    }
-    return chunks;
+const chunkText = async (text, chunkSize = 1000, overlap = 200) => {
+    const splitter = new RecursiveCharacterTextSplitter({
+        chunkSize,
+        chunkOverlap: overlap,
+    });
+    return await splitter.splitText(text);
 };
 
 const generateEmbedding = async (text) => {
@@ -63,7 +62,7 @@ export const ingestMaterial = async (materialId, filePath, mimeType, userId) => 
     
     try {
         const text = await extractText(filePath, mimeType);
-        const chunks = chunkText(text);
+        const chunks = await chunkText(text);
         
         const client = await pool.connect();
         try {
@@ -93,7 +92,6 @@ export const ingestMaterial = async (materialId, filePath, mimeType, userId) => 
         }
     } catch (e) {
         console.error("Ingestion failed:", e);
-        // materials table doesn't have error column, so just log it.
         throw e;
     }
 };

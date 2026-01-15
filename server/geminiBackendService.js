@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { retrieveContext } from "./ragService.js";
+import fs from 'fs/promises';
 
 const getApiKey = () => {
   const key = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
@@ -13,10 +14,45 @@ const getApiKey = () => {
 const getClient = () => {
   const key = getApiKey();
   if (!key) return null;
-  const genAI = new GoogleGenAI(key);
-  console.log("genAI keys:", Object.keys(genAI));
-  console.log("genAI constructor name:", genAI.constructor.name);
+  // Initialize for Gemini API (not Vertex AI for now, assuming API key usage)
+  const genAI = new GoogleGenAI({ apiKey: key });
   return genAI;
+};
+
+/**
+ * Analyzes a document directly using Gemini's multimodal capabilities (File/Image).
+ * Used when local text extraction fails (e.g. image-only PDFs).
+ */
+export const analyzeDocumentWithGemini = async (filePath, mimeType) => {
+  const genAI = getClient();
+  if (!genAI) throw new Error("Gemini API Key missing");
+
+  try {
+    const buffer = await fs.readFile(filePath);
+    const base64 = buffer.toString('base64');
+    
+    const prompt = `
+      Please analyze this document in detail.
+      Summarize the key topics, learning goals, target audience, and structure.
+      If it's a technical blueprint or diagram, explain what it depicts.
+    `;
+
+    const result = await genAI.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: [{
+        role: "user",
+        parts: [
+          { text: prompt },
+          { inlineData: { mimeType: mimeType, data: base64 } }
+        ]
+      }]
+    });
+    
+    return result.text || result.candidates?.[0]?.content?.parts?.[0]?.text || "分析できませんでした。";
+  } catch (e) {
+    console.error("Gemini Vision Analysis Failed:", e);
+    return "ファイルの視覚分析に失敗しました。";
+  }
 };
 
 // --- Schemas ---

@@ -137,3 +137,20 @@ export const getFullMaterialText = async (materialId) => {
         return "";
     }
 };
+
+export const getMaterialDetails = async (materialId) => {
+    const pool = getPool();
+    if (!pool) return null;
+    
+    try {
+        const result = await pool.query(
+            `SELECT storage_path, type FROM materials WHERE id = $1`,
+            [materialId]
+        );
+        if (result.rows.length === 0) return null;
+        return result.rows[0];
+    } catch (e) {
+        console.error("Material details retrieval failed:", e);
+        return null;
+    }
+};

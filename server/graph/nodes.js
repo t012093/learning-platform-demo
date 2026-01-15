@@ -1,10 +1,12 @@
-import { generateRequirements, generateRoadmap, generateCurriculum } from '../geminiBackendService.js';
+import { generateRequirements, generateRoadmap, generateCurriculum, analyzeDocumentWithGemini } from '../geminiBackendService.js';
 import { AIMessage, HumanMessage, ToolMessage } from "@langchain/core/messages";
 import { GoogleGenAI } from "@google/genai";
-import { retrieveContext } from '../ragService.js';
+import { retrieveContext, getFullMaterialText, getMaterialDetails } from '../ragService.js';
+import path from 'path';
 
 const getApiKey = () => process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
 const getGenAI = () => new GoogleGenAI(getApiKey());
+const PROJECT_ROOT = process.cwd();
 
 // --- Node Functions ---
 
@@ -154,7 +156,6 @@ async function analyzerNode(state) {
     const { attachments, user_id } = state;
     
     // Retrieve full text for all attachments to leverage Gemini's large context window
-    const { getFullMaterialText } = await import('../ragService.js');
     console.log(`   [ANALYZER] Extracting full text for ${attachments.length} files...`);
     
     let fullText = "";
@@ -162,7 +163,19 @@ async function analyzerNode(state) {
         // Handle both material_id and id based on payload structure
         const mid = attachment.material_id || attachment.id;
         if (mid) {
-            const text = await getFullMaterialText(mid);
+            let text = await getFullMaterialText(mid);
+            
+            // Fallback: If text is empty (e.g. image-only PDF), try Gemini Vision
+            if (!text || text.trim().length < 50) {
+                console.log(`   [ANALYZER] Text extraction weak for ${mid}, attempting Gemini Vision analysis...`);
+                const details = await getMaterialDetails(mid);
+                if (details && details.storage_path) {
+                    const absolutePath = path.resolve(PROJECT_ROOT, details.storage_path);
+                    const visionSummary = await analyzeDocumentWithGemini(absolutePath, details.type || 'application/pdf');
+                    text = `[Visual Analysis]\n${visionSummary}`;
+                }
+            }
+            
             fullText += `\n\n--- Document: ${attachment.name || mid} ---\n${text}`;
         }
     }

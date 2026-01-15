@@ -32,8 +32,12 @@ const normalizeGeneratedCourse = (raw: any): GeneratedCourse => {
     
   const createdAt = raw.created_at ? new Date(raw.created_at) : new Date();
   
+  // Ensure chapters exists (V2 uses modules)
+  const chapters = normalized.chapters || (normalized as any).modules || [];
+
   return { 
     ...normalized, 
+    chapters,
     id: raw.id || normalized.id,
     title: typeof normalized.title === 'object' ? (normalized.title as any).jp || (normalized.title as any).en : normalized.title,
     description: typeof normalized.description === 'object' ? (normalized.description as any).jp || (normalized.description as any).en : normalized.description,
@@ -52,12 +56,12 @@ export const fetchGeneratedCourses = async (): Promise<Course[]> => {
     id: row.id,
     title: row.title,
     description: row.description || '',
-    category: 'AI Generated',
+    category: row.category || 'AI Generated',
     progress: 0,
     totalLessons: 0,
     completedLessons: 0,
-    thumbnail: 'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?auto=format&fit=crop&q=80&w=800',
-    color: 'bg-indigo-500',
+    thumbnail: row.thumbnail || 'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?auto=format&fit=crop&q=80&w=800',
+    color: row.color || 'bg-indigo-500',
     source: 'generated'
   }));
 };

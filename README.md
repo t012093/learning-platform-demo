@@ -47,6 +47,7 @@ Experience learning tailored just for you.
 ### Prerequisites
 - Node.js (v20+ recommended)
 - Google Cloud / Gemini API Key
+- **PostgreSQL** with **pgvector** extension enabled
 
 ### Installation
 
@@ -57,22 +58,34 @@ Experience learning tailored just for you.
    ```
 
 2. **Environment Setup**
-   Create a `.env` file in the root directory:
+   Create a `.env.local` file in the root directory:
    ```env
    GEMINI_API_KEY=your_api_key_here
+   DATABASE_URL_PHASE1=postgres://user:password@localhost:5432/lumina_db
    ```
 
-3. **Install Dependencies**
+3. **Database Setup**
+   Initialize the PostgreSQL database schema and seed initial data.
+   ```bash
+   # 1. Create tables
+   psql -d lumina_db -f doc/ai-curriculum-spec/local_postgres_phase1.sql
+   
+   # 2. Run migration (if needed) & Seed initial courses
+   node scripts/migrate_curricula.js
+   node scripts/seed_full_integrated.js
+   ```
+
+4. **Install Dependencies**
    ```bash
    npm install
    ```
 
-4. **Run Development Environment**
-   This starts both the frontend (Vite) and the backend (Express) services.
+5. **Run Development Environment**
+   This starts the frontend (Vite) and the backend (Express with LangGraph).
    ```bash
    npm run dev
-   # Frontend: http://localhost:3005
-   # Backend (Audio): http://localhost:3006
+   # Frontend: http://localhost:3007
+   # Backend: http://localhost:3006
    ```
 
 ---
@@ -86,15 +99,17 @@ Experience learning tailored just for you.
 │   ├── features/        # Feature-specific components
 │       ├── ai/          # AI Course Generator, Chat, Character Views
 │       ├── dashboard/   # Main Dashboard & Learning Hub
-│       └── ...          # Other domain views (art, blender, programming)
+│       └── ...          # Other domain views
 ├── context/             # Global Contexts (Theme, etc.)
-├── public/              # Static assets & Generated Audio
-│   └── data/audio/      # AI-generated course audio files
-├── scripts/             # Utility scripts (Legacy Python scripts, new Node tools)
-├── services/            # Business Logic & API Clients
-│   ├── geminiService.ts # Core Gemini API integration (Text & Audio)
-│   └── ...
-├── server.js            # Express backend for file ops & audio handling
+├── public/              # Static assets
+├── server/              # Node.js Express Backend
+│   ├── graph/           # LangGraph Multi-Agent Workflows
+│   ├── geminiBackendService.js # AI Generation Logic
+│   ├── ragService.js    # RAG Ingestion & Retrieval
+│   └── jobWorker.js     # Async Job Queue Worker
+├── scripts/             # Utility scripts (Seeding, Migrations)
+├── services/            # Frontend API Clients
+├── server.js            # Main Server Entry Point
 └── types.ts             # Global TypeScript definitions
 ```
 
@@ -102,25 +117,24 @@ Experience learning tailored just for you.
 
 ## 🚧 Current Development Focus & Roadmap
 
-We are currently transitioning from a Python-based gTTS architecture to a **Node.js-native Gemini 2.5 TTS** solution.
+We have successfully migrated to a **LangGraph-based Multi-Agent Backend**.
+
+### Completed Features
+- **LangGraph Integration**: State-driven workflow for "Requirements -> Roadmap -> Curriculum" generation with user approval loops.
+- **RAG Architecture**: Document ingestion (PDF/Txt), chunking with `RecursiveCharacterTextSplitter`, and vector search using `pgvector`.
+- **Async Job Worker**: Scalable background processing for document embedding.
+- **Real AI Generation**: Powered by **Gemini 2.0 Flash** via `@google/genai` SDK v1.x.
+- **Database Persistence**: Full state synchronization with PostgreSQL.
 
 ### Active Issues
 - **Issue #3**: **Gemini 2.5 TTS Implementation**
   - Goal: Replace `gTTS` with `@google/genai` SDK native audio generation.
-  - Implement "5-Element Prompting" (Audio Profile, Scene, Director's Notes, Context, Transcript) for expressive narration.
 - **Issue #4**: **Voice Selection Feature**
-  - Goal: Allow users to select different voice personalities (e.g., 'Kore', 'Puck') for the AI tutor.
-- **Issue #6**: **Blender HTML Embeddings for Curriculum RAG**
-  - Goal: Embed Blender manual HTML and retrieve relevant context to enrich curriculum generation (option 2).
-- **Issue #7**: **User Intent Metadata DB + Embedding Memory**
-  - Goal: Extract structured intent from chat, embed it, and persist personalized context for future sessions.
-- **Issue #8**: **Blender Image Metadata & Retrieval**
-  - Goal: Enrich image metadata (caption/context/tags), improve search (BM25/vector), and support JP queries for curriculum generation.
+  - Goal: Allow users to select different voice personalities.
 
 ### How to Contribute
 1. Check the [Issues](https://github.com/t012093/learning-platform-from-gemini/issues) tab.
-2. Read the specific Issue description (e.g., Issue #3 for the TTS architecture).
-3. Follow the project's coding style (Functional React components, TypeScript, Tailwind).
+2. Follow the project's coding style (Functional React components, TypeScript, Tailwind).
 
 ---
 

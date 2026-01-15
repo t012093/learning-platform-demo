@@ -145,7 +145,7 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
 
   const navItems: NavItem[] = [
     { view: ViewState.DASHBOARD, label: t.dashboard, icon: LayoutDashboard },
-    { view: ViewState.LEARNING_HUB, label: t.learningHub, icon: Layers },
+    { view: ViewState.COURSES, label: t.learningHub, icon: Layers },
 
     { view: ViewState.AI_DIAGNOSIS, label: t.aiDiagnosis, icon: Brain },
     {

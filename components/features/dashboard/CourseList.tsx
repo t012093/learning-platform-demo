@@ -11,8 +11,7 @@ interface CourseListProps {
 
 const CourseList: React.FC<CourseListProps> = ({ onSelectCourse }) => {
   const { language } = useLanguage();
-  const curatedCourses = COURSES_DATA.map(course => ({ ...course, source: 'curated' as const }));
-  const [courses, setCourses] = useState<Course[]>(curatedCourses);
+  const [courses, setCourses] = useState<Course[]>([]);
   const copy = {
     en: {
       title: 'Curriculum',
@@ -40,21 +39,11 @@ const CourseList: React.FC<CourseListProps> = ({ onSelectCourse }) => {
       try {
         const generated = await fetchGeneratedCourses();
         if (!isMounted) return;
-        const generatedCourses = generated.map(course => ({
-          ...course,
-          source: course.source || 'generated',
-        }));
-        const seen = new Set<string>();
-        const merged = [...generatedCourses, ...curatedCourses].filter(course => {
-          if (seen.has(course.id)) return false;
-          seen.add(course.id);
-          return true;
-        });
-        setCourses(merged);
+        setCourses(generated);
       } catch (error) {
         if (!isMounted) return;
         console.error('Failed to load generated curricula:', error);
-        setCourses(curatedCourses);
+        setCourses([]); // Set empty array on failure
       }
     };
 

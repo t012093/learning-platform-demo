@@ -154,20 +154,51 @@ const AppContent: React.FC = () => {
   const [selectedBlenderStageId, setSelectedBlenderStageId] = useState<number>(1);
 
   const handleCourseSelect = async (course: Course) => {
-    if (course.source === 'generated') {
-      setGeneratedCourseBackView(ViewState.COURSES);
-      try {
-        const fullCourse = await fetchGeneratedCourseById(course.id);
-        setGeneratedCourse(fullCourse);
-        setCurrentView(ViewState.GENERATED_COURSE_PATH);
-      } catch (error) {
-        console.error('Failed to load generated course:', error);
-      }
-      return;
+    // 1. Route legacy/hardcoded courses to their dedicated views
+    if (course.id === 'vibe-coding') {
+        setCurrentView(ViewState.PROGRAMMING_VIBE);
+        return;
+    }
+    if (course.id === 'blender-3d') {
+        setCurrentView(ViewState.BLENDER); // Or BLENDER_PATH depending on entry preference
+        return;
+    }
+    if (course.id === 'art-atelier') {
+        setCurrentView(ViewState.ART_MUSEUM); // Entry point for Art
+        return;
+    }
+    if (course.id === 'scratch-game') {
+        setCurrentView(ViewState.P_SCHOOL);
+        return;
+    }
+    if (course.id === 'unity-ai') {
+        setCurrentView(ViewState.UNITY_AI_GAME_DEV);
+        return;
+    }
+    if (course.id === 'web-basics') {
+        setCurrentView(ViewState.PROGRAMMING_WEB);
+        return;
+    }
+    if (course.id === 'gen-ai-camp') {
+        setCurrentView(ViewState.PROGRAMMING_AI);
+        return;
+    }
+    if (course.id === 'global-communication') {
+        // English didn't have a dedicated full path view in imports, 
+        // assuming generic or ViewState.COURSES was used.
+        // If no dedicated view, fall through to generic.
     }
 
-    setSelectedCourse(course);
-    setCurrentView(ViewState.COURSE_DETAILS);
+    // 2. Route AI generated courses to generic view
+    // course.source is 'generated' for everything from DB now
+    setGeneratedCourseBackView(ViewState.COURSES);
+    try {
+      const fullCourse = await fetchGeneratedCourseById(course.id);
+      setGeneratedCourse(fullCourse);
+      setCurrentView(ViewState.GENERATED_COURSE_PATH);
+    } catch (error) {
+      console.error('Failed to load generated course:', error);
+    }
   };
 
   const handleStartLessonAttempt = () => {

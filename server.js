@@ -778,7 +778,7 @@ app.get('/api/v2/curricula', async (req, res) => {
     try {
         await ensurePhase1User(poolInstance);
         const result = await poolInstance.query(
-            `select id, title, description, current_version_id, created_at
+            `select id, title, description, current_version_id, created_at, category, thumbnail, color
              from curricula
              where user_id = $1
              order by created_at desc

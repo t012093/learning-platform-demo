@@ -22,16 +22,18 @@ graph TD
         end
     end
 
-    subgraph "Service Layer"
-        GeminiSvc[geminiService.ts]
-        CurriculumSvc[curriculumData.ts]
-        MockRAG[Mock Vector Store]
+    subgraph "Backend Service (Node.js/Express)"
+        APIServer[server.js]
+        LangGraph[LangGraph Workflow]
+        JobWorker[Async Job Worker]
+        GeminiSvc[geminiBackendService.js]
+        RAGSvc[ragService.js]
     end
 
-    subgraph "AI Infrastructure"
+    subgraph "Data & AI"
+        DB[(PostgreSQL + pgvector)]
         GeminiAPI[Google Gemini API]
         ModelFlash[Gemini 2.0 Flash]
-        ModelPro[Gemini 3.0 Pro]
     end
 
     App --> Layout
@@ -39,43 +41,57 @@ graph TD
     Layout --> StaticModules
     Layout --> Generator
     
-    Generator -->|Topic + Big5 Profile| GeminiSvc
-    GeminiSvc -->|Pedagogical Strategy| GeminiSvc
-    GeminiSvc -->|Context Retrieval| MockRAG
+    Generator -->|/api/v2/ai/chat| APIServer
+    APIServer -->|Invoke| LangGraph
+    LangGraph -->|Generate| GeminiSvc
+    GeminiSvc -->|Retrieve Context| RAGSvc
     
+    RAGSvc -->|Search| DB
     GeminiSvc -->|Prompt + Context| GeminiAPI
-    GeminiAPI -->|Select| ModelFlash
-    GeminiAPI -->|Select| ModelPro
+    GeminiAPI --> ModelFlash
+    
+    Generator -->|Upload Material| APIServer
+    APIServer -->|Queue Job| DB
+    JobWorker -->|Poll & Ingest| DB
+    JobWorker -->|Embed| GeminiAPI
     
     GeminiAPI -->>|Structured JSON| GeminiSvc
-    GeminiSvc -->>|GeneratedCourse| App
+    LangGraph -->>|State Sync| DB
+    APIServer -->>|GeneratedCourse| App
     App -->|Render Data| LessonView
 ```
 
-## Personalization Data Flow
+## Personalization Data Flow (Multi-Agent)
 
 ```mermaid
 sequenceDiagram
     participant U as User
     participant UI as CourseGeneratorView
-    participant S as geminiService
-    participant AI as Gemini API
+    participant API as API Server
+    participant LG as LangGraph
+    participant DB as PostgreSQL
 
     U->>UI: Input Topic: "Quantum Computing"
-    U->>UI: Set Big5: High Openness, Low Conscientiousness
-    U->>UI: Click "Generate"
+    UI->>API: POST /api/v2/ai/chat
+    API->>LG: Invoke(State)
     
-    UI->>S: generateCourse("Quantum", Profile)
+    note right of LG: Agent 1: Requirements
+    LG->>LG: Generate Requirements Draft
+    LG->>DB: Save Draft (Pending Approval)
     
-    note right of S: Strategy Generation
-    S->>S: Analyze Profile -> "Use Metaphors, Focus on Concepts"
+    API-->>UI: Return "Approval Required"
     
-    note right of S: RAG Retrieval (Mock)
-    S->>S: Search("Quantum") -> [Context Documents]
+    U->>UI: Click "Approve"
+    UI->>API: POST /api/v2/curricula/:id/decision
+    API->>LG: Invoke(State + Decision)
     
-    S->>AI: Prompt: "Explain Quantum using Metaphors..." + Context
-    AI-->>S: Returns JSON with "Analogy", "WhyItMatters"
+    note right of LG: Agent 2: Roadmap
+    LG->>LG: Generate Roadmap
     
-    S-->>UI: Returns GeneratedCourse Object
+    note right of LG: Agent 3: Curriculum
+    LG->>LG: Generate Full Content (vibe_coding)
+    
+    LG->>DB: Save Final Course
+    API-->>UI: Return "Completed"
     UI->>U: Displays Personalized Curriculum
 ```

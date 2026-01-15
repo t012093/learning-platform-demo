@@ -114,13 +114,25 @@ router.post('/upload', upload.single('file'), async (req, res) => {
                      req.file.mimetype.includes('audio') ? 'audio' : 'txt';
         // Store relative path for portability
         const storagePath = `public/uploads/${req.file.filename}`;
+        const absolutePath = path.join(PROJECT_ROOT, storagePath);
 
         const result = await pool.query(
             `insert into materials (user_id, type, title, storage_path, status)
              values ($1, $2, $3, $4, 'uploaded') returning id, status`,
             [PHASE1_USER_ID, type, req.file.originalname, storagePath]
         );
-        res.json({ ok: true, material_id: result.rows[0].id, status: result.rows[0].status });
+        const materialId = result.rows[0].id;
+
+        // Trigger synchronous ingestion for immediate analysis availability
+        console.log(`Starting immediate ingestion for material ${materialId}...`);
+        try {
+            await ingestMaterial(materialId, absolutePath, req.file.mimetype, PHASE1_USER_ID);
+            res.json({ ok: true, material_id: materialId, status: 'ready' });
+        } catch (ingestErr) {
+            console.error('Immediate Ingestion failed, but file was uploaded:', ingestErr);
+            // Fallback: still return success but status is 'uploaded'
+            res.json({ ok: true, material_id: materialId, status: 'uploaded' });
+        }
     } catch (error) {
         console.error('Upload Error:', error);
         res.status(500).json({ error: 'Upload failed' });

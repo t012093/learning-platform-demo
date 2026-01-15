@@ -96,7 +96,7 @@ export const ingestMaterial = async (materialId, filePath, mimeType, userId) => 
     }
 };
 
-export const retrieveContext = async (query, limit = 5, userId) => {
+export const retrieveContext = async (query, limit = 3, userId) => {
     const pool = getPool();
     if (!pool) return [];
     
@@ -117,5 +117,23 @@ export const retrieveContext = async (query, limit = 5, userId) => {
     } catch (e) {
         console.error("Retrieval failed:", e);
         return [];
+    }
+};
+
+export const getFullMaterialText = async (materialId) => {
+    const pool = getPool();
+    if (!pool) return "";
+    
+    try {
+        const result = await pool.query(
+            `SELECT content FROM material_chunks 
+             WHERE material_id = $1 
+             ORDER BY chunk_index ASC`,
+            [materialId]
+        );
+        return result.rows.map(row => row.content).join("\n");
+    } catch (e) {
+        console.error("Full text retrieval failed:", e);
+        return "";
     }
 };

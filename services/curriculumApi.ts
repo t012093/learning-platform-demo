@@ -110,7 +110,7 @@ export const sendAiChat = async (message: string, sessionId?: string, attachment
 };
 
 export const sendAiDecision = async (curriculumId: string, sessionId: string, stage: string, decision: 'approved' | 'revise', feedbackText?: string) => {
-  const response = await fetch(`${API_BASE}/curricula/${curriculumId}/decision`, {
+  const response = await fetch(`${API_BASE}/ai/curricula/${curriculumId}/decision`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ session_id: sessionId, stage, decision, feedback_text: feedbackText }),

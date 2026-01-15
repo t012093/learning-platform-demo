@@ -111,7 +111,7 @@ async function testFinalE2E() {
 
   // 4. Approve Requirements
   console.log("\n🔹 Step 4: Approving Requirements");
-  await fetch(`${BASE_URL}/api/v2/curricula/${curriculumId}/decision`, {
+  await fetch(`${BASE_URL}/api/v2/ai/curricula/${curriculumId}/decision`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ stage: 'requirements', decision: 'approved', session_id: sessionId })
@@ -119,7 +119,7 @@ async function testFinalE2E() {
 
   // 5. Approve Roadmap
   console.log("\n🔹 Step 5: Approving Roadmap");
-  await fetch(`${BASE_URL}/api/v2/curricula/${curriculumId}/decision`, {
+  await fetch(`${BASE_URL}/api/v2/ai/curricula/${curriculumId}/decision`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ stage: 'roadmap', decision: 'approved', session_id: sessionId })

@@ -230,7 +230,28 @@ router.post('/curricula/:id/decision', async (req, res) => {
             [JSON.stringify(outputState), nextPending, status, session.id]
         );
 
-        // ... Sync logic (abbreviated, same as chat) ...
+        // Sync logic to update curriculum_versions
+        if (outputState.curriculum_version_id) {
+            const updates = [];
+            const values = [];
+            let idx = 1;
+            if (outputState.requirements?.approved) {
+                updates.push(`requirements = $${idx++}`);
+                values.push(JSON.stringify(outputState.requirements.approved));
+            }
+            if (outputState.roadmap?.approved) {
+                updates.push(`roadmap = $${idx++}`);
+                values.push(JSON.stringify(outputState.roadmap.approved));
+            }
+            if (outputState.curriculum?.approved) {
+                updates.push(`content_json = $${idx++}`);
+                values.push(JSON.stringify(outputState.curriculum.approved));
+            }
+            if (updates.length > 0) {
+                values.push(outputState.curriculum_version_id);
+                await pool.query(`update curriculum_versions set ${updates.join(', ')}, updated_at = now() where id = $${idx}`, values);
+            }
+        }
         
         res.json({
             ok: true,

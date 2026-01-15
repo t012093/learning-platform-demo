@@ -52,7 +52,7 @@ async function testHumanToolFlow() {
 
   // 3. Approve
   console.log("\n🔹 Step 3: User approves requirements");
-  const res3 = await fetch(`${BASE_URL}/api/v2/curricula/${curriculumId}/decision`, {
+  const res3 = await fetch(`${BASE_URL}/api/v2/ai/curricula/${curriculumId}/decision`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ stage: 'requirements', decision: 'approved', session_id: sessionId })

@@ -31,6 +31,11 @@ export const analyzeDocumentWithGemini = async (filePath, mimeType) => {
     const buffer = await fs.readFile(filePath);
     const base64 = buffer.toString('base64');
     
+    // Normalize mimeType
+    let validMimeType = mimeType;
+    if (mimeType === 'pdf') validMimeType = 'application/pdf';
+    if (mimeType === 'audio') validMimeType = 'audio/mp3'; // Default to mp3 for generic audio
+    
     const prompt = `
       Please analyze this document in detail.
       Summarize the key topics, learning goals, target audience, and structure.
@@ -43,7 +48,7 @@ export const analyzeDocumentWithGemini = async (filePath, mimeType) => {
         role: "user",
         parts: [
           { text: prompt },
-          { inlineData: { mimeType: mimeType, data: base64 } }
+          { inlineData: { mimeType: validMimeType, data: base64 } }
         ]
       }]
     });

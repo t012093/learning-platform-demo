@@ -69,16 +69,31 @@ export const ingestMaterial = async (materialId, filePath, mimeType, userId) => 
             await client.query('BEGIN');
             await client.query('DELETE FROM material_chunks WHERE material_id = $1', [materialId]);
 
+            // Check for vector extension support
+            const typeCheck = await client.query(
+                "SELECT 1 FROM pg_type WHERE typname = 'vector'"
+            );
+            const hasVector = typeCheck.rowCount > 0;
+
             for (let i = 0; i < chunks.length; i++) {
                 const chunk = chunks[i];
                 const vector = await generateEmbedding(chunk);
                 
-                await client.query(
-                    `INSERT INTO material_chunks 
-                    (material_id, chunk_index, content, embedding, token_count)
-                    VALUES ($1, $2, $3, $4, $5)`,
-                    [materialId, i, chunk, vector, chunk.length]
-                );
+                if (hasVector) {
+                    await client.query(
+                        `INSERT INTO material_chunks 
+                        (material_id, chunk_index, content, embedding, token_count, embedding_model, embedding_dim)
+                        VALUES ($1, $2, $3, $4::vector, $5, $6, $7)`,
+                        [materialId, i, chunk, JSON.stringify(vector), chunk.length, "text-embedding-004", 768]
+                    );
+                } else {
+                    await client.query(
+                        `INSERT INTO material_chunks 
+                        (material_id, chunk_index, content, embedding, token_count, embedding_model, embedding_dim)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                        [materialId, i, chunk, vector, chunk.length, "text-embedding-004", 768]
+                    );
+                }
             }
             
             await client.query('UPDATE materials SET status = $1, updated_at = NOW() WHERE id = $2', ['ready', materialId]);
@@ -103,15 +118,37 @@ export const retrieveContext = async (query, limit = 3, userId) => {
     try {
         const queryVector = await generateEmbedding(query);
 
-        const result = await pool.query(
-            `SELECT c.content, (c.embedding <=> $1::vector) as distance
-             FROM material_chunks c
-             JOIN materials m ON c.material_id = m.id
-             WHERE m.user_id = $2
-             ORDER BY distance ASC
-             LIMIT $3`,
-            [JSON.stringify(queryVector), userId, limit]
+        // Check for vector extension support
+        const typeCheck = await pool.query(
+            "SELECT 1 FROM pg_type WHERE typname = 'vector'"
         );
+        const hasVector = typeCheck.rowCount > 0;
+
+        let result;
+        if (hasVector) {
+            result = await pool.query(
+                `SELECT c.content, (c.embedding <=> $1::vector) as distance
+                 FROM material_chunks c
+                 JOIN materials m ON c.material_id = m.id
+                 WHERE m.user_id = $2
+                 ORDER BY distance ASC
+                 LIMIT $3`,
+                [JSON.stringify(queryVector), userId, limit]
+            );
+        } else {
+            // Simple fallback if no pgvector: just return latest or match basic if needed
+            // For now, let's just return top items by ID as similarity is hard in pure SQL float8[]
+            console.warn("pgvector not available, falling back to basic retrieval");
+            result = await pool.query(
+                `SELECT c.content
+                 FROM material_chunks c
+                 JOIN materials m ON c.material_id = m.id
+                 WHERE m.user_id = $1
+                 ORDER BY c.created_at DESC
+                 LIMIT $2`,
+                [userId, limit]
+            );
+        }
         
         return result.rows.map(row => row.content);
     } catch (e) {

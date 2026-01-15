@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { ViewState, GeneratedCourse, Course } from './types';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
@@ -13,10 +14,15 @@ import LoginModal from './components/common/LoginModal';
 import LessonView from './components/common/LessonView';
 import Library from './components/common/Library';
 
+// Wrappers
+import CoursePathViewWrapper from './components/wrappers/CoursePathViewWrapper';
+import GeneratedCourseViewWrapper from './components/wrappers/GeneratedCourseViewWrapper';
+import GeneratedLessonViewWrapper from './components/wrappers/GeneratedLessonViewWrapper';
+
 // Dashboard Features
 import Dashboard from './components/features/dashboard/Dashboard';
 import CourseList from './components/features/dashboard/CourseList';
-import CoursePathView from './components/features/dashboard/CoursePathView';
+import CoursePathView from './components/features/dashboard/CoursePathView'; // Still used for type import or direct usage if needed
 import LearningHub from './components/features/dashboard/LearningHub';
 import ProfilePassport from './components/features/dashboard/ProfilePassport';
 import MyContent from './components/features/dashboard/MyContent';
@@ -26,8 +32,6 @@ import { FloatingChatbot } from './components/common/FloatingChatbot';
 
 // AI Features
 import CourseGeneratorView from './components/features/ai/CourseGeneratorView';
-import GeneratedCourseView from './components/features/ai/GeneratedCourseView';
-import GeneratedLessonView from './components/features/ai/GeneratedLessonView';
 import LuminaConciergeView from './components/features/ai/LuminaConciergeView';
 import BlenderChecklistGeneratorView from './components/features/ai/BlenderChecklistGeneratorView';
 import PersonalAssessmentView from './components/features/dashboard/assessment/PersonalAssessmentView';
@@ -84,8 +88,11 @@ import SonicSynthView from './components/features/sonic/SonicSynthView';
 // P-School Feature
 import PSchoolView from './components/features/PSchool/PSchoolView';
 
+import MultiFormatLessonView from './components/features/ai/MultiFormatLessonView';
+
 import { User, Settings, Bell, Shield } from 'lucide-react';
 
+// Profile Placeholder (kept for reference or usage)
 const ProfilePlaceholder: React.FC = () => (
   <div className="p-8 max-w-2xl mx-auto">
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -128,402 +135,115 @@ const ProfilePlaceholder: React.FC = () => (
   </div>
 );
 
-import MultiFormatLessonView from './components/features/ai/MultiFormatLessonView';
-
 const AppContent: React.FC = () => {
   const { language, setLanguage } = useLanguage();
-  const [currentView, setCurrentView] = useState<ViewState>(ViewState.DASHBOARD);
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
   
-  // AI Generated Course State
-  const [generatedCourse, setGeneratedCourse] = useState<GeneratedCourse | null>(null);
-  const [latestGeneratedForLibrary, setLatestGeneratedForLibrary] = useState<GeneratedCourse | null>(null);
-  const [generatedCourseBackView, setGeneratedCourseBackView] = useState<ViewState>(ViewState.MY_CONTENT);
-
   // Auth state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isLoginPageVisible, setIsLoginPageVisible] = useState(false);
 
-  // Selected Craft/Tribal State
-  const [selectedCraftId, setSelectedCraftId] = useState<string | null>(null);
-  const [selectedTribalId, setSelectedTribalId] = useState<string | null>(null);
-  const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
+  // Derive current view from location for Layout highlight
+  // This is a simple mapping for the Layout's navigation prop
+  const getCurrentViewState = (): ViewState => {
+     const path = location.pathname;
+     if (path === '/') return ViewState.DASHBOARD;
+     if (path === '/learning-hub') return ViewState.LEARNING_HUB;
+     if (path.startsWith('/courses')) return ViewState.COURSES;
+     if (path.startsWith('/generated-course')) return ViewState.GENERATED_COURSE_PATH;
+     if (path.startsWith('/my-content')) return ViewState.MY_CONTENT;
+     if (path.startsWith('/profile')) return ViewState.PROFILE;
+     if (path.startsWith('/blender')) return ViewState.BLENDER;
+     if (path.startsWith('/programming')) return ViewState.PROGRAMMING;
+     if (path.startsWith('/art')) return ViewState.ART_MUSEUM;
+     if (path.startsWith('/sonic')) return ViewState.SONIC_LAB;
+     if (path.startsWith('/vibe')) return ViewState.PROGRAMMING_VIBE;
+     if (path.startsWith('/unity')) return ViewState.UNITY_AI_GAME_DEV;
+     if (path === '/library') return ViewState.LIBRARY;
+     return ViewState.DASHBOARD;
+  };
 
-  // Blender State
-  const [selectedBlenderStageId, setSelectedBlenderStageId] = useState<number>(1);
-
-  const handleCourseSelect = async (course: Course) => {
-    // 1. Route legacy/hardcoded courses to their dedicated views
-    if (course.id === 'vibe-coding') {
-        setCurrentView(ViewState.PROGRAMMING_VIBE);
-        return;
-    }
-    if (course.id === 'blender-3d') {
-        setCurrentView(ViewState.BLENDER); // Or BLENDER_PATH depending on entry preference
-        return;
-    }
-    if (course.id === 'art-atelier') {
-        setCurrentView(ViewState.ART_MUSEUM); // Entry point for Art
-        return;
-    }
-    if (course.id === 'scratch-game') {
-        setCurrentView(ViewState.P_SCHOOL);
-        return;
-    }
-    if (course.id === 'unity-ai') {
-        setCurrentView(ViewState.UNITY_AI_GAME_DEV);
-        return;
-    }
-    if (course.id === 'web-basics') {
-        setCurrentView(ViewState.PROGRAMMING_WEB);
-        return;
-    }
-    if (course.id === 'gen-ai-camp') {
-        setCurrentView(ViewState.PROGRAMMING_AI);
-        return;
-    }
-    if (course.id === 'global-communication') {
-        // English didn't have a dedicated full path view in imports, 
-        // assuming generic or ViewState.COURSES was used.
-        // If no dedicated view, fall through to generic.
-    }
-
-    // 2. Route AI generated courses to generic view
-    // course.source is 'generated' for everything from DB now
-    setGeneratedCourseBackView(ViewState.COURSES);
-    try {
-      const fullCourse = await fetchGeneratedCourseById(course.id);
-      setGeneratedCourse(fullCourse);
-      setCurrentView(ViewState.GENERATED_COURSE_PATH);
-    } catch (error) {
-      console.error('Failed to load generated course:', error);
+  const handleNavigate = (view: ViewState) => {
+    switch (view) {
+      case ViewState.DASHBOARD: navigate('/'); break;
+      case ViewState.LEARNING_HUB: navigate('/learning-hub'); break;
+      case ViewState.COURSES: navigate('/courses'); break;
+      case ViewState.MY_CONTENT: navigate('/my-content'); break;
+      case ViewState.PROFILE: navigate('/profile'); break;
+      case ViewState.LIBRARY: navigate('/library'); break;
+      
+      // Feature Hubs
+      case ViewState.BLENDER: navigate('/blender'); break;
+      case ViewState.PROGRAMMING: navigate('/programming'); break;
+      case ViewState.PROGRAMMING_WEB: navigate('/programming/web'); break;
+      case ViewState.PROGRAMMING_AI: navigate('/programming/ai'); break;
+      case ViewState.PROGRAMMING_VIBE: navigate('/vibe'); break;
+      case ViewState.VIBE_PATH: navigate('/vibe'); break;
+      case ViewState.UNITY_AI_GAME_DEV: navigate('/unity'); break;
+      case ViewState.ART_MUSEUM: navigate('/art'); break;
+      case ViewState.SONIC_LAB: navigate('/sonic'); break;
+      case ViewState.P_SCHOOL: navigate('/p-school'); break;
+      
+      // Specific Tools
+      case ViewState.COURSE_GENERATOR: navigate('/course-generator'); break;
+      case ViewState.AI_DIAGNOSIS: navigate('/assessment'); break;
+      case ViewState.AI_CHARACTERS: navigate('/characters'); break;
+      
+      // Deep Links (Mapping known sub-routes)
+      case ViewState.HTML_CSS_PATH: navigate('/programming/html-css'); break;
+      case ViewState.HTML_CSS_COURSE: navigate('/programming/html-css/course'); break;
+      case ViewState.HTML_CSS_PART_TWO: navigate('/programming/html-css/part2'); break;
+      case ViewState.WEB_INSPECTOR: navigate('/programming/web-inspector'); break;
+      case ViewState.PYTHON_COURSE: navigate('/programming/python'); break;
+      
+      // Art Sub-routes
+      case ViewState.ART_HISTORY: navigate('/art/history'); break;
+      case ViewState.ART_CURRICULUM: navigate('/art/curriculum'); break;
+      case ViewState.ART_INTRO: navigate('/art/intro'); break;
+      case ViewState.ART_PERIOD_DETAIL: navigate('/art/period'); break;
+      case ViewState.ART_CRAFTS: navigate('/art/crafts'); break;
+      case ViewState.ART_KINTSUGI: navigate('/art/kintsugi'); break;
+      case ViewState.ART_TRIBAL: navigate('/art/tribal'); break;
+      case ViewState.ART_TRIBAL_DETAIL: navigate('/art/tribal/intro'); break; // Default
+      
+      // Fallback
+      default: console.warn('Unhandled navigation:', view); navigate('/'); break;
     }
   };
 
-  const handleStartLessonAttempt = () => {
-    if (!isLoggedIn) {
-      setShowLoginModal(true);
+  const handleCourseSelect = async (course: Course) => {
+    if (course.id === 'vibe-coding') { navigate('/vibe'); return; }
+    if (course.id === 'blender-3d') { navigate('/blender'); return; }
+    if (course.id === 'art-atelier') { navigate('/art'); return; }
+    if (course.id === 'scratch-game') { navigate('/p-school'); return; }
+    if (course.id === 'unity-ai') { navigate('/unity'); return; }
+    if (course.id === 'web-basics') { navigate('/programming/web'); return; }
+    if (course.id === 'gen-ai-camp') { navigate('/programming/ai'); return; }
+
+    // Generated Courses
+    if (course.source === 'generated') {
+        navigate(`/generated-course/${course.id}`);
     } else {
-      setCurrentView(ViewState.LESSON);
+        // Static/Standard Courses
+        navigate(`/course/${course.id}`);
     }
+  };
+
+  const handleGeneratedCourseSelect = (course: GeneratedCourse) => {
+    navigate(`/generated-course/${course.id}`);
   };
 
   const handleLoginSuccess = () => {
     setIsLoggedIn(true);
     setShowLoginModal(false);
-    setCurrentView(ViewState.LESSON);
+    navigate('/');
   };
 
-  // Helper to navigate to a specific craft
-  const handleCraftSelect = (craftId: string) => {
-    setSelectedCraftId(craftId);
-    if (craftId === 'kintsugi') {
-      setCurrentView(ViewState.ART_KINTSUGI);
-    } else {
-      setCurrentView(ViewState.ART_CRAFT_DETAIL);
-    }
-  };
-
-  // Helper to navigate to tribal section
-  const handleTribalSelect = (chapterId: string) => {
-    setSelectedTribalId(chapterId);
-    setCurrentView(ViewState.ART_TRIBAL_DETAIL);
-  };
-
-  const handleCharacterSelect = (charId: string) => {
-    setSelectedCharacterId(charId);
-    setCurrentView(ViewState.AI_CHARACTER_DETAIL);
-  };
-
-  const handleBlenderStageStart = (stageId: number) => {
-    setSelectedBlenderStageId(stageId);
-    setCurrentView(ViewState.BLENDER_LESSON);
-  };
-  
-  const handleCourseGenerated = (course: GeneratedCourse) => {
-    setGeneratedCourseBackView(ViewState.MY_CONTENT);
-    setGeneratedCourse(course);
-    setLatestGeneratedForLibrary(course);
-    setCurrentView(ViewState.GENERATED_COURSE_PATH);
-
-    saveGeneratedCourse(course).catch((error) => {
-      console.error('Failed to save generated course:', error);
-    });
-  };
-
-  const handleGeneratedCourseSelect = (course: GeneratedCourse) => {
-    setGeneratedCourseBackView(ViewState.MY_CONTENT);
-    setGeneratedCourse(course);
-    setCurrentView(ViewState.GENERATED_COURSE_PATH);
-  };
-
-  const renderContent = () => {
-    switch (currentView) {
-      case ViewState.MULTI_FORMAT_DEMO:
-        return <MultiFormatLessonView onBack={() => setCurrentView(ViewState.DASHBOARD)} />;
-      case ViewState.DEMO_CONCEPT:
-        return <MultiFormatLessonView onBack={() => setCurrentView(ViewState.DASHBOARD)} forceBlockType="concept" />;
-      case ViewState.DEMO_DIALOGUE:
-        return <MultiFormatLessonView onBack={() => setCurrentView(ViewState.DASHBOARD)} forceBlockType="dialogue" />;
-      case ViewState.DEMO_WORKSHOP:
-        return <MultiFormatLessonView onBack={() => setCurrentView(ViewState.DASHBOARD)} forceSubType="code" />;
-      case ViewState.DEMO_REFLECTION:
-        return <MultiFormatLessonView onBack={() => setCurrentView(ViewState.DASHBOARD)} forceBlockType="reflection" />;
-      case ViewState.DEMO_BLENDER:
-        return <MultiFormatLessonView onBack={() => setCurrentView(ViewState.DASHBOARD)} forceSubType="blender" />;
-      case ViewState.DEMO_CHECKLIST:
-        return <MultiFormatLessonView onBack={() => setCurrentView(ViewState.DASHBOARD)} forceBlockType="checklist" />;
-      case ViewState.DEMO_CHECKLIST_GENERATOR:
-        return <BlenderChecklistGeneratorView onBack={() => setCurrentView(ViewState.DASHBOARD)} />;
-      case ViewState.DASHBOARD:
-        return <Dashboard onNavigate={setCurrentView} />;
-      case ViewState.COURSE_GENERATOR:
-        return <CourseGeneratorView onBack={() => setCurrentView(ViewState.DASHBOARD)} onCourseGenerated={handleCourseGenerated} onNavigate={setCurrentView} />;
-      case ViewState.LEARNING_HUB:
-        return <LearningHub onNavigate={setCurrentView} />;
-      case ViewState.COURSES:
-        return <CourseList onSelectCourse={handleCourseSelect} />;
-      case ViewState.COURSE_DETAILS:
-        if (!selectedCourse) return <CourseList onSelectCourse={handleCourseSelect} />;
-        return (
-          <CoursePathView
-            course={selectedCourse}
-            onStartLesson={handleStartLessonAttempt}
-            onBack={() => setCurrentView(ViewState.COURSES)}
-          />
-        );
-      case ViewState.BLENDER:
-        return <BlenderCurriculum onNavigate={setCurrentView} />;
-      case ViewState.BLENDER_PATH:
-        return <BlenderPathView
-          onBack={() => setCurrentView(ViewState.BLENDER)}
-          onStartLesson={handleBlenderStageStart}
-        />;
-      case ViewState.BLENDER_LESSON:
-        return <BlenderLessonView
-          stageId={selectedBlenderStageId}
-          onBack={() => setCurrentView(ViewState.BLENDER_PATH)}
-          onComplete={() => setCurrentView(ViewState.BLENDER_PATH)}
-        />;
-      case ViewState.TEACHER_BOT_LIVE:
-        return <TeacherBotLiveView onBack={() => setCurrentView(ViewState.LEARNING_HUB)} />;
-      case ViewState.PROGRAMMING:
-      case ViewState.PROGRAMMING_WEB:
-        return <ProgrammingCurriculum onNavigate={setCurrentView} initialTrack="web" />;
-      case ViewState.PROGRAMMING_AI:
-        return <ProgrammingCurriculum onNavigate={setCurrentView} initialTrack="ai" />;
-
-      // Detailed Programming Paths
-      case ViewState.PROGRAMMING_PATH:
-        return <ProgrammingCourseView onBack={() => setCurrentView(ViewState.PROGRAMMING)} />;
-      case ViewState.PYTHON_COURSE:
-        return <PythonBeginnerView onBack={() => setCurrentView(ViewState.PROGRAMMING_AI)} />;
-      case ViewState.HTML_CSS_PATH:
-        return <HtmlCssPathView
-          onBack={() => setCurrentView(ViewState.PROGRAMMING_WEB)}
-          onNavigate={setCurrentView}
-        />;
-      case ViewState.HTML_CSS_COURSE:
-        return <HtmlCssView onBack={() => setCurrentView(ViewState.HTML_CSS_PATH)} />;
-      case ViewState.HTML_CSS_PART_TWO:
-        return <HtmlCssPartTwoView onBack={() => setCurrentView(ViewState.HTML_CSS_PATH)} />;
-      case ViewState.WEB_INSPECTOR:
-        return <WebInspectorView onBack={() => setCurrentView(ViewState.HTML_CSS_PATH)} onNavigate={setCurrentView} />;
-
-      case ViewState.PROGRAMMING_VIBE:
-      case ViewState.VIBE_PATH:
-        return <VibePathView
-          onBack={() => setCurrentView(ViewState.LEARNING_HUB)}
-          onNavigate={setCurrentView}
-          language={language}
-          setLanguage={setLanguage}
-        />;
-      case ViewState.VIBE_PROLOGUE:
-        return <VibePrologueView
-          onBack={() => setCurrentView(ViewState.VIBE_PATH)}
-          onNavigate={setCurrentView}
-          language={language}
-          setLanguage={setLanguage}
-        />;
-      case ViewState.VIBE_CHAPTER_0:
-        return <VibeChapterZeroView
-          onBack={() => setCurrentView(ViewState.VIBE_PATH)}
-          onNavigate={setCurrentView}
-          language={language}
-          setLanguage={setLanguage}
-        />;
-      case ViewState.VIBE_CHAPTER_1:
-        return <VibeChapterOneView
-          onBack={() => setCurrentView(ViewState.VIBE_PATH)}
-          onNavigate={setCurrentView}
-          language={language}
-          setLanguage={setLanguage}
-        />;
-      case ViewState.VIBE_CHAPTER_2:
-        return <VibeChapterTwoView
-          onBack={() => setCurrentView(ViewState.VIBE_PATH)}
-          onNavigate={setCurrentView}
-          language={language}
-          setLanguage={setLanguage}
-        />;
-      case ViewState.VIBE_CHAPTER_3:
-        return <VibeChapterThreeView
-          onBack={() => setCurrentView(ViewState.VIBE_PATH)}
-          onNavigate={setCurrentView}
-          language={language}
-          setLanguage={setLanguage}
-        />;
-      case ViewState.VIBE_CHAPTER_4:
-        return <VibeChapterFourView
-          onBack={() => setCurrentView(ViewState.VIBE_PATH)}
-          onNavigate={setCurrentView}
-          language={language}
-          setLanguage={setLanguage}
-        />;
-      case ViewState.VIBE_CHAPTER_5:
-        return <VibeChapterFiveView
-          onBack={() => setCurrentView(ViewState.VIBE_PATH)}
-          onNavigate={setCurrentView}
-          language={language}
-          setLanguage={setLanguage}
-        />;
-      case ViewState.VIBE_CHAPTER_6:
-        return <VibeChapterSixView
-          onBack={() => setCurrentView(ViewState.VIBE_PATH)}
-          onNavigate={setCurrentView}
-          language={language}
-          setLanguage={setLanguage}
-        />;
-      case ViewState.VIBE_CHAPTER_7:
-        return <VibeChapterSevenView
-          onBack={() => setCurrentView(ViewState.VIBE_PATH)}
-          onNavigate={setCurrentView}
-          language={language}
-          setLanguage={setLanguage}
-        />;
-      case ViewState.VIBE_CHAPTER_8:
-        return <VibeChapterEightView
-          onBack={() => setCurrentView(ViewState.VIBE_PATH)}
-          onNavigate={setCurrentView}
-          language={language}
-          setLanguage={setLanguage}
-        />;
-      case ViewState.VIBE_CHAPTER_9:
-        return <VibeChapterNineView
-          onBack={() => setCurrentView(ViewState.VIBE_PATH)}
-          onNavigate={setCurrentView}
-          language={language}
-          setLanguage={setLanguage}
-        />;
-      case ViewState.VIBE_CHAPTER_10:
-        return <VibeChapterTenView
-          onBack={() => setCurrentView(ViewState.VIBE_PATH)}
-          onNavigate={setCurrentView}
-          language={language}
-          setLanguage={setLanguage}
-        />;
-      case ViewState.VIBE_CHAPTER_11:
-        return <VibeChapterElevenView
-          onBack={() => setCurrentView(ViewState.VIBE_PATH)}
-          onNavigate={setCurrentView}
-          language={language}
-          setLanguage={setLanguage}
-        />;
-
-      // Unity AI Game Dev
-      case ViewState.UNITY_AI_GAME_DEV:
-        return <UnityPathView
-          onBack={() => setCurrentView(ViewState.LEARNING_HUB)}
-          onNavigate={setCurrentView}
-          language={language}
-          setLanguage={setLanguage}
-        />;
-      case ViewState.UNITY_CHAPTER_0:
-      case ViewState.UNITY_CHAPTER_1:
-      case ViewState.UNITY_CHAPTER_2:
-      case ViewState.UNITY_CHAPTER_3:
-        return <UnityChapterView
-          viewState={currentView}
-          onBack={() => setCurrentView(ViewState.UNITY_AI_GAME_DEV)}
-          onNavigate={setCurrentView}
-          language={language}
-          setLanguage={setLanguage}
-        />;
-
-      // Art Routes
-      case ViewState.ART_MUSEUM:
-        return <ArtMuseumView onNavigate={setCurrentView} language={language} setLanguage={setLanguage} />;
-      case ViewState.ART_HISTORY:
-        return <ArtHistoryView onBack={() => setCurrentView(ViewState.ART_MUSEUM)} onNavigate={setCurrentView} language={language} setLanguage={setLanguage} />;
-      case ViewState.ART_CURRICULUM:
-        return <ArtCurriculumView onBack={() => setCurrentView(ViewState.ART_MUSEUM)} onNavigate={setCurrentView} language={language} setLanguage={setLanguage} />;
-      case ViewState.ART_INTRO:
-        return <ArtIntroView onBack={() => setCurrentView(ViewState.ART_CURRICULUM)} onNavigate={setCurrentView} language={language} setLanguage={setLanguage} />;
-      case ViewState.ART_PERIOD_DETAIL:
-        return <ArtPeriodDetailView onBack={() => setCurrentView(ViewState.ART_CURRICULUM)} language={language} setLanguage={setLanguage} />;
-      case ViewState.ART_CRAFTS:
-        return <ArtCraftsView onBack={() => setCurrentView(ViewState.ART_MUSEUM)} onSelectCraft={handleCraftSelect} language={language} setLanguage={setLanguage} />;
-      case ViewState.ART_CRAFT_DETAIL:
-        return <ArtCraftDetailView craftId={selectedCraftId || 'urushi'} onBack={() => setCurrentView(ViewState.ART_CRAFTS)} language={language} setLanguage={setLanguage} />;
-      case ViewState.ART_KINTSUGI:
-        return <ArtKintsugiView onBack={() => setCurrentView(ViewState.ART_CRAFTS)} language={language} setLanguage={setLanguage} />;
-      case ViewState.ART_TRIBAL:
-        return <ArtTribalView onBack={() => setCurrentView(ViewState.ART_MUSEUM)} onSelectChapter={handleTribalSelect} language={language} setLanguage={setLanguage} />;
-      case ViewState.ART_TRIBAL_DETAIL:
-        return <ArtTribalDetailView chapterId={selectedTribalId || 'intro'} onBack={() => setCurrentView(ViewState.ART_TRIBAL)} language={language} setLanguage={setLanguage} />;
-
-      // Sonic Lab Routes
-      case ViewState.SONIC_LAB:
-        return <SonicLabView onNavigate={setCurrentView} />;
-      case ViewState.SONIC_SYNTH:
-        return <SonicSynthView onBack={() => setCurrentView(ViewState.SONIC_LAB)} />;
-      
-      case ViewState.P_SCHOOL:
-        return <PSchoolView />;
-
-      case ViewState.LIBRARY:
-        return <Library />;
-
-      case ViewState.AI_DIAGNOSIS:
-        return <PersonalAssessmentView onNavigate={setCurrentView} />;
-
-      // AI Characters
-      case ViewState.AI_CHARACTERS:
-        return <AICharacterIntroView onNavigate={setCurrentView} onSelectCharacter={handleCharacterSelect} />;
-      case ViewState.AI_CHARACTER_DETAIL:
-        return <AICharacterDetailView
-          characterId={selectedCharacterId || 'openness'}
-          onNavigate={setCurrentView}
-          onBack={() => setCurrentView(ViewState.AI_CHARACTERS)}
-        />;
-
-      case ViewState.PROFILE:
-        return <ProfilePassport onNavigate={setCurrentView} />;
-      case ViewState.MY_CONTENT:
-        return <MyContent onNavigate={setCurrentView} onSelectCourse={handleGeneratedCourseSelect} newCourseForLibrary={latestGeneratedForLibrary} />;
-      case ViewState.GENERATED_COURSE_PATH:
-        if (!generatedCourse) return <MyContent onNavigate={setCurrentView} onSelectCourse={handleGeneratedCourseSelect} />;
-        return <GeneratedCourseView course={generatedCourse} onBack={() => setCurrentView(generatedCourseBackView)} onStartLesson={() => {
-            console.log("App: Switching to GENERATED_LESSON_VIEW");
-            setCurrentView(ViewState.GENERATED_LESSON_VIEW);
-          }} />;
-      case ViewState.GENERATED_LESSON_VIEW:
-        if (generatedCourse?.preferredTemplate === 'workshop_split') {
-             const allBlocks = generatedCourse.chapters.flatMap(ch => ch.blocks || []);
-             return (
-                <MultiFormatLessonView 
-                    blocks={allBlocks} 
-                    onBack={() => setCurrentView(ViewState.GENERATED_COURSE_PATH)} 
-                />
-             );
-        }
-        return <GeneratedLessonView course={generatedCourse} onBack={() => setCurrentView(ViewState.GENERATED_COURSE_PATH)} onComplete={() => setCurrentView(ViewState.GENERATED_COURSE_PATH)} />;
-      case ViewState.LESSON:
-        return <LessonView onBack={() => setCurrentView(ViewState.DASHBOARD)} />;
-      default:
-        return <Dashboard onNavigate={setCurrentView} />;
-    }
+  // Vibe Chapter Navigation Helper
+  const navigateToVibeChapter = (chapter: string) => {
+      navigate(`/vibe/${chapter}`);
   };
 
   return (
@@ -535,14 +255,149 @@ const AppContent: React.FC = () => {
       ) : (
         <>
           <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} onLogin={handleLoginSuccess} />
-          <Layout currentView={currentView} onNavigate={setCurrentView}>
-            {renderContent()}
+          
+          <Layout currentView={getCurrentViewState()} onNavigate={handleNavigate}>
+            <Routes>
+              <Route path="/" element={<Dashboard onNavigate={handleNavigate} />} />
+              <Route path="/learning-hub" element={<LearningHub onNavigate={handleNavigate} />} />
+              <Route path="/courses" element={<CourseList onSelectCourse={handleCourseSelect} />} />
+              <Route path="/course/:courseId" element={<CoursePathViewWrapper />} />
+              
+              {/* My Content & Generated Courses */}
+              <Route path="/my-content" element={<MyContent onNavigate={handleNavigate} onSelectCourse={handleGeneratedCourseSelect} />} />
+              <Route path="/generated-course/:courseId" element={<GeneratedCourseViewWrapper />} />
+              <Route path="/generated-lesson/:courseId" element={<GeneratedLessonViewWrapper />} />
+              <Route path="/course-generator" element={<CourseGeneratorView onBack={() => navigate('/')} onCourseGenerated={(c) => { saveGeneratedCourse(c); navigate(`/generated-course/${c.id}`); }} onNavigate={handleNavigate} />} />
+
+              {/* Standard Lesson View (Mock/Demo) */}
+              <Route path="/lesson/:courseId" element={<LessonViewWrapper />} />
+
+              {/* Assessment & Profile */}
+              <Route path="/assessment" element={<PersonalAssessmentView onNavigate={handleNavigate} />} />
+              <Route path="/profile" element={<ProfilePassport onNavigate={handleNavigate} />} />
+              <Route path="/library" element={<Library />} />
+              <Route path="/characters" element={<AICharacterIntroView onNavigate={handleNavigate} onSelectCharacter={(id) => navigate(`/character/${id}`)} />} />
+              <Route path="/character/:characterId" element={<AICharacterDetailViewWrapper onNavigate={handleNavigate} />} />
+
+              {/* Blender */}
+              <Route path="/blender" element={<BlenderCurriculum onNavigate={handleNavigate} />} />
+              <Route path="/blender/path" element={<BlenderPathView onBack={() => navigate('/blender')} onStartLesson={(stageId) => navigate(`/blender/lesson/${stageId}`)} />} />
+              <Route path="/blender/lesson/:stageId" element={<BlenderLessonViewWrapper />} />
+              <Route path="/blender/teacher-bot" element={<TeacherBotLiveView onBack={() => navigate('/learning-hub')} />} />
+
+              {/* Programming Hubs */}
+              <Route path="/programming" element={<ProgrammingCurriculum onNavigate={handleNavigate} initialTrack="web" />} />
+              <Route path="/programming/web" element={<ProgrammingCurriculum onNavigate={handleNavigate} initialTrack="web" />} />
+              <Route path="/programming/ai" element={<ProgrammingCurriculum onNavigate={handleNavigate} initialTrack="ai" />} />
+              <Route path="/programming/python" element={<PythonBeginnerView onBack={() => navigate('/programming/ai')} />} />
+              <Route path="/programming/path" element={<ProgrammingCourseView onBack={() => navigate('/programming')} />} />
+
+              {/* HTML/CSS Path */}
+              <Route path="/programming/html-css" element={<HtmlCssPathView onBack={() => navigate('/programming/web')} onNavigate={handleNavigate} />} />
+              <Route path="/programming/html-css/course" element={<HtmlCssView onBack={() => navigate('/programming/html-css')} />} />
+              <Route path="/programming/html-css/part2" element={<HtmlCssPartTwoView onBack={() => navigate('/programming/html-css')} />} />
+              <Route path="/programming/web-inspector" element={<WebInspectorView onBack={() => navigate('/programming/html-css')} onNavigate={handleNavigate} />} />
+
+              {/* Vibe Coding */}
+              <Route path="/vibe" element={<VibePathView onBack={() => navigate('/learning-hub')} onNavigate={handleNavigate} language={language} setLanguage={setLanguage} />} />
+              <Route path="/vibe/prologue" element={<VibePrologueView onBack={() => navigate('/vibe')} onNavigate={handleNavigate} language={language} setLanguage={setLanguage} />} />
+              <Route path="/vibe/chapter-0" element={<VibeChapterZeroView onBack={() => navigate('/vibe')} onNavigate={handleNavigate} language={language} setLanguage={setLanguage} />} />
+              <Route path="/vibe/chapter-1" element={<VibeChapterOneView onBack={() => navigate('/vibe')} onNavigate={handleNavigate} language={language} setLanguage={setLanguage} />} />
+              <Route path="/vibe/chapter-2" element={<VibeChapterTwoView onBack={() => navigate('/vibe')} onNavigate={handleNavigate} language={language} setLanguage={setLanguage} />} />
+              <Route path="/vibe/chapter-3" element={<VibeChapterThreeView onBack={() => navigate('/vibe')} onNavigate={handleNavigate} language={language} setLanguage={setLanguage} />} />
+              <Route path="/vibe/chapter-4" element={<VibeChapterFourView onBack={() => navigate('/vibe')} onNavigate={handleNavigate} language={language} setLanguage={setLanguage} />} />
+              <Route path="/vibe/chapter-5" element={<VibeChapterFiveView onBack={() => navigate('/vibe')} onNavigate={handleNavigate} language={language} setLanguage={setLanguage} />} />
+              <Route path="/vibe/chapter-6" element={<VibeChapterSixView onBack={() => navigate('/vibe')} onNavigate={handleNavigate} language={language} setLanguage={setLanguage} />} />
+              <Route path="/vibe/chapter-7" element={<VibeChapterSevenView onBack={() => navigate('/vibe')} onNavigate={handleNavigate} language={language} setLanguage={setLanguage} />} />
+              <Route path="/vibe/chapter-8" element={<VibeChapterEightView onBack={() => navigate('/vibe')} onNavigate={handleNavigate} language={language} setLanguage={setLanguage} />} />
+              <Route path="/vibe/chapter-9" element={<VibeChapterNineView onBack={() => navigate('/vibe')} onNavigate={handleNavigate} language={language} setLanguage={setLanguage} />} />
+              <Route path="/vibe/chapter-10" element={<VibeChapterTenView onBack={() => navigate('/vibe')} onNavigate={handleNavigate} language={language} setLanguage={setLanguage} />} />
+              <Route path="/vibe/chapter-11" element={<VibeChapterElevenView onBack={() => navigate('/vibe')} onNavigate={handleNavigate} language={language} setLanguage={setLanguage} />} />
+
+              {/* Unity */}
+              <Route path="/unity" element={<UnityPathView onBack={() => navigate('/learning-hub')} onNavigate={handleNavigate} language={language} setLanguage={setLanguage} />} />
+              <Route path="/unity/:chapterId" element={<UnityChapterWrapper language={language} setLanguage={setLanguage} onNavigate={handleNavigate} />} />
+
+              {/* Art */}
+              <Route path="/art" element={<ArtMuseumView onNavigate={handleNavigate} language={language} setLanguage={setLanguage} />} />
+              <Route path="/art/history" element={<ArtHistoryView onBack={() => navigate('/art')} onNavigate={handleNavigate} language={language} setLanguage={setLanguage} />} />
+              <Route path="/art/curriculum" element={<ArtCurriculumView onBack={() => navigate('/art')} onNavigate={handleNavigate} language={language} setLanguage={setLanguage} />} />
+              <Route path="/art/intro" element={<ArtIntroView onBack={() => navigate('/art/curriculum')} onNavigate={handleNavigate} language={language} setLanguage={setLanguage} />} />
+              <Route path="/art/period" element={<ArtPeriodDetailView onBack={() => navigate('/art/curriculum')} language={language} setLanguage={setLanguage} />} />
+              <Route path="/art/crafts" element={<ArtCraftsView onBack={() => navigate('/art')} onSelectCraft={(id) => navigate(`/art/craft/${id}`)} language={language} setLanguage={setLanguage} />} />
+              <Route path="/art/craft/:craftId" element={<ArtCraftDetailViewWrapper language={language} setLanguage={setLanguage} />} />
+              <Route path="/art/kintsugi" element={<ArtKintsugiView onBack={() => navigate('/art/crafts')} language={language} setLanguage={setLanguage} />} />
+              <Route path="/art/tribal" element={<ArtTribalView onBack={() => navigate('/art')} onSelectChapter={(id) => navigate(`/art/tribal/${id}`)} language={language} setLanguage={setLanguage} />} />
+              <Route path="/art/tribal/:chapterId" element={<ArtTribalDetailViewWrapper language={language} setLanguage={setLanguage} />} />
+
+              {/* Sonic */}
+              <Route path="/sonic" element={<SonicLabView onNavigate={handleNavigate} />} />
+              <Route path="/sonic/synth" element={<SonicSynthView onBack={() => navigate('/sonic')} />} />
+
+              {/* P-School */}
+              <Route path="/p-school" element={<PSchoolView />} />
+
+              {/* Demos */}
+              <Route path="/demo/multi" element={<MultiFormatLessonView onBack={() => navigate('/')} />} />
+              <Route path="/demo/checklist-gen" element={<BlenderChecklistGeneratorView onBack={() => navigate('/')} />} />
+              
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
           </Layout>
           <FloatingChatbot />
         </>
       )}
     </>
   );
+};
+
+// --- Inline Wrappers for less common dynamic routes ---
+
+const AICharacterDetailViewWrapper: React.FC<{ onNavigate: (v: ViewState) => void }> = ({ onNavigate }) => {
+    const { characterId } = useParams<{ characterId: string }>();
+    const navigate = useNavigate();
+    return <AICharacterDetailView characterId={characterId || 'openness'} onNavigate={onNavigate} onBack={() => navigate('/characters')} />;
+};
+
+const BlenderLessonViewWrapper: React.FC = () => {
+    const { stageId } = useParams<{ stageId: string }>();
+    const navigate = useNavigate();
+    return <BlenderLessonView stageId={Number(stageId) || 1} onBack={() => navigate('/blender/path')} onComplete={() => navigate('/blender/path')} />;
+};
+
+const UnityChapterWrapper: React.FC<{ language: any, setLanguage: any, onNavigate: any }> = ({ language, setLanguage, onNavigate }) => {
+    const { chapterId } = useParams<{ chapterId: string }>();
+    const navigate = useNavigate();
+    // Map URL param to ViewState for the component (it expects ViewState)
+    // NOTE: UnityChapterView expects 'viewState' prop to determine content. 
+    // We need to map chapterId to ViewState.
+    let vs = ViewState.UNITY_CHAPTER_0;
+    if (chapterId === 'chapter-1') vs = ViewState.UNITY_CHAPTER_1;
+    if (chapterId === 'chapter-2') vs = ViewState.UNITY_CHAPTER_2;
+    if (chapterId === 'chapter-3') vs = ViewState.UNITY_CHAPTER_3;
+
+    return <UnityChapterView viewState={vs} onBack={() => navigate('/unity')} onNavigate={onNavigate} language={language} setLanguage={setLanguage} />;
+};
+
+const ArtCraftDetailViewWrapper: React.FC<{ language: any, setLanguage: any }> = ({ language, setLanguage }) => {
+    const { craftId } = useParams<{ craftId: string }>();
+    const navigate = useNavigate();
+    if (craftId === 'kintsugi') return <ArtKintsugiView onBack={() => navigate('/art/crafts')} language={language} setLanguage={setLanguage} />;
+    return <ArtCraftDetailView craftId={craftId || 'urushi'} onBack={() => navigate('/art/crafts')} language={language} setLanguage={setLanguage} />;
+};
+
+const ArtTribalDetailViewWrapper: React.FC<{ language: any, setLanguage: any }> = ({ language, setLanguage }) => {
+    const { chapterId } = useParams<{ chapterId: string }>();
+    const navigate = useNavigate();
+    return <ArtTribalDetailView chapterId={chapterId || 'intro'} onBack={() => navigate('/art/tribal')} language={language} setLanguage={setLanguage} />;
+};
+
+const LessonViewWrapper: React.FC = () => {
+    const { courseId } = useParams<{ courseId: string }>();
+    const navigate = useNavigate();
+    // In a real app, we would fetch the specific lesson for this course.
+    // For now, we render the demo LessonView.
+    return <LessonView onBack={() => navigate(`/course/${courseId}`)} />;
 };
 
 const App: React.FC = () => (

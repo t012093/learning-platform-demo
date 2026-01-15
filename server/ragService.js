@@ -104,13 +104,13 @@ export const retrieveContext = async (query, limit = 5, userId) => {
         const queryVector = await generateEmbedding(query);
 
         const result = await pool.query(
-            `SELECT c.content, (c.embedding <=> $1) as distance
+            `SELECT c.content, (c.embedding <=> $1::vector) as distance
              FROM material_chunks c
              JOIN materials m ON c.material_id = m.id
              WHERE m.user_id = $2
              ORDER BY distance ASC
              LIMIT $3`,
-            [queryVector, userId, limit]
+            [JSON.stringify(queryVector), userId, limit]
         );
         
         return result.rows.map(row => row.content);

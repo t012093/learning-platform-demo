@@ -1,6 +1,6 @@
 import express from 'express';
 import { createCurriculumGraph } from '../graph/workflow.js';
-import { HumanMessage, ToolMessage } from "@langchain/core/messages";
+import { HumanMessage, ToolMessage, AIMessage } from "@langchain/core/messages";
 import { getPool, ensurePhase1User, PHASE1_USER_ID } from '../db.js';
 
 const router = express.Router();
@@ -18,31 +18,54 @@ const buildApprovalUi = (pendingApproval) => {
     return { type: 'approval', options: ['approved', 'revise'] };
 };
 
+// Helper to convert plain JSON objects from DB to LangChain Message instances
+const deserializeMessages = (messages) => {
+    if (!Array.isArray(messages)) return [];
+    return messages.map(m => {
+        if (m.type === 'human' || m._getType?.() === 'human' || m.role === 'user') {
+            return new HumanMessage(m.content || m.text || "");
+        }
+        if (m.type === 'tool' || m._getType?.() === 'tool' || m.tool_call_id) {
+            return new ToolMessage({
+                content: m.content || m.text || "",
+                tool_call_id: m.tool_call_id,
+                name: m.name
+            });
+        }
+        // Default to AI Message
+        return new AIMessage({
+            content: m.content || m.text || "",
+            tool_calls: m.tool_calls
+        });
+    });
+};
+
 const getDisplayMessage = (outputState, nextPending) => {
     const messages = outputState.messages || [];
-    const lastAiMsg = messages[messages.length - 1];
+    if (messages.length === 0) return "こんにちは！どのようにお手伝いしましょうか？";
     
-    let displayMessage = lastAiMsg?.content || "";
+    const lastMsg = messages[messages.length - 1];
     
-    // Check for tool calls (handling both object and class instance)
-    const toolCalls = lastAiMsg?.tool_calls || lastAiMsg?.additional_kwargs?.tool_calls;
-    
-    if (toolCalls?.length > 0) {
+    // 1. If it's a tool call, the AI is asking a question via 'ask_human'
+    const toolCalls = lastMsg.tool_calls || [];
+    if (toolCalls.length > 0) {
         const tc = toolCalls[0];
-        // Handle different tool call structures
-        const args = tc.function?.arguments ? JSON.parse(tc.function.arguments) : tc.args;
-        if ((tc.name === 'ask_human' || tc.function?.name === 'ask_human') && args?.question) {
-            displayMessage = args.question;
+        if (tc.name === 'ask_human' && tc.args?.question) {
+            return tc.args.question;
         }
     }
 
-    if (!displayMessage) {
-        if (nextPending === 'requirements') displayMessage = "学習要件（Requirements）の案がまとまりました。内容を確認して、承認または修正の指示をお願いします。";
-        else if (nextPending === 'roadmap') displayMessage = "ロードマップ（Roadmap）の構成案が作成されました。こちらで進めてよろしいでしょうか？";
-        else if (nextPending === 'curriculum') displayMessage = "カリキュラムの詳細生成が完了しました！最終確認をお願いします。";
-        else displayMessage = "セッションがアクティブです。何かお手伝いしましょうか？";
+    // 2. If it's a normal AI message with content
+    if (lastMsg.content && lastMsg.content !== "思考中...") {
+        return lastMsg.content;
     }
-    return displayMessage;
+
+    // 3. Fallback to state-based technical summary if content is empty
+    if (nextPending === 'requirements') return "学習要件（Requirements）の案がまとまりました。内容を確認してください。";
+    if (nextPending === 'roadmap') return "ロードマップ（Roadmap）の構成案が作成されました。こちらで進めてよろしいでしょうか？";
+    if (nextPending === 'curriculum') return "カリキュラムの詳細生成が完了しました！最終確認をお願いします。";
+    
+    return "セッションが継続中です。";
 };
 
 // POST /api/v2/ai/chat
@@ -99,21 +122,13 @@ router.post('/chat', async (req, res) => {
 
         // Prepare Graph Input
         const currentState = normalizeStateJson(session.state_json);
-        const history = currentState.messages || [];
-        const lastMsg = history[history.length - 1]; // Plain object from JSON
+        const history = deserializeMessages(currentState.messages);
+        const lastMsg = history[history.length - 1];
 
         let newMessages = [];
-        
-        // Robust check for tool calls in plain object
-        const isToolCall = lastMsg?.tool_calls?.some(tc => tc.name === 'ask_human') || 
-                           (lastMsg?.additional_kwargs?.tool_calls?.some(tc => tc.function.name === 'ask_human'));
-
-        if (isToolCall) {
-            // Find ID
-            let toolCallId = lastMsg.tool_calls?.[0]?.id || lastMsg.additional_kwargs?.tool_calls?.[0]?.id;
-            
+        if (lastMsg?.tool_calls?.some(tc => tc.name === 'ask_human')) {
             newMessages.push(new ToolMessage({
-                tool_call_id: toolCallId || 'call_default', 
+                tool_call_id: lastMsg.tool_calls[0].id,
                 content: message,
                 name: 'ask_human'
             }));
@@ -123,9 +138,9 @@ router.post('/chat', async (req, res) => {
 
         const inputState = {
             ...currentState,
-            messages: newMessages, // Reducer will concat
+            messages: newMessages,
             last_user_message: message,
-            attachments: attachments,
+            attachments: attachments.length > 0 ? attachments : currentState.attachments,
             current_decision: null
         };
 
@@ -139,19 +154,14 @@ router.post('/chat', async (req, res) => {
             [JSON.stringify(outputState), nextPending, session.id]
         );
 
-        // Sync Content (Optimized)
+        // Sync logic (simplified for clarity)
         if (outputState.curriculum_version_id) {
-            // ... (Simple sync logic for brevity, assuming standard flow)
-            // Ideally should be a separate function, but keeping inline for logic preservation
             const updates = [];
             const values = [];
             let idx = 1;
-            
             if (outputState.requirements?.approved) {
                 updates.push(`requirements = $${idx++}`);
                 values.push(JSON.stringify(outputState.requirements.approved));
-                const sum = outputState.requirements.approved.summary;
-                if (sum) await pool.query('update curricula set title = $1 where id = $2', [sum, outputState.curriculum_id]);
             }
             if (outputState.roadmap?.approved) {
                 updates.push(`roadmap = $${idx++}`);
@@ -161,23 +171,17 @@ router.post('/chat', async (req, res) => {
                 updates.push(`content_json = $${idx++}`);
                 values.push(JSON.stringify(outputState.curriculum.approved));
             }
-            
             if (updates.length > 0) {
                 values.push(outputState.curriculum_version_id);
-                await pool.query(
-                    `update curriculum_versions set ${updates.join(', ')}, updated_at = now() where id = $${idx}`,
-                    values
-                );
+                await pool.query(`update curriculum_versions set ${updates.join(', ')}, updated_at = now() where id = $${idx}`, values);
             }
         }
-
-        const displayMessage = getDisplayMessage(outputState, nextPending);
 
         res.json({
             session_id: session.id,
             curriculum_id: outputState.curriculum_id || session.curriculum_id,
             curriculum_version_id: outputState.curriculum_version_id,
-            message: displayMessage,
+            message: getDisplayMessage(outputState, nextPending),
             pending_approval: nextPending,
             ui: buildApprovalUi(nextPending),
             state_summary: {

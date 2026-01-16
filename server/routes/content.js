@@ -89,11 +89,20 @@ router.get('/curricula/:id', async (req, res) => {
         if (detailRes.rowCount === 0) return res.status(404).json({ error: 'Not found' });
         
         const row = detailRes.rows[0];
+        const finalContent = row.content_json || row.content;
+        
+        // Debug log for content structure
+        if (finalContent) {
+            const keys = Object.keys(finalContent);
+            const moduleCount = finalContent.modules ? finalContent.modules.length : 0;
+            console.log(`[Content API] Fetched Course ${req.params.id}: Keys=[${keys.join(', ')}], Modules=${moduleCount}, Template=${finalContent.ui_template_id}`);
+        }
+
         res.json({
             ok: true,
             course: {
                 ...row,
-                content: row.content_json || row.content // Fallback to legacy content column
+                ...(typeof finalContent === 'object' ? finalContent : {})
             }
         });
     } catch (error) {

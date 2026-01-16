@@ -163,13 +163,19 @@ router.post('/chat', async (req, res) => {
 
         // Sync logic (simplified for clarity)
         if (outputState.curriculum_version_id) {
-            // ... (sync logic omitted for brevity in replace, keep existing) ...
             const updates = [];
             const values = [];
             let idx = 1;
             if (outputState.requirements?.approved) {
                 updates.push(`requirements = $${idx++}`);
                 values.push(JSON.stringify(outputState.requirements.approved));
+                
+                // Sync title/description to parent curricula table
+                const reqs = outputState.requirements.approved;
+                await pool.query(
+                    'update curricula set title = $1, description = $2 where id = $3',
+                    [reqs.summary || 'New Curriculum', reqs.goal || '', outputState.curriculum_id]
+                );
             }
             if (outputState.roadmap?.approved) {
                 updates.push(`roadmap = $${idx++}`);
@@ -177,7 +183,22 @@ router.post('/chat', async (req, res) => {
             }
             if (outputState.curriculum?.approved) {
                 updates.push(`content_json = $${idx++}`);
-                values.push(JSON.stringify(outputState.curriculum.approved));
+                // Ensure ui_template_id is present
+                const finalJson = {
+                    ...outputState.curriculum.approved,
+                    ui_template_id: outputState.curriculum.approved.ui_template_id || 'vibe_coding'
+                };
+                values.push(JSON.stringify(finalJson));
+                
+                // Calculate total lessons
+                const modules = finalJson.modules || [];
+                const lessonCount = modules.reduce((sum, m) => sum + (m.lessons?.length || 0), 0);
+
+                // Link current version to parent and update total lessons
+                await pool.query(
+                    'update curricula set current_version_id = $1, total_lessons = $2 where id = $3',
+                    [outputState.curriculum_version_id, lessonCount, outputState.curriculum_id]
+                );
             }
             if (updates.length > 0) {
                 values.push(outputState.curriculum_version_id);
@@ -249,6 +270,13 @@ router.post('/curricula/:id/decision', async (req, res) => {
             if (outputState.requirements?.approved) {
                 updates.push(`requirements = $${idx++}`);
                 values.push(JSON.stringify(outputState.requirements.approved));
+                
+                // Sync title/description to parent curricula table
+                const reqs = outputState.requirements.approved;
+                await pool.query(
+                    'update curricula set title = $1, description = $2 where id = $3',
+                    [reqs.summary || 'New Curriculum', reqs.goal || '', outputState.curriculum_id]
+                );
             }
             if (outputState.roadmap?.approved) {
                 updates.push(`roadmap = $${idx++}`);
@@ -256,7 +284,22 @@ router.post('/curricula/:id/decision', async (req, res) => {
             }
             if (outputState.curriculum?.approved) {
                 updates.push(`content_json = $${idx++}`);
-                values.push(JSON.stringify(outputState.curriculum.approved));
+                // Ensure ui_template_id is present
+                const finalJson = {
+                    ...outputState.curriculum.approved,
+                    ui_template_id: outputState.curriculum.approved.ui_template_id || 'vibe_coding'
+                };
+                values.push(JSON.stringify(finalJson));
+                
+                // Calculate total lessons
+                const modules = finalJson.modules || [];
+                const lessonCount = modules.reduce((sum, m) => sum + (m.lessons?.length || 0), 0);
+
+                // Link current version to parent and update total lessons
+                await pool.query(
+                    'update curricula set current_version_id = $1, total_lessons = $2 where id = $3',
+                    [outputState.curriculum_version_id, lessonCount, outputState.curriculum_id]
+                );
             }
             if (updates.length > 0) {
                 values.push(outputState.curriculum_version_id);

@@ -264,10 +264,11 @@ async function interviewerNode(state) {
 
     if (decision.includes("READY") || (analysis && isAffirmative)) {
         console.log("   [ACTION] Generating Requirements Draft...");
-        const draftInput = `${history}\n\n[Reference Analysis]\n${analysis}`;
-        const draft = await generateRequirements(draftInput, attachments, user_id);
-        
-        const summaryText = `お待たせしました！資料の内容を分析し、ご要望に基づいた学習要件（Requirements）を作成しました。
+        try {
+            const draftInput = `${history}\n\n[Reference Analysis]\n${analysis}`;
+            const draft = await generateRequirements(draftInput, attachments, user_id);
+            
+            const summaryText = `お待たせしました！資料の内容を分析し、ご要望に基づいた学習要件（Requirements）を作成しました。
 
 **【学習要件案】**
 **タイトル:** ${draft.summary}
@@ -277,12 +278,19 @@ async function interviewerNode(state) {
 
 こちらでよろしいでしょうか？`;
 
-        return {
-            requirements: { ...requirements, draft },
-            pending_approval: "requirements",
-            messages: [new AIMessage({ content: summaryText })],
-            next_actor: "end"
-        };
+            return {
+                requirements: { ...requirements, draft },
+                pending_approval: "requirements",
+                messages: [new AIMessage({ content: summaryText })],
+                next_actor: "end"
+            };
+        } catch (error) {
+            console.error("Requirements generation failed:", error);
+            return {
+                messages: [new AIMessage({ content: "学習要件の生成中にエラーが発生しました。もう一度指示を出していただけますか？" })],
+                next_actor: "end"
+            };
+        }
     }
     
     // 2. Continue Interview
@@ -323,15 +331,16 @@ async function architectNode(state) {
 
     if (!roadmap?.draft) {
         console.log("   [ACTION] Designing Roadmap draft...");
-        const contextRequirements = { 
-            ...requirements.approved, 
-            materials_analysis: analysis 
-        };
-        const draft = await generateRoadmap(contextRequirements);
-        
-        const modulesList = draft.modules.map(m => `**Module ${m.order}: ${m.title}**\n${m.objective} (${m.estimated_hours}h)`).join('\n\n');
-        const summaryText = `要件に基づき、ロードマップ（章立て）案を作成しました。
-        
+        try {
+            const contextRequirements = { 
+                ...requirements.approved, 
+                materials_analysis: analysis 
+            };
+            const draft = await generateRoadmap(contextRequirements);
+            
+            const modulesList = draft.modules.map(m => `**Module ${m.order}: ${m.title}**\n${m.objective} (${m.estimated_hours}h)`).join('\n\n');
+            const summaryText = `要件に基づき、ロードマップ（章立て）案を作成しました。
+            
 **【ロードマップ案】**
 **全体構成:** ${draft.title} (約${draft.total_hours}時間)
 
@@ -339,12 +348,19 @@ ${modulesList}
 
 こちらの構成で進めてよろしいでしょうか？`;
 
-        return {
-            roadmap: { ...roadmap, draft },
-            pending_approval: "roadmap",
-            messages: [new AIMessage({ content: summaryText })],
-            next_actor: "end"
-        };
+            return {
+                roadmap: { ...roadmap, draft },
+                pending_approval: "roadmap",
+                messages: [new AIMessage({ content: summaryText })],
+                next_actor: "end"
+            };
+        } catch (error) {
+            console.error("Roadmap generation failed:", error);
+            return {
+                messages: [new AIMessage({ content: "ロードマップの生成中にエラーが発生しました。時間をおいて再試行するか、要件を少し変更してみてください。" })],
+                next_actor: "end"
+            };
+        }
     }
     return { next_actor: "end" };
 }
@@ -355,29 +371,37 @@ async function writerNode(state) {
 
     if (!curriculum?.draft) {
         console.log("   [ACTION] Writing full curriculum details...");
-        const contextRequirements = { 
-            ...requirements.approved, 
-            materials_analysis: analysis 
-        };
-        const draft = await generateCurriculum(contextRequirements, roadmap.approved, {
-            curriculumId: curriculum_id,
-            version: curriculum_version_id
-        }, user_id);
-        
-        const summaryText = `ロードマップに従い、全レッスンの詳細を執筆しました！
-        
+        try {
+            const contextRequirements = { 
+                ...requirements.approved, 
+                materials_analysis: analysis 
+            };
+            const draft = await generateCurriculum(contextRequirements, roadmap.approved, {
+                curriculumId: curriculum_id,
+                version: curriculum_version_id
+            }, user_id);
+            
+            const summaryText = `ロードマップに従い、全レッスンの詳細を執筆しました！
+            
 **【カリキュラム完成版】**
 **タイトル:** ${draft.title.jp || draft.title.en}
 **レッスン数:** ${draft.modules.reduce((acc, m) => acc + m.lessons.length, 0)}
 
 最終確認をお願いします。承認すると学習を開始できます。`;
 
-        return {
-            curriculum: { ...curriculum, draft },
-            pending_approval: "curriculum",
-            messages: [new AIMessage({ content: summaryText })],
-            next_actor: "end"
-        };
+            return {
+                curriculum: { ...curriculum, draft },
+                pending_approval: "curriculum",
+                messages: [new AIMessage({ content: summaryText })],
+                next_actor: "end"
+            };
+        } catch (error) {
+            console.error("Curriculum generation failed:", error);
+            return {
+                messages: [new AIMessage({ content: "カリキュラム詳細の生成中にエラーが発生しました。複雑すぎる可能性があります。再試行してください。" })],
+                next_actor: "end"
+            };
+        }
     }
     return { next_actor: "end" };
 }

@@ -27,6 +27,7 @@ export const analyzeDocumentWithGemini = async (filePath, mimeType) => {
   const genAI = getClient();
   if (!genAI) throw new Error("Gemini API Key missing");
 
+  console.log(`   [Gemini Vision] Analyzing document: ${filePath} (${mimeType})...`);
   try {
     const buffer = await fs.readFile(filePath);
     const base64 = buffer.toString('base64');
@@ -60,9 +61,10 @@ export const analyzeDocumentWithGemini = async (filePath, mimeType) => {
       }]
     });
     
+    console.log("   [Gemini Vision] Analysis complete.");
     return result.text || result.candidates?.[0]?.content?.parts?.[0]?.text || "分析できませんでした。";
   } catch (e) {
-    console.error("Gemini Vision Analysis Failed:", e);
+    console.error("   [Gemini Vision] Analysis Failed:", e);
     return "ファイルの視覚分析に失敗しました。";
   }
 };
@@ -253,11 +255,17 @@ export const generateRequirements = async (message, attachments = [], userId) =>
   const genAI = getClient();
   if (!genAI) throw new Error("Gemini API Key missing");
 
+  console.log("   [Gemini API] Starting Requirements generation...");
   let context = "";
   if (userId) {
-      const docs = await retrieveContext(message, 3, userId);
-      if (docs.length > 0) {
-          context = `\nReference Materials:\n${docs.map(d => `- ${d}`).join('\n')}\n`;
+      try {
+          const docs = await retrieveContext(message, 3, userId);
+          if (docs.length > 0) {
+              console.log(`   [Gemini API] Retrieved ${docs.length} RAG docs for requirements.`);
+              context = `\nReference Materials:\n${docs.map(d => `- ${d}`).join('\n')}\n`;
+          }
+      } catch (e) {
+          console.warn("   [Gemini API] RAG retrieval skipped/failed:", e.message);
       }
   }
 
@@ -269,29 +277,35 @@ export const generateRequirements = async (message, attachments = [], userId) =>
     Generate a JSON object defining the curriculum requirements.
   `;
 
-  const result = await genAI.models.generateContent({
-    model: "gemini-2.0-flash",
-    systemInstruction: `
-      You are an expert Learning Concierge. 
-      Your goal is to analyze the user's request and extract structured learning requirements.
-      - Identify the topic, goal, and difficulty level.
-      - If the request is vague, infer the most likely intent (e.g. "learn python" -> "Python Basics").
-      - Set concrete constraints and success criteria.
-    `,
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: requirementsSchema
+  try {
+    const result = await genAI.models.generateContent({
+      model: "gemini-2.0-flash",
+      systemInstruction: `
+        You are an expert Learning Concierge. 
+        Your goal is to analyze the user's request and extract structured learning requirements.
+        - Identify the topic, goal, and difficulty level.
+        - If the request is vague, infer the most likely intent (e.g. "learn python" -> "Python Basics").
+        - Set concrete constraints and success criteria.
+      `,
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: requirementsSchema
+      }
+    });
+
+    console.log("   [Gemini API] Requirements generation finished.");
+    const text = result.text || result.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) {
+      console.error("Gemini full response:", JSON.stringify(result, null, 2));
+      throw new Error("No text in Gemini response");
     }
-  });
 
-  const text = result.text || result.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) {
-    console.error("Gemini full response:", JSON.stringify(result, null, 2));
-    throw new Error("No text in Gemini response");
+    return JSON.parse(text);
+  } catch (err) {
+    console.error("   [Gemini API] Requirements generation failed:", err);
+    throw err;
   }
-
-  return JSON.parse(text);
 };
 
 /**
@@ -301,32 +315,40 @@ export const generateRoadmap = async (requirements) => {
   const genAI = getClient();
   if (!genAI) throw new Error("Gemini API Key missing");
 
+  console.log("   [Gemini API] Starting Roadmap generation...");
   const prompt = `
-    Requirements: ${JSON.stringify(requirements)}
+    Based on these requirements: ${JSON.stringify(requirements)}
     
-    Generate a JSON object defining the roadmap with modules.
+    Generate a JSON object defining the roadmap with 3 to 5 modules.
+    Focus on a logical learning path from basics to advanced.
   `;
 
-  const result = await genAI.models.generateContent({
-    model: "gemini-2.0-flash",
-    systemInstruction: `
-      You are a Curriculum Architect.
-      Create a high-level roadmap based on the provided requirements.
-      - Break down the goal into 3-5 logical modules.
-      - Assign estimated hours for each module.
-      - Ensure a logical progression (Foundations -> Practice -> Application).
-    `,
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: roadmapSchema
-    }
-  });
+  try {
+    const result = await genAI.models.generateContent({
+      model: "gemini-2.0-flash",
+      systemInstruction: `
+        You are a Curriculum Architect.
+        Create a high-level roadmap based on the provided requirements.
+        - Output MUST be valid JSON matching the schema.
+        - Assign estimated hours for each module.
+        - Ensure a logical progression (Foundations -> Practice -> Application).
+      `,
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: roadmapSchema
+      }
+    });
 
-  const text = result.text || result.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error("No text in Gemini response (roadmap)");
+    console.log("   [Gemini API] Roadmap generation finished.");
+    const text = result.text || result.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error("No text in Gemini response (roadmap)");
 
-  return JSON.parse(text);
+    return JSON.parse(text);
+  } catch (err) {
+    console.error("   [Gemini API] Error during Roadmap generation:", err);
+    throw err;
+  }
 };
 
 /**
@@ -336,12 +358,17 @@ export const generateCurriculum = async (requirements, roadmap, options = {}, us
   const genAI = getClient();
   if (!genAI) throw new Error("Gemini API Key missing");
 
+  console.log("   [Gemini API] Starting Curriculum generation (this may take time)...");
   let context = "";
   if (userId) {
-      // Use requirements goal as query
-      const docs = await retrieveContext(requirements.goal || "curriculum", 5, userId);
-      if (docs.length > 0) {
-          context = `\nReference Materials:\n${docs.map(d => `- ${d}`).join('\n')}\n`;
+      try {
+          const docs = await retrieveContext(requirements.goal || "curriculum", 5, userId);
+          if (docs.length > 0) {
+              console.log(`   [Gemini API] Retrieved ${docs.length} RAG docs for curriculum.`);
+              context = `\nReference Materials:\n${docs.map(d => `- ${d}`).join('\n')}\n`;
+          }
+      } catch (e) {
+          console.warn("   [Gemini API] RAG retrieval skipped:", e.message);
       }
   }
 
@@ -355,37 +382,43 @@ export const generateCurriculum = async (requirements, roadmap, options = {}, us
     Generate the full curriculum JSON.
   `;
 
-  const result = await genAI.models.generateContent({
-    model: "gemini-2.0-flash",
-    systemInstruction: `
-      You are a Content Developer for 'Vibe Coding', a modern learning platform.
-      Generate a detailed curriculum JSON based on the roadmap.
-      
-      CRITICAL RULES:
-      - 'ui_template_id' must be 'vibe_coding'.
-      - Create detailed 'lessons' for each module in the roadmap.
-      - 'doc_blocks' should be rich and educational (markdown text, code snippets).
-      - 'quiz' should have 1-3 questions per lesson.
-      - 'unlock_rule' must be 'doc_completed'.
-      - 'content_mix' and 'assessment_mix' must sum to 1.0.
-      - Ensure 'lesson_id's are unique (e.g. m1-l1, m1-l2).
-    `,
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: curriculumSchema
-    }
-  });
+  try {
+    const result = await genAI.models.generateContent({
+      model: "gemini-2.0-flash",
+      systemInstruction: `
+        You are a Content Developer for 'Vibe Coding', a modern learning platform.
+        Generate a detailed curriculum JSON based on the roadmap.
+        
+        CRITICAL RULES:
+        - 'ui_template_id' must be 'vibe_coding'.
+        - Create detailed 'lessons' for each module in the roadmap.
+        - 'doc_blocks' should be rich and educational (markdown text, code snippets).
+        - 'quiz' should have 1-3 questions per lesson.
+        - 'unlock_rule' must be 'doc_completed'.
+        - 'content_mix' and 'assessment_mix' must sum to 1.0.
+        - Ensure 'lesson_id's are unique (e.g. m1-l1, m1-l2).
+      `,
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: curriculumSchema
+      }
+    });
 
-  const resText = result.text || result.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!resText) throw new Error("No text in Gemini response (curriculum)");
+    console.log("   [Gemini API] Curriculum generation finished.");
+    const resText = result.text || result.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!resText) throw new Error("No text in Gemini response (curriculum)");
 
-  const data = JSON.parse(resText);
-  
-  // Post-processing to ensure required fixed fields that might be hallucinated or omitted
-  data.ui_template_id = "vibe_coding";
-  if (options.curriculumId) data.curriculum_id = options.curriculumId;
-  if (options.version) data.version = options.version;
+    const data = JSON.parse(resText);
+    
+    // Post-processing to ensure required fixed fields that might be hallucinated or omitted
+    data.ui_template_id = "vibe_coding";
+    if (options.curriculumId) data.curriculum_id = options.curriculumId;
+    if (options.version) data.version = options.version;
 
-  return data;
+    return data;
+  } catch (err) {
+    console.error("   [Gemini API] Curriculum generation failed:", err);
+    throw err;
+  }
 };

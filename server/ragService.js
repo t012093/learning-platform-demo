@@ -116,6 +116,7 @@ export const retrieveContext = async (query, limit = 3, userId) => {
     if (!pool) return [];
     
     try {
+        console.log(`   [RAG] Retrieving context for query: "${query.substring(0, 50)}..."`);
         const queryVector = await generateEmbedding(query);
 
         // Check for vector extension support
@@ -138,7 +139,7 @@ export const retrieveContext = async (query, limit = 3, userId) => {
         } else {
             // Simple fallback if no pgvector: just return latest or match basic if needed
             // For now, let's just return top items by ID as similarity is hard in pure SQL float8[]
-            console.warn("pgvector not available, falling back to basic retrieval");
+            console.warn("   [RAG] pgvector not available, falling back to basic retrieval");
             result = await pool.query(
                 `SELECT c.content
                  FROM material_chunks c
@@ -150,9 +151,10 @@ export const retrieveContext = async (query, limit = 3, userId) => {
             );
         }
         
+        console.log(`   [RAG] Found ${result.rows.length} relevant chunks.`);
         return result.rows.map(row => row.content);
     } catch (e) {
-        console.error("Retrieval failed:", e);
+        console.error("   [RAG] Retrieval failed:", e);
         return [];
     }
 };

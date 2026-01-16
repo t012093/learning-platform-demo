@@ -148,6 +148,10 @@ router.post('/chat', async (req, res) => {
         const outputState = await curriculumGraph.invoke(inputState);
         const nextPending = outputState.pending_approval || 'none';
 
+        console.log(`   [AI Route] Graph Finished. Next Pending: ${nextPending}`);
+        const displayMsg = getDisplayMessage(outputState, nextPending);
+        console.log(`   [AI Route] Display Message: ${displayMsg ? displayMsg.substring(0, 50) + "..." : "None"}`);
+
         // Update DB
         await pool.query(
             'update ai_sessions set state_json = $1, pending_approval = $2, state_version = state_version + 1, last_message_at = now() where id = $3',
@@ -156,6 +160,7 @@ router.post('/chat', async (req, res) => {
 
         // Sync logic (simplified for clarity)
         if (outputState.curriculum_version_id) {
+            // ... (sync logic omitted for brevity in replace, keep existing) ...
             const updates = [];
             const values = [];
             let idx = 1;
@@ -177,11 +182,11 @@ router.post('/chat', async (req, res) => {
             }
         }
 
-        res.json({
+        const responsePayload = {
             session_id: session.id,
             curriculum_id: outputState.curriculum_id || session.curriculum_id,
             curriculum_version_id: outputState.curriculum_version_id,
-            message: getDisplayMessage(outputState, nextPending),
+            message: displayMsg,
             pending_approval: nextPending,
             ui: buildApprovalUi(nextPending),
             state_summary: {
@@ -189,7 +194,10 @@ router.post('/chat', async (req, res) => {
                 roadmap: outputState.roadmap || {},
                 curriculum: outputState.curriculum || {}
             }
-        });
+        };
+        
+        // console.log("Response Payload:", JSON.stringify(responsePayload, null, 2)); 
+        res.json(responsePayload);
 
     } catch (error) {
         console.error('Chat Error:', error);
@@ -253,10 +261,15 @@ router.post('/curricula/:id/decision', async (req, res) => {
             }
         }
         
+        const displayMsg = getDisplayMessage(outputState, nextPending);
+        console.log(`   [AI Decision] Graph Finished. Next Pending: ${nextPending}`);
+        console.log(`   [AI Decision] Display Message: ${displayMsg ? displayMsg.substring(0, 50) + "..." : "None"}`);
+
         res.json({
             ok: true,
             status: status === 'closed' ? 'approved' : 'draft',
             pending_approval: nextPending,
+            message: displayMsg, // Ensure message is passed back in decision response too if needed by UI
             state_summary: {
                 requirements: outputState.requirements || {},
                 roadmap: outputState.roadmap || {},

@@ -19,9 +19,13 @@ const GeneratedCourseViewWrapper: React.FC = () => {
     }
 
     fetchGeneratedCourseById(courseId)
-      .then(setCourse)
+      .then((data) => {
+        console.log("Wrapper: Course data fetched successfully:", data);
+        console.log("Wrapper: Chapters count:", data.chapters?.length);
+        setCourse(data);
+      })
       .catch((err) => {
-        console.error(err);
+        console.error("Wrapper: Failed to load course:", err);
         setError("Failed to load course");
       })
       .finally(() => setLoading(false));

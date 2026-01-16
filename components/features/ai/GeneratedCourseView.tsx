@@ -11,6 +11,18 @@ interface GeneratedCourseViewProps {
 
 const GeneratedCourseView: React.FC<GeneratedCourseViewProps> = ({ course, onBack, onStartLesson }) => {
     const { language } = useLanguage();
+    console.log("GeneratedCourseView: Rendering with course:", {
+        id: course.id,
+        title: course.title,
+        titleType: typeof course.title,
+        chaptersCount: course.chapters?.length,
+        firstChapter: course.chapters?.[0]
+    });
+
+    const displayTitle = typeof course.title === 'object' 
+        ? ((course.title as any).jp || (course.title as any).en || JSON.stringify(course.title)) 
+        : course.title;
+
     const copy = {
         en: {
             back: 'Back to Library',
@@ -63,7 +75,7 @@ const GeneratedCourseView: React.FC<GeneratedCourseViewProps> = ({ course, onBac
                         <span className="bg-white/10 backdrop-blur px-3 py-1 rounded-full text-xs font-bold border border-white/10 flex items-center gap-1"><Clock size={12} /> {course.duration}</span>
                     </div>
 
-                    <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">{course.title}</h1>
+                    <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">{displayTitle}</h1>
                     <p className="text-xl text-slate-300 max-w-2xl leading-relaxed">{course.description}</p>
 
                     <div className="mt-8 flex gap-4">

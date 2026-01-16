@@ -136,20 +136,29 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
   };
 
   const handleApprove = async () => {
-    if (!curriculumId || !sessionId || !pendingApproval) return;
+    console.log("Handle Approve Clicked:", { curriculumId, sessionId, pendingApproval });
+    
+    if (!curriculumId || !sessionId || !pendingApproval) {
+        console.error("Missing state for approval");
+        setError(`Internal Error: Missing ID (${curriculumId ? 'OK' : 'Missing Course'}, ${sessionId ? 'OK' : 'Missing Session'}). Please reset chat.`);
+        return;
+    }
+    
     setIsGenerating(true);
     try {
         const response = await sendAiDecision(curriculumId, sessionId, pendingApproval, 'approved');
         handleApiResponse(response);
     } catch (err) {
+        console.error("Approval Error:", err);
         setError(t.errorChat);
         setIsGenerating(false);
     }
   };
 
   const handleApiResponse = async (data: any) => {
-      setSessionId(data.session_id);
-      setCurriculumId(data.curriculum_id);
+      if (data.session_id) setSessionId(data.session_id);
+      if (data.curriculum_id) setCurriculumId(data.curriculum_id);
+      
       setPendingApproval(data.pending_approval);
 
       if (data.message) {

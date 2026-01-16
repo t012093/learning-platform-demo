@@ -25,20 +25,42 @@ const normalizeGeneratedCourse = (raw: any): GeneratedCourse => {
   if (raw.chapters && raw.ui_template_id) return raw as GeneratedCourse;
 
   // Handle DB record structure (v2)
-  const content = raw.course || raw.content_json || raw;
-  const normalized = isVibeCodingCurriculum(content)
-    ? mapVibeCodingToGeneratedCourse(content)
-    : (content as GeneratedCourse);
+  // API returns: { course: { content: { modules, ui_template_id }, ... } }
+  // We need to check raw.course.content for the actual curriculum structure
+  const courseData = raw.course || raw.content_json || raw;
+  
+  // The actual curriculum content might be nested in courseData.content
+  const curriculumContent = courseData.content || courseData;
+  
+  // Debug: log what we're working with
+  console.log('[curriculumApi] normalizeGeneratedCourse:', {
+    hasRawCourse: !!raw.course,
+    hasCourseContent: !!courseData.content,
+    curriculumKeys: Object.keys(curriculumContent || {}),
+    uiTemplateId: curriculumContent?.ui_template_id,
+    hasModules: Array.isArray(curriculumContent?.modules),
+    modulesCount: curriculumContent?.modules?.length
+  });
+  
+  const normalized = isVibeCodingCurriculum(curriculumContent)
+    ? mapVibeCodingToGeneratedCourse(curriculumContent)
+    : (curriculumContent as GeneratedCourse);
     
-  const createdAt = raw.created_at ? new Date(raw.created_at) : new Date();
+  const createdAt = raw.created_at || courseData.created_at ? new Date(raw.created_at || courseData.created_at) : new Date();
   
   // Ensure chapters exists (V2 uses modules)
   const chapters = normalized.chapters || (normalized as any).modules || [];
+  
+  console.log('[curriculumApi] Normalized result:', {
+    chaptersCount: chapters.length,
+    normalizedId: normalized.id,
+    normalizedTitle: normalized.title
+  });
 
   return { 
     ...normalized, 
     chapters,
-    id: raw.id || normalized.id,
+    id: raw.id || courseData.id || normalized.id,
     title: typeof normalized.title === 'object' ? (normalized.title as any).jp || (normalized.title as any).en : normalized.title,
     description: typeof normalized.description === 'object' ? (normalized.description as any).jp || (normalized.description as any).en : normalized.description,
     createdAt 

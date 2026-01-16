@@ -267,7 +267,7 @@ const AppContent: React.FC = () => {
               <Route path="/my-content" element={<MyContent onNavigate={handleNavigate} onSelectCourse={handleGeneratedCourseSelect} />} />
               <Route path="/generated-course/:courseId" element={<GeneratedCourseViewWrapper />} />
               <Route path="/generated-lesson/:courseId" element={<GeneratedLessonViewWrapper />} />
-              <Route path="/course-generator" element={<CourseGeneratorView onBack={() => navigate('/')} onCourseGenerated={(c) => { saveGeneratedCourse(c); navigate(`/generated-course/${c.id}`); }} onNavigate={handleNavigate} />} />
+              <Route path="/course-generator" element={<CourseGeneratorView onBack={() => navigate('/')} onCourseGenerated={(c) => { navigate(`/generated-course/${c.id}`); }} onNavigate={handleNavigate} />} />
 
               {/* Standard Lesson View (Mock/Demo) */}
               <Route path="/lesson/:courseId" element={<LessonViewWrapper />} />

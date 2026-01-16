@@ -174,8 +174,15 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
       setIsGenerating(false);
 
       if (data.status === 'approved') {
-          const fullCourse = await fetchGeneratedCourseById(data.curriculum_id);
-          onCourseGenerated(fullCourse);
+          // Use response ID or fallback to state ID
+          const targetId = data.curriculum_id || curriculumId;
+          if (targetId) {
+              const fullCourse = await fetchGeneratedCourseById(targetId);
+              onCourseGenerated(fullCourse);
+          } else {
+              console.error("Missing Curriculum ID for final fetch");
+              setError("完了しましたが、コースIDが見つかりませんでした。ライブラリを確認してください。");
+          }
       }
   };
 

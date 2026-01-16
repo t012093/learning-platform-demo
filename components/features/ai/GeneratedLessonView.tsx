@@ -91,11 +91,12 @@ const GeneratedLessonView: React.FC<GeneratedLessonViewProps> = ({ course, onBac
     } as const;
     const t = copy[language];
 
-    if (!course) {
+    if (!course || !course.chapters || course.chapters.length === 0) {
         return (
             <div className="h-screen bg-slate-900 text-white flex items-center justify-center">
                 <div className="text-center">
                     <h2 className="text-2xl font-bold mb-4">{t.noCourseTitle}</h2>
+                    <p className="text-slate-400 mb-6">Content is being generated or is empty.</p>
                     <button onClick={onBack} className="bg-indigo-600 px-6 py-2 rounded-lg">{t.noCourseBack}</button>
                 </div>
             </div>

@@ -102,6 +102,9 @@ router.post('/chat', async (req, res) => {
             );
             const verId = verRes.rows[0].id;
             
+            // Link current version
+            await pool.query('update curricula set current_version_id = $1 where id = $2', [verId, currId]);
+            
             const initialState = {
                 user_id: PHASE1_USER_ID,
                 curriculum_id: currId,

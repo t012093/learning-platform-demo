@@ -314,18 +314,81 @@ export const convertLessonToDocChapter = (lesson: LegacyLesson): GeneratedLesson
 };
 
 /**
- * Convert a legacy module to GeneratedModule
+ * Convert a new-format lesson (with sections) to GeneratedLesson
  */
-export const convertModuleToGeneratedModule = (module: LegacyModule): GeneratedModule => {
+const convertNewFormatLesson = (lesson: any): GeneratedLesson => {
+    // Lesson already has sections structure
+    return {
+        id: lesson.lesson_id || lesson.id,
+        lesson_id: lesson.lesson_id || lesson.id,
+        title: normalizeLocalizedText(lesson.title),
+        subtitle: normalizeLocalizedText(lesson.subtitle || ''),
+        readingTime: normalizeLocalizedText(
+            lesson.reading_time || `${lesson.estimated_min || 10}分`,
+            lesson.reading_time || `${lesson.estimated_min || 10} min`
+        ),
+        sections: lesson.sections || [],
+        estimated_min: lesson.estimated_min || 10,
+        unlock_rule: 'immediate',
+        quiz: lesson.quiz ? convertNewQuizFormat(lesson.quiz) : undefined,
+        exercises: undefined,
+        ui_hints: undefined
+    };
+};
+
+/**
+ * Convert new quiz format to QuizData
+ */
+const convertNewQuizFormat = (quiz: any): QuizData | undefined => {
+    if (!quiz || !quiz.questions || quiz.questions.length === 0) return undefined;
+
+    return {
+        id: quiz.id || 'quiz',
+        title: normalizeLocalizedText(quiz.title || '理解度チェック', quiz.title || 'Comprehension Check'),
+        questions: quiz.questions.map((q: any, idx: number) => ({
+            id: q.id || `q${idx}`,
+            text: normalizeLocalizedText(q.text),
+            options: (q.options || []).map((opt: any, optIdx: number) => ({
+                id: opt.id || `opt${optIdx}`,
+                text: normalizeLocalizedText(opt.text)
+            })),
+            correctAnswer: q.correctAnswer || q.correct_answer || '',
+            explanation: normalizeLocalizedText(q.explanation || '')
+        }))
+    };
+};
+
+/**
+ * Check if a lesson is in new format (has sections)
+ */
+const isNewFormatLesson = (lesson: any): boolean => {
+    return Array.isArray(lesson.sections) && lesson.sections.length > 0;
+};
+
+/**
+ * Convert a legacy module to GeneratedModule
+ * Handles both new format (with sections) and legacy format (with doc_blocks)
+ */
+export const convertModuleToGeneratedModule = (module: any): GeneratedModule => {
+    const lessons = (module.lessons || []).map((lesson: any) => {
+        if (isNewFormatLesson(lesson)) {
+            // New format: lesson already has sections
+            return convertNewFormatLesson(lesson);
+        } else {
+            // Legacy format: needs conversion
+            return convertLessonToDocChapter(lesson);
+        }
+    });
+
     return {
         module_id: module.module_id,
         title: normalizeLocalizedText(module.title),
         objective: normalizeLocalizedText(module.objective || ''),
         estimated_hours: module.estimated_hours || 1,
-        lessons: (module.lessons || []).map(convertLessonToDocChapter),
+        lessons,
         module_ui_hints: module.module_ui_hints ? {
-            card_title: module.module_ui_hints.card_title || module.title,
-            card_text: module.module_ui_hints.card_text || module.objective || '',
+            card_title: module.module_ui_hints.card_title || (typeof module.title === 'string' ? module.title : module.title?.jp || ''),
+            card_text: module.module_ui_hints.card_text || (typeof module.objective === 'string' ? module.objective : module.objective?.jp || ''),
             tags: module.module_ui_hints.tags || [],
             difficulty: (module.module_ui_hints.difficulty as 'easy' | 'medium' | 'hard') || 'medium'
         } : undefined

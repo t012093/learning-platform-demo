@@ -399,8 +399,8 @@ export const convertModuleToGeneratedModule = (module: any): GeneratedModule => 
  * Convert a GeneratedCourse (from curriculumApi) or legacy curriculum to GeneratedCurriculumV2
  * 
  * Handles multiple data sources:
- * 1. GeneratedCourse with 'chapters' (from curriculumApi.ts normalizeGeneratedCourse)
- * 2. Raw API data with 'modules' (legacy format)
+ * 1. New doc_chapter format with 'modules' containing lessons with sections
+ * 2. Legacy format with 'chapters' (simple structure)
  */
 export const convertToGeneratedCurriculumV2 = (
     curriculum: any,
@@ -410,15 +410,43 @@ export const convertToGeneratedCurriculumV2 = (
         hasChapters: Array.isArray(curriculum.chapters),
         hasModules: Array.isArray(curriculum.modules),
         chaptersCount: curriculum.chapters?.length,
-        modulesCount: curriculum.modules?.length
+        modulesCount: curriculum.modules?.length,
+        uiTemplateId: curriculum.ui_template_id,
+        firstModuleHasLessons: curriculum.modules?.[0]?.lessons?.length > 0
     });
 
-    // Priority: Use 'chapters' if available (from curriculumApi), otherwise 'modules'
-    const sourceModules = curriculum.chapters || curriculum.modules || [];
+    // Check if we have the new doc_chapter format (modules with lessons that have sections)
+    const hasNewModulesFormat = Array.isArray(curriculum.modules) &&
+        curriculum.modules.length > 0 &&
+        curriculum.modules[0]?.lessons?.length > 0;
 
-    // Convert chapters/modules to GeneratedModule format
-    const modules: GeneratedModule[] = sourceModules.map((item: any, index: number) => {
-        // Check if this is a chapter (from GeneratedCourse) or a module (from raw API)
+    if (hasNewModulesFormat) {
+        // New format: use modules directly
+        console.log('[curriculumAdapter] Using new modules format');
+        const modules: GeneratedModule[] = curriculum.modules.map((module: any) =>
+            convertModuleToGeneratedModule(module)
+        );
+
+        console.log('[curriculumAdapter] Converted modules:', modules.length);
+
+        return {
+            curriculum_id: curriculumId || curriculum.id || curriculum.curriculum_id || crypto.randomUUID(),
+            version: curriculum.version || 1,
+            ui_template_id: curriculum.ui_template_id || 'doc_chapter',
+            title: normalizeLocalizedText(curriculum.title, 'Generated Curriculum'),
+            description: normalizeLocalizedText(curriculum.description, ''),
+            modules,
+            created_at: curriculum.createdAt || new Date()
+        };
+    }
+
+    // Legacy format: use chapters
+    console.log('[curriculumAdapter] Using legacy chapters format');
+    const sourceData = curriculum.chapters || [];
+
+    // Convert chapters to GeneratedModule format
+    const modules: GeneratedModule[] = sourceData.map((item: any, index: number) => {
+        // Check if this is a chapter (from GeneratedCourse) or a module
         const isChapter = !item.module_id && !item.lessons;
 
         if (isChapter) {

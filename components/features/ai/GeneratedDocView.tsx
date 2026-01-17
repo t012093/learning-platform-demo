@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import mermaid from 'mermaid';
 import { DocChapter, DocSection, LocalizedDocBlock, LocalizedText, QuizData } from '../../../types';
-import { useTheme } from '../../../context/ThemeContext';
 import { GeneratedLesson } from '../../../services/curriculumAdapter';
 
 // Helper to handle both string (legacy/resolved) and LocalizedText
@@ -41,12 +40,21 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
     hasNext,
     hasPrev
 }) => {
-    const { setTheme } = useTheme();
+    // Theme is handled by context
     const [activeSection, setActiveSection] = useState<string>('');
     const [viewMode, setViewMode] = useState<'doc' | 'quiz'>('doc');
     const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({});
     const [quizSubmitted, setQuizSubmitted] = useState(false);
     const observer = useRef<IntersectionObserver | null>(null);
+
+    // Debug: Log lesson data
+    console.log('[GeneratedDocView] Rendering with lesson:', {
+        lessonId: lesson?.lesson_id,
+        title: lesson?.title,
+        sectionsCount: lesson?.sections?.length,
+        firstSectionBlocks: lesson?.sections?.[0]?.content?.length,
+        fullLesson: lesson
+    });
 
     const t = {
         en: {
@@ -84,15 +92,14 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
     }[language];
 
     useEffect(() => {
-        setTheme('light');
+        // Note: Theme is handled by context, no need to override here
         mermaid.initialize({
             startOnLoad: false,
             theme: 'neutral',
             securityLevel: 'loose',
             fontFamily: 'sans-serif'
         });
-        return () => setTheme('system');
-    }, [setTheme]);
+    }, []);
 
     // Scroll Spy Logic
     useEffect(() => {
@@ -120,6 +127,17 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
             el.scrollIntoView({ behavior: 'smooth', block: 'start' });
             setActiveSection(id);
         }
+    };
+
+    // Helper: Navigate to next/prev lesson and scroll to top
+    const handleNextLesson = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        onNextLesson?.();
+    };
+
+    const handlePrevLesson = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        onPrevLesson?.();
     };
 
     useEffect(() => {
@@ -168,8 +186,8 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
                     <button
                         onClick={() => setViewMode('doc')}
                         className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-bold transition-all ${viewMode === 'doc'
-                                ? 'bg-white text-purple-600 shadow-sm'
-                                : 'text-slate-500 hover:text-slate-700'
+                            ? 'bg-white text-purple-600 shadow-sm'
+                            : 'text-slate-500 hover:text-slate-700'
                             }`}
                     >
                         <FileText size={14} />
@@ -180,8 +198,8 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
                         <button
                             onClick={() => setViewMode('quiz')}
                             className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-bold transition-all ${viewMode === 'quiz'
-                                    ? 'bg-white text-purple-600 shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700'
+                                ? 'bg-white text-purple-600 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700'
                                 }`}
                         >
                             <Brain size={14} />
@@ -240,7 +258,7 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
                         <div className="mt-20 pt-10 border-t border-slate-100 flex justify-between items-center">
                             <div className="flex gap-2">
                                 {hasPrev && onPrevLesson && (
-                                    <button onClick={onPrevLesson} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-medium transition-colors px-4 py-2 rounded-lg hover:bg-slate-50">
+                                    <button onClick={handlePrevLesson} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-medium transition-colors px-4 py-2 rounded-lg hover:bg-slate-50">
                                         <ChevronLeft size={16} /> {t.prevLesson}
                                     </button>
                                 )}
@@ -258,7 +276,7 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
                                     </button>
                                 ) : hasNext && onNextLesson ? (
                                     <button
-                                        onClick={onNextLesson}
+                                        onClick={handleNextLesson}
                                         className="bg-slate-900 text-white px-6 py-3 rounded-full font-bold hover:bg-slate-800 transition-all flex items-center gap-2"
                                     >
                                         {t.nextLesson} <ChevronRight size={18} />
@@ -287,8 +305,8 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
                                         <button
                                             onClick={() => scrollToSection(section.id)}
                                             className={`text-sm py-1.5 pl-4 text-left w-full transition-colors border-l-2 -ml-[2px] ${activeSection === section.id
-                                                    ? 'border-purple-500 text-purple-600 font-medium'
-                                                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                                                ? 'border-purple-500 text-purple-600 font-medium'
+                                                : 'border-transparent text-slate-500 hover:text-slate-800'
                                                 }`}
                                         >
                                             {getText(section.title, language)}
@@ -338,12 +356,12 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
                                                     onClick={() => handleQuizAnswer(question.id, option.id)}
                                                     disabled={quizSubmitted}
                                                     className={`w-full text-left p-4 rounded-xl border-2 transition-all ${showCorrect
-                                                            ? 'border-green-500 bg-green-50 text-green-800'
-                                                            : showIncorrect
-                                                                ? 'border-red-500 bg-red-50 text-red-800'
-                                                                : isSelected
-                                                                    ? 'border-purple-500 bg-purple-50'
-                                                                    : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                                        ? 'border-green-500 bg-green-50 text-green-800'
+                                                        : showIncorrect
+                                                            ? 'border-red-500 bg-red-50 text-red-800'
+                                                            : isSelected
+                                                                ? 'border-purple-500 bg-purple-50'
+                                                                : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                                                         }`}
                                                 >
                                                     <div className="flex items-center gap-3">
@@ -380,7 +398,7 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
                                 </div>
                                 {hasNext && onNextLesson ? (
                                     <button
-                                        onClick={onNextLesson}
+                                        onClick={handleNextLesson}
                                         className="bg-slate-900 text-white px-6 py-3 rounded-full font-bold hover:bg-slate-800 transition-all flex items-center gap-2"
                                     >
                                         {t.nextLesson} <ChevronRight size={18} />
@@ -474,32 +492,40 @@ const BlockRenderer: React.FC<{ block: LocalizedDocBlock; language: 'en' | 'jp' 
             );
 
         case 'callout':
+            // Guard: if no text, don't render the callout
+            if (!block.text && !block.title) return null;
             const variants = {
                 info: { bg: 'bg-blue-50', border: 'border-blue-100', text: 'text-blue-900', icon: Info, iconColor: 'text-blue-500' },
                 warning: { bg: 'bg-amber-50', border: 'border-amber-100', text: 'text-amber-900', icon: AlertTriangle, iconColor: 'text-amber-500' },
                 tip: { bg: 'bg-emerald-50', border: 'border-emerald-100', text: 'text-emerald-900', icon: Lightbulb, iconColor: 'text-emerald-500' },
                 success: { bg: 'bg-green-50', border: 'border-green-100', text: 'text-green-900', icon: CheckCircle2, iconColor: 'text-green-500' },
             };
-            const style = variants[block.variant];
+            const calloutVariant = block.variant || 'info';
+            const style = variants[calloutVariant] || variants.info;
             const Icon = style.icon;
             return (
                 <div className={`my-8 p-6 rounded-xl border ${style.bg} ${style.border} flex gap-4`}>
                     <div className={`mt-0.5 shrink-0 ${style.iconColor}`}><Icon size={20} /></div>
                     <div>
                         {block.title && <h4 className={`font-bold text-sm uppercase tracking-wide mb-2 ${style.text} opacity-80`}>{getText(block.title, language)}</h4>}
-                        <p className={`text-sm leading-relaxed ${style.text}`}>
-                            {getText(block.text, language)}
-                        </p>
+                        {block.text && (
+                            <p className={`text-sm leading-relaxed ${style.text}`}>
+                                {getText(block.text, language)}
+                            </p>
+                        )}
                     </div>
                 </div>
             );
 
         case 'list':
+            if (!block.items || !Array.isArray(block.items)) return null;
+            const listBlock = block as any;
+            const isNumbered = listBlock.style === 'number' || listBlock.listStyle === 'number';
             return (
-                <ul className={`my-6 space-y-3 ${block.style === 'number' ? 'list-decimal pl-5' : ''}`}>
+                <ul className={`my-6 space-y-3 ${isNumbered ? 'list-decimal pl-5' : ''}`}>
                     {block.items.map((item, i) => (
                         <li key={i} className="flex gap-3 text-slate-700 leading-relaxed group">
-                            {block.style !== 'number' && <span className="mt-2 w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0 group-hover:scale-125 transition-transform" />}
+                            {!isNumbered && <span className="mt-2 w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0 group-hover:scale-125 transition-transform" />}
                             <span>{getText(item, language)}</span>
                         </li>
                     ))}
@@ -510,6 +536,7 @@ const BlockRenderer: React.FC<{ block: LocalizedDocBlock; language: 'en' | 'jp' 
             return <MermaidBlock chart={block.chart} caption={block.caption} language={language} />;
 
         case 'table':
+            if (!block.headers || !block.rows) return null;
             return (
                 <div className="my-8 overflow-x-auto">
                     <table className="w-full border-collapse">

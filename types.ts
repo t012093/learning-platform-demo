@@ -221,18 +221,18 @@ export interface AssessmentProfile {
 export type BlockType = 'concept' | 'dialogue' | 'workshop' | 'reflection';
 
 export interface ChecklistBlock {
+  id: string;
+  type: 'checklist';
+  title: string;
+  tasks: {
     id: string;
-    type: 'checklist';
-    title: string;
-    tasks: {
-      id: string;
-      label: string;
-      details: string;
-      imageKeyword?: string;
-      imageUrl?: string;
-      imageCaption?: string;
-      linkUrl?: string;
-    }[];
+    label: string;
+    details: string;
+    imageKeyword?: string;
+    imageUrl?: string;
+    imageCaption?: string;
+    linkUrl?: string;
+  }[];
 }
 
 export interface ConceptBlock {
@@ -272,14 +272,14 @@ export interface GeneratedChapter {
   duration: string;
   type: string;
   content: string; // Overview
-  
+
   // Rich Content for Personalized Learning
   whyItMatters: string;
   keyConcepts: string[];
   actionStep: string;
   analogy: string;
   quizQuestion?: string;
-  
+
   // Multi-Format Content (New Standard)
   blocks?: LearningBlock[];
 
@@ -304,12 +304,14 @@ export interface GeneratedCourse {
   description: string;
   duration: string;
   chapters: GeneratedChapter[];
+  modules?: any[]; // Optional: new format modules for adapter
   createdAt: Date;
-  modelUsed: 'standard' | 'pro' | 'gemini-2.5-flash' | 'gemini-2.5-pro';
+  modelUsed: 'standard' | 'pro' | 'flash' | 'gemini-2.5-flash' | 'gemini-2.5-pro';
   targetProfile?: Big5Profile; // The profile this was generated for
   teacherPersona?: { name: string; role: string; tone: string; greeting: string; };
   personalizationReasoning?: string;
   preferredTemplate?: CourseTemplate;
+  ui_template_id?: string;
 }
 
 export type CourseTemplate = 'focus_slide' | 'workshop_split' | 'dialogue_chat' | 'explore_map';
@@ -321,7 +323,7 @@ export type LocalizedText = {
   jp: string;
 };
 
-export type LocalizedDocBlock = 
+export type LocalizedDocBlock =
   | { type: 'text'; text: LocalizedText; style?: 'normal' | 'lead' | 'quote' }
   | { type: 'image'; src: string; alt: string; caption?: LocalizedText; layout?: 'full' | 'float-right' }
   | { type: 'code'; code: string; language: string; filename?: string; highlightLines?: number[] }
@@ -329,17 +331,17 @@ export type LocalizedDocBlock =
   | { type: 'callout'; title?: LocalizedText; text: LocalizedText; variant: 'info' | 'warning' | 'tip' | 'success' }
   | { type: 'mermaid'; chart: string; caption?: LocalizedText }
   | { type: 'table'; headers: LocalizedText[]; rows: LocalizedText[][] }
-  | { 
-      type: 'mindmap'; 
-      root: {
+  | {
+    type: 'mindmap';
+    root: {
+      text: LocalizedText;
+      children: {
         text: LocalizedText;
-        children: {
-          text: LocalizedText;
-          details: LocalizedText;
-          children?: { text: LocalizedText; details: LocalizedText }[];
-        }[];
-      }
-    };
+        details: LocalizedText;
+        children?: { text: LocalizedText; details: LocalizedText }[];
+      }[];
+    }
+  };
 
 export interface DocSection {
   id: string;

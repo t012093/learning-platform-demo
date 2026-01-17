@@ -502,7 +502,8 @@ Generate content that would make learners EXCITED to continue learning!
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       config: {
         responseMimeType: "application/json",
-        responseSchema: curriculumSchema
+        responseSchema: curriculumSchema,
+        maxOutputTokens: 65536  // Increase token limit for complex curricula
       }
     });
 
@@ -510,7 +511,14 @@ Generate content that would make learners EXCITED to continue learning!
     const resText = result.text || result.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!resText) throw new Error("No text in Gemini response (curriculum)");
 
-    const data = JSON.parse(resText);
+    // Try to parse JSON with better error handling
+    let data;
+    try {
+      data = JSON.parse(resText);
+    } catch (parseErr) {
+      console.error("   [Gemini API] JSON parse error. Raw response:", resText.substring(0, 500) + "...");
+      throw new Error(`Failed to parse curriculum JSON: ${parseErr.message}`);
+    }
 
     // Post-processing
     data.ui_template_id = "doc_chapter";

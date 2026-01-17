@@ -6,7 +6,7 @@ import { useLanguage } from '../../../context/LanguageContext';
 interface GeneratedCourseViewProps {
     course: GeneratedCourse;
     onBack: () => void;
-    onStartLesson: () => void;
+    onStartLesson: (moduleIndex: number, lessonIndex: number) => void;
 }
 
 const GeneratedCourseView: React.FC<GeneratedCourseViewProps> = ({ course, onBack, onStartLesson }) => {
@@ -14,13 +14,11 @@ const GeneratedCourseView: React.FC<GeneratedCourseViewProps> = ({ course, onBac
     console.log("GeneratedCourseView: Rendering with course:", {
         id: course.id,
         title: course.title,
-        titleType: typeof course.title,
         chaptersCount: course.chapters?.length,
-        firstChapter: course.chapters?.[0]
     });
 
-    const displayTitle = typeof course.title === 'object' 
-        ? ((course.title as any).jp || (course.title as any).en || JSON.stringify(course.title)) 
+    const displayTitle = typeof course.title === 'object'
+        ? ((course.title as any).jp || (course.title as any).en || JSON.stringify(course.title))
         : course.title;
 
     const copy = {
@@ -49,7 +47,12 @@ const GeneratedCourseView: React.FC<GeneratedCourseViewProps> = ({ course, onBac
 
     const handleStartClick = () => {
         console.log("Start Learning clicked");
-        onStartLesson();
+        onStartLesson(0, 0);
+    };
+
+    const handleChapterClick = (chapterIndex: number) => {
+        console.log("Chapter clicked:", chapterIndex);
+        onStartLesson(chapterIndex, 0);
     };
 
     return (
@@ -65,11 +68,10 @@ const GeneratedCourseView: React.FC<GeneratedCourseViewProps> = ({ course, onBac
                     </button>
 
                     <div className="flex gap-4 mb-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold border backdrop-blur ${
-                            course.modelUsed === 'pro' 
-                            ? 'bg-purple-500/80 border-purple-400/50' 
-                            : 'bg-indigo-500/80 border-indigo-400/50'
-                        }`}>
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold border backdrop-blur ${course.modelUsed === 'pro'
+                                ? 'bg-purple-500/80 border-purple-400/50'
+                                : 'bg-indigo-500/80 border-indigo-400/50'
+                            }`}>
                             {t.generatedWith} {course.modelUsed === 'pro' ? t.modelPro : t.modelFlash}
                         </span>
                         <span className="bg-white/10 backdrop-blur px-3 py-1 rounded-full text-xs font-bold border border-white/10 flex items-center gap-1"><Clock size={12} /> {course.duration}</span>
@@ -102,7 +104,11 @@ const GeneratedCourseView: React.FC<GeneratedCourseViewProps> = ({ course, onBac
 
                         <div className="space-y-8">
                             {course.chapters.map((chapter, index) => (
-                                <div key={chapter.id} className="relative flex items-start gap-4 group cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors" onClick={handleStartClick}>
+                                <div
+                                    key={chapter.id}
+                                    className="relative flex items-start gap-4 group cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors"
+                                    onClick={() => handleChapterClick(index)}
+                                >
                                     {/* Node */}
                                     <div className="w-12 h-12 rounded-full bg-white border-4 border-indigo-100 flex items-center justify-center relative z-10 shrink-0 shadow-sm group-hover:scale-110 transition-transform group-hover:border-indigo-200">
                                         <span className="text-lg font-bold text-indigo-600">{index + 1}</span>

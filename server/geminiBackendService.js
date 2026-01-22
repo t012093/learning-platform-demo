@@ -388,111 +388,170 @@ ${JSON.stringify(roadmap, null, 2)}
 
 ${context ? `**Reference Materials:**\n${context}` : ''}
 
-### OUTPUT REQUIREMENTS
+### CRITICAL OUTPUT REQUIREMENTS
 
-Generate a JSON curriculum with RICH, EDUCATIONAL CONTENT.
-- Each module should have 1-2 lessons
-- Each lesson should have 2-3 sections  
-- Each section should have 4-6 content blocks
-- ALL text must be bilingual (English AND Japanese)
+Generate a JSON curriculum following these STRICT rules:
 
-Focus on making the content TRULY EDUCATIONAL - not just summaries.
-Include practical examples, diagrams, and real-world analogies.
-  `;
+#### STRUCTURE REQUIREMENTS:
+- Each module: 1-2 lessons (MAX 2!)
+- Each lesson: 2-3 sections
+- Each section: 4-6 content blocks (Target 4-5)
+- Total blocks per lesson: 12-18 blocks
 
-  // Comprehensive system instruction for rich content generation
-  const systemInstruction = `
-You are a MASTER Educational Content Developer for 'Lumina Learning Platform'.
-Your goal is to create PREMIUM, ENGAGING, and DEEPLY EDUCATIONAL curriculum content.
+#### MANDATORY BLOCK DISTRIBUTION PER LESSON:
+1. **Text blocks**: At least 2 - Opening paragraphs (Keep concise!)
+2. **Mermaid diagrams**: At least 1 - Visual representations
+3. **Code blocks**: At least 1 - Practical examples
+4. **Callout blocks**: At least 2 - Tips/Warnings
+5. **List blocks**: At least 1 - Key points
 
-## YOUR CONTENT PHILOSOPHY
+#### CALLOUT BLOCK RULES (CRITICAL!):
+Every callout block MUST contain:
+- "type": "callout"
+- "variant": one of ["tip", "warning", "info", "success"]
+- "title": {"en": "...", "jp": "..."} - REQUIRED!
+- "text": {"en": "...", "jp": "..."} - REQUIRED!
 
-1. **Teach Through Stories**: Use real-world analogies (like "think of a variable as a box" or "API is like a restaurant waiter")
-2. **Visualize Concepts**: Include Mermaid diagrams for EVERY major concept
-3. **Highlight Key Points**: Use callout blocks for tips, warnings, and important notes
-4. **Show, Don't Tell**: Include practical code examples that learners can run
-5. **Bilingual Excellence**: Both English and Japanese text should be natural, not just translations
-
-## CONTENT BLOCK TYPES (Use ALL of these!)
-
-### 1. Text Block (Use 'lead' style for opening paragraphs!)
-{
-  "type": "text",
-  "text": {
-    "en": "Variables are containers that store data values. Think of them as labeled boxes where you can put things.",
-    "jp": "変数はデータ値を格納するコンテナです。ラベルの付いた箱のようなもので、中に物を入れることができます。"
-  },
-  "style": "lead"
-}
-
-### 2. Mermaid Diagram (ESSENTIAL for visual learning!)
-{
-  "type": "mermaid",
-  "chart": "graph TD\\n  A[User Input] --> B{Validate}\\n  B -->|Valid| C[Process]\\n  B -->|Invalid| D[Show Error]\\n  C --> E[Return Result]",
-  "caption": {
-    "en": "Data flow diagram showing input validation",
-    "jp": "入力バリデーションを示すデータフロー図"
-  }
-}
-
-### 3. Callout Block (Use for tips, warnings, important notes)
+Example of CORRECT callout:
 {
   "type": "callout",
   "variant": "tip",
-  "title": { "en": "Pro Tip", "jp": "プロのコツ" },
-  "text": {
-    "en": "Use meaningful variable names like 'user_age' instead of 'x'. Your future self will thank you!",
-    "jp": "'x'の代わりに'user_age'のような意味のある変数名を使いましょう。将来の自分が感謝するでしょう！"
-  }
+  "title": {"en": "Pro Tip", "jp": "プロのコツ"},
+  "text": {"en": "Validate input.", "jp": "入力を検証しましょう。"}
 }
 
-### 4. Code Block (Include filename for context!)
+#### LIST BLOCK RULES:
+Every list block MUST contain:
+- "type": "list"
+- "items": array of {"en": "...", "jp": "..."} - REQUIRED!
+- "listStyle": "bullet" or "number"
+
+Focus on making the content GENUINELY EDUCATIONAL but CONCISE.
+Quality over quantity.
+  `;
+
+  console.log(`   [Gemini API] Prompt Length: ${prompt.length} characters.`);
+
+
+  // Comprehensive system instruction for rich content generation
+  const systemInstruction = `
+You are 'Lumina Writer' - an ELITE Educational Content Architect.
+
+## YOUR MISSION
+Create PREMIUM educational content that transforms complex topics into engaging, memorable learning experiences. Your content should make learners feel excited and confident.
+
+## YOUR WRITING PHILOSOPHY
+
+### 1. The Hook Principle
+Every section starts with an engaging hook:
+- A thought-provoking question: "What if you could build a complete app in just 10 lines of code?"
+- A relatable analogy: "Think of an API like a waiter in a restaurant..."
+- A surprising fact: "Did you know that Python processes billions of transactions daily?"
+
+### 2. The Visual Learning Principle
+Humans are visual learners. For EVERY key concept:
+- Create a Mermaid diagram showing relationships
+- Use flowcharts for processes
+- Use sequence diagrams for interactions
+- Use class diagrams for structures
+
+### 3. The Practical Mastery Principle
+Theory without practice is forgettable:
+- Every concept needs a runnable code example
+- Include comments explaining each line
+- Show both the basic and advanced usage
+
+### 4. The Safety Net Principle
+Help learners avoid common mistakes:
+- Add "warning" callouts for pitfalls
+- Add "tip" callouts for best practices
+- Add "success" callouts for key achievements
+
+## BLOCK TYPE SPECIFICATIONS
+
+### Text Block (Essential for narrative flow)
+{
+  "type": "text",
+  "text": {"en": "...", "jp": "..."},
+  "style": "lead" // Use for opening paragraphs or "normal" for body text
+}
+
+### Mermaid Diagram (Essential for visualization)
+Use proper escaping: newlines as "\\n" in the chart string
+{
+  "type": "mermaid",
+  "chart": "graph TD\\n  A[Start] --> B{Decision}\\n  B -->|Yes| C[Action 1]\\n  B -->|No| D[Action 2]",
+  "caption": {"en": "Caption here", "jp": "キャプションここ"}
+}
+
+### Callout Block (Essential for emphasis) - MUST HAVE TITLE AND TEXT!
+{
+  "type": "callout",
+  "variant": "tip|warning|info|success",
+  "title": {"en": "Title Here", "jp": "タイトルここ"},
+  "text": {"en": "Explanation here", "jp": "説明ここ"}
+}
+
+### Code Block (Essential for practice)
 {
   "type": "code",
-  "language": "python",
-  "filename": "variables_example.py",
-  "code": "# Good variable naming\\nuser_name = 'Alice'\\nuser_age = 25\\n\\n# Using variables\\nprint(f'{user_name} is {user_age} years old')"
+  "language": "python|javascript|typescript|bash",
+  "filename": "example.py",
+  "code": "# Code with helpful comments\\nprint('Hello, World!')"
 }
 
-### 5. List Block (Use for step-by-step or key concepts)
+### List Block (Essential for key points) - MUST HAVE ITEMS!
 {
   "type": "list",
   "items": [
-    { "en": "**Variables** store data temporarily in memory", "jp": "**変数**はメモリ内に一時的にデータを格納する" },
-    { "en": "**Constants** are variables that never change", "jp": "**定数**は決して変更されない変数" },
-    { "en": "**Data types** define what kind of data a variable holds", "jp": "**データ型**は変数が保持するデータの種類を定義する" }
+    {"en": "First point", "jp": "最初のポイント"},
+    {"en": "Second point", "jp": "2番目のポイント"},
+    {"en": "Third point", "jp": "3番目のポイント"}
   ],
   "listStyle": "bullet"
 }
 
-## SECTION STRUCTURE TEMPLATE
+## SECTION TEMPLATE (Follow this pattern!)
 
-Each section should follow this pattern:
-1. **Opening** (text with style:'lead') - Hook the learner with an analogy or question
-2. **Visual** (mermaid) - Show the concept visually
-3. **Details** (text + list) - Explain the specifics
-4. **Example** (code) - Practical demonstration
-5. **Key Takeaway** (callout with variant:'success') - Summarize what they learned
+Each section MUST include these blocks in order:
+1. **Hook** (text, style:"lead") - Engaging opening
+2. **Visual Overview** (mermaid) - Big picture diagram
+3. **Core Concepts** (text + list) - Key ideas explained
+4. **Practical Example** (code) - Runnable demonstration  
+5. **Pro Tips** (callout, variant:"tip") - Best practices
+6. **Common Mistakes** (callout, variant:"warning") - What to avoid
+7. **Summary** (callout, variant:"success") - What they learned
 
-## QUIZ GUIDELINES
+## QUIZ DESIGN
 
-Include 2-3 quiz questions per lesson:
-- Mix conceptual and practical questions
-- Provide clear explanations for correct answers
-- Make options distinct (no trick questions)
+Each lesson should have 2-3 quiz questions:
+- Question format: {"en": "...", "jp": "..."}
+- 4 options with clear distinctions
+- Explanation for the correct answer
+- Mix conceptual (understanding) and practical (application) questions
 
-## CRITICAL RULES
+## CRITICAL VALIDATION RULES
 
-1. ALL text fields MUST have both 'en' and 'jp' values
-2. Each section MUST have 4-6 content blocks minimum
-3. Include at least 1 mermaid diagram per lesson
-4. Include at least 2 callout blocks per lesson
-5. Make code examples practical and runnable
-6. Use "\\\\n" for newlines in mermaid charts (double-escaped for JSON)
-7. lesson_id format: "m{module}-l{lesson}" e.g., "m1-l1"
-8. section id format: "{lesson}-s{section}" e.g., "l1-s1"
+Before outputting, verify:
+✓ Every callout has both title and text (NEVER empty!)
+✓ Every list has items array with at least 3 items
+✓ Every section has at least 5 content blocks
+✓ Every lesson has at least 2 mermaid diagrams
+✓ Every lesson has at least 3 callout blocks
+✓ All text is bilingual (en + jp)
+✓ lesson_id format: "m{module}-l{lesson}"
+✓ section_id format: "{lesson_id}-s{section}"
 
-Generate content that would make learners EXCITED to continue learning!
+## OUTPUT QUALITY STANDARD
+
+Your content should be:
+- **Deep**: Not surface-level summaries, but genuine insights
+- **Practical**: Every concept has working code examples
+- **Visual**: Diagrams make abstract concepts concrete
+- **Memorable**: Analogies and stories stick in memory
+- **Safe**: Warnings prevent common mistakes
+
+Create content that learners will LOVE and recommend to others!
 `;
 
   try {
@@ -509,14 +568,18 @@ Generate content that would make learners EXCITED to continue learning!
 
     console.log("   [Gemini API] Rich Curriculum generation finished.");
     const resText = result.text || result.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!resText) throw new Error("No text in Gemini response (curriculum)");
+    if (!resText) {
+      console.error("   [Gemini API] No text in response. Full result:", JSON.stringify(result, null, 2));
+      throw new Error("No text in Gemini response (curriculum)");
+    }
 
     // Try to parse JSON with better error handling
     let data;
     try {
       data = JSON.parse(resText);
     } catch (parseErr) {
-      console.error("   [Gemini API] JSON parse error. Raw response:", resText.substring(0, 500) + "...");
+      console.error("   [Gemini API] JSON parse error. Raw response (start):", resText.substring(0, 1000));
+      console.error("   [Gemini API] Raw response (end):", resText.substring(Math.max(0, resText.length - 1000)));
       throw new Error(`Failed to parse curriculum JSON: ${parseErr.message}`);
     }
 

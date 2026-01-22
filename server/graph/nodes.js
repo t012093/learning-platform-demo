@@ -31,7 +31,7 @@ async function orchestratorNode(state) {
     }
 
     // 3. Specialized Agent Routing & Verification Loop
-    
+
     // Step A: Gathering Requirements
     if (!requirements?.approved) {
         console.log("   [ROUTING] Target: Interviewer Agent");
@@ -51,7 +51,7 @@ async function orchestratorNode(state) {
             console.log("   [ROUTING] Target: Reviewer Agent (Validating output)");
             return { next_actor: "reviewer" };
         }
-        
+
         // If review found issues (Self-Correction Loop)
         if (review?.status === 'rejected') {
             console.log("   [ROUTING] Target: Writer Agent (Redrafting based on feedback)");
@@ -69,53 +69,77 @@ async function orchestratorNode(state) {
 
 /**
  * Agent 4: Reviewer (Quality Assurance)
- * Focus: Verifying consistency between Analysis, Requirements, and Curriculum.
- * Implements the "verify their outputs" role from the paper.
+ * Focus: Verifying consistency, educational quality, and JSON structure validity.
  */
 async function reviewerNode(state) {
     console.log("--- Node: Reviewer Agent ---");
     const { analysis, requirements, curriculum } = state;
 
+    // Skip review if no draft exists
+    if (!curriculum?.draft) {
+        return { next_actor: "orchestrator" };
+    }
+
     const genAI = getGenAI();
     const prompt = `
-        あなたはカリキュラム品質管理のエキスパートです。
-        以下の「元資料の分析」「定義された要件」と、「実際に作成されたカリキュラム案」を比較して校閲してください。
+        You are an Expert Curriculum Reviewer for the Lumina Learning Platform.
+        Your job is to strictly validate the generated curriculum against Quality Standards.
 
-        【資料の分析結果】
-        ${analysis || "なし"}
+        【Reference Analysis】
+        ${analysis || "None"}
 
-        【学習要件 (Approved)】
+        【Requirements】
         ${JSON.stringify(requirements.approved)}
 
-        【カリキュラム案 (Draft)】
-        ${JSON.stringify(curriculum.draft)}
+        【Curriculum Draft (Partial View)】
+        Title: ${curriculum.draft.title.en}
+        Module Count: ${curriculum.draft.modules?.length}
+        First Module: ${JSON.stringify(curriculum.draft.modules?.[0], null, 2)}
 
-        【チェック項目】
-        1. 網羅性: 資料の重要なポイントが含まれているか？
-        2. 整合性: 要件で定義した難易度レベルに合っているか？
-        3. 実用性: 各レッスンの目標が明確か？
+        【CHECKLIST】
+        
+        1. **Content Richness**: 
+           - Does the content look "thin" or "full"? 
+           - Are there clear explanations, examples, and diagrams?
+           
+        2. **Technical Validity (CRITICAL)**:
+           - Do 'callout' blocks have BOTH 'title' and 'text'? (Reject if missing)
+           - Do 'list' blocks have 'items'?
+           - Are texts properly bilingual (en/jp)?
+           - Is there a mix of block types (text, mermaid, code, callout)?
 
-        もし重大な欠落や誤りがある場合は "REJECT" とし、修正の指示を具体的に書いてください。
-        問題がなければ "PASS" としてください。
+        3. **Alignment**: 
+           - Does it match the difficulty defined in requirements?
+           - Does it cover the analyzed material?
 
-        返答形式:
+        Response Format:
         STATUS: [PASS or REJECT]
-        FEEDBACK: [修正が必要な理由、または合格の理由]
+        FEEDBACK: [Detailed feedback for the Writer if REJECTed, or approval remarks if PASS]
+        
+        If REJECTED, be very specific about what needs to be fixed (e.g., "Module 1 Lesson 2 callouts are empty").
     `;
 
-    const result = await genAI.models.generateContent({
-        model: "gemini-2.0-flash",
-        contents: [{ role: "user", parts: [{ text: prompt }] }]
-    });
+    try {
+        const result = await genAI.models.generateContent({
+            model: "gemini-2.0-flash",
+            contents: [{ role: "user", parts: [{ text: prompt }] }]
+        });
 
-    const response = result.text || "";
-    const status = response.includes("PASS") ? "passed" : "rejected";
-    console.log(`   [REVIEWER] Status: ${status.toUpperCase()}`);
+        const response = result.text || "";
+        // Simple heuristic parsing
+        const status = response.includes("STATUS: PASS") ? "passed" : "rejected";
+        console.log(`   [REVIEWER] Status: ${status.toUpperCase()}`);
 
-    return {
-        review: { status, feedback: response },
-        next_actor: "orchestrator"
-    };
+        return {
+            review: { status, feedback: response },
+            // If rejected, loop back to writer (handled by orchestrator logic ideally, 
+            // but for now we pass feedback to next iteration)
+            next_actor: "orchestrator"
+        };
+    } catch (e) {
+        console.error("   [REVIEWER] Error:", e);
+        return { next_actor: "orchestrator" }; // Fail safe
+    }
 }
 
 /**
@@ -126,9 +150,9 @@ async function approvalNode(state) {
     const { current_decision, requirements, roadmap, curriculum } = state;
     const { stage, decision, feedback } = current_decision;
 
-    const updates = { 
-        current_decision: null, 
-        pending_approval: "none" 
+    const updates = {
+        current_decision: null,
+        pending_approval: "none"
     };
 
     if (decision === 'approved') {
@@ -154,17 +178,17 @@ async function approvalNode(state) {
 async function analyzerNode(state) {
     console.log("--- Node: Analyzer Agent ---");
     const { attachments, user_id } = state;
-    
+
     // Retrieve full text for all attachments to leverage Gemini's large context window
     console.log(`   [ANALYZER] Extracting full text for ${attachments.length} files...`);
-    
+
     let fullText = "";
     for (const attachment of attachments) {
         // Handle both material_id and id based on payload structure
         const mid = attachment.material_id || attachment.id;
         if (mid) {
             let text = await getFullMaterialText(mid);
-            
+
             // Fallback: If text is empty (e.g. image-only PDF), try Gemini Vision
             if (!text || text.trim().length < 50) {
                 console.log(`   [ANALYZER] Text extraction weak for ${mid}, attempting Gemini Vision analysis...`);
@@ -175,7 +199,7 @@ async function analyzerNode(state) {
                     text = `[Visual Analysis]\n${visionSummary}`;
                 }
             }
-            
+
             fullText += `\n\n--- Document: ${attachment.name || mid} ---\n${text}`;
         }
     }
@@ -184,7 +208,7 @@ async function analyzerNode(state) {
         console.log("   [ANALYZER] No text content found in attachments.");
         return { analysis: "資料の読み取りに失敗しました。", next_actor: "orchestrator" };
     }
-    
+
     const genAI = getGenAI();
     const prompt = `
         あなたは高度な資料分析エキスパートです。
@@ -221,9 +245,9 @@ async function analyzerNode(state) {
 async function interviewerNode(state) {
     console.log("--- Node: Interviewer Agent ---");
     const { messages, user_id, attachments, requirements, analysis } = state;
-    
+
     const lastMessage = messages[messages.length - 1];
-    
+
     const history = messages.map(m => {
         let role = 'AI';
         const type = m._getType?.() || m.type;
@@ -236,7 +260,7 @@ async function interviewerNode(state) {
     const isAffirmative = /はい|yes|お願いします|進めて|作成して|ok|了解/.test(lastContent);
 
     const genAI = getGenAI();
-    
+
     // 1. Check if we should move to Architect
     const decisionPrompt = `
         あなたは学習要件を定義するエキスパートコンシェルジュです。
@@ -267,7 +291,7 @@ async function interviewerNode(state) {
         try {
             const draftInput = `${history}\n\n[Reference Analysis]\n${analysis}`;
             const draft = await generateRequirements(draftInput, attachments, user_id);
-            
+
             const summaryText = `お待たせしました！資料の内容を分析し、ご要望に基づいた学習要件（Requirements）を作成しました。
 
 **【学習要件案】**
@@ -292,12 +316,14 @@ async function interviewerNode(state) {
             };
         }
     }
-    
+
     // 2. Continue Interview
     console.log("   [ACTION] Continuing Interview...");
     const result = await genAI.models.generateContent({
         model: "gemini-2.0-flash",
-        contents: [{ role: "user", parts: [{ text: `
+        contents: [{
+            role: "user", parts: [{
+                text: `
             あなたはLuminaコンシェルジュです。資料の分析結果を踏まえ、
             ユーザーに最適なカリキュラムを提案するためのステップ（目標の深掘り等）を進めてください。
             
@@ -309,14 +335,15 @@ async function interviewerNode(state) {
             - ユーザーに資料の内容を尋ねるのではなく、こちらから「〜についての資料ですね」と提示してください。
             
             履歴: ${history}
-        ` }] }]
+        ` }]
+        }]
     });
-    
+
     const aiResponse = result.text || result.candidates?.[0]?.content?.parts?.[0]?.text || "どのようなことを学びたいか、詳しく教えてください。";
 
     return {
         messages: [new AIMessage({
-            content: "思考中...", 
+            content: "思考中...",
             tool_calls: [{ id: `call_${Date.now()}`, name: "ask_human", args: { question: aiResponse } }]
         })],
         next_actor: "end"
@@ -332,12 +359,12 @@ async function architectNode(state) {
     if (!roadmap?.draft) {
         console.log("   [ACTION] Designing Roadmap draft...");
         try {
-            const contextRequirements = { 
-                ...requirements.approved, 
-                materials_analysis: analysis 
+            const contextRequirements = {
+                ...requirements.approved,
+                materials_analysis: analysis
             };
             const draft = await generateRoadmap(contextRequirements);
-            
+
             const modulesList = draft.modules.map(m => `**Module ${m.order}: ${m.title}**\n${m.objective} (${m.estimated_hours}h)`).join('\n\n');
             const summaryText = `要件に基づき、ロードマップ（章立て）案を作成しました。
             
@@ -372,15 +399,15 @@ async function writerNode(state) {
     if (!curriculum?.draft) {
         console.log("   [ACTION] Writing full curriculum details...");
         try {
-            const contextRequirements = { 
-                ...requirements.approved, 
-                materials_analysis: analysis 
+            const contextRequirements = {
+                ...requirements.approved,
+                materials_analysis: analysis
             };
             const draft = await generateCurriculum(contextRequirements, roadmap.approved, {
                 curriculumId: curriculum_id,
                 version: curriculum_version_id
             }, user_id);
-            
+
             const summaryText = `ロードマップに従い、全レッスンの詳細を執筆しました！
             
 **【カリキュラム完成版】**
@@ -396,9 +423,20 @@ async function writerNode(state) {
                 next_actor: "end"
             };
         } catch (error) {
-            console.error("Curriculum generation failed:", error);
+            console.error("Curriculum generation failed - FULL ERROR:", error);
+            let errorMessage = "カリキュラム詳細の生成中にエラーが発生しました。";
+
+            // Check for specific error types
+            if (error.message.includes("400") || error.message.includes("InvalidArgument")) {
+                errorMessage += "（入力データまたはプロンプトが長すぎる、あるいは不正な形式の可能性があります）";
+            } else if (error.message.includes("500")) {
+                errorMessage += "（サーバー内部エラーが発生しました）";
+            }
+
+            errorMessage += `\n\n詳細なエラー: ${error.message}`;
+
             return {
-                messages: [new AIMessage({ content: "カリキュラム詳細の生成中にエラーが発生しました。複雑すぎる可能性があります。再試行してください。" })],
+                messages: [new AIMessage({ content: errorMessage })],
                 next_actor: "end"
             };
         }

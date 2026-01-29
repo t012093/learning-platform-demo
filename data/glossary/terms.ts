@@ -142,5 +142,207 @@ export const GLOSSARY_TERMS: GlossaryTerm[] = [
       jp: '名前でオブジェクトを探す関数。非常に処理が重いため、Updateの中で使うとゲームがカクつく原因になる。「検索」ではなく「参照」を使うべき。'
     },
     category: 'code'
+  },
+
+  // --- AI Agents ---
+  {
+    id: 'ai-agent',
+    term: 'AI Agent',
+    synonyms: ['AI agent', 'AI agents', 'AIエージェント', 'エージェント'],
+    definitions: {
+      en: 'A system that uses a model plus tools to plan and act toward a goal, not just chat.',
+      jp: 'モデルとツールを使って目標達成のために計画・実行するシステム。会話だけでなく行動まで行う。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'tool-use',
+    term: 'Tool Use',
+    synonyms: ['tool use', 'tool-use', 'tool calling', 'function calling', 'ツール利用', '関数呼び出し'],
+    definitions: {
+      en: 'Calling external tools (APIs/functions) to get data or take actions as part of a task.',
+      jp: '外部ツール（API/関数）を呼び出して情報取得や実行を行うこと。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'reasoning',
+    term: 'Reasoning',
+    synonyms: ['reasoning', '推論'],
+    definitions: {
+      en: 'The decision process used to choose the next step or derive an answer.',
+      jp: '次の手順や回答を導くための思考プロセス。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'planning',
+    term: 'Planning',
+    synonyms: ['planning', '計画'],
+    definitions: {
+      en: 'Breaking a goal into steps and deciding the order of actions.',
+      jp: '目標を複数ステップに分解し、行動の順序を決めること。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'state',
+    term: 'State',
+    synonyms: ['state', '状態'],
+    definitions: {
+      en: 'The current context or status an agent maintains while working.',
+      jp: 'エージェントが作業中に保持する現在の文脈や進捗状態。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'memory',
+    term: 'Memory',
+    synonyms: ['memory', 'メモリ', '記憶'],
+    definitions: {
+      en: 'Information kept across steps or sessions to preserve context.',
+      jp: 'ステップやセッションを跨いで文脈を保持するための情報。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'autonomy',
+    term: 'Autonomy',
+    synonyms: ['autonomy', '自律性'],
+    definitions: {
+      en: 'How independently an agent can act without human approval.',
+      jp: '人間の承認なしでどれだけ独立して行動できるかの度合い。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'rag',
+    term: 'RAG',
+    synonyms: ['Retrieval-Augmented Generation', 'RAG', '検索拡張生成'],
+    definitions: {
+      en: 'A pattern that retrieves external data and uses it in generation for more grounded answers.',
+      jp: '外部データを検索し、その情報を使って回答を生成する手法。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'grounding',
+    term: 'Grounding',
+    synonyms: ['grounding', 'グラウンディング'],
+    definitions: {
+      en: 'Linking outputs to verifiable sources to reduce unsupported claims.',
+      jp: '検証可能な情報源に結び付け、根拠のない出力を減らすこと。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'context-window',
+    term: 'Context Window',
+    synonyms: ['context window', 'context length', 'コンテキストウィンドウ', 'コンテキスト長'],
+    definitions: {
+      en: 'The amount of text a model can consider at one time.',
+      jp: 'モデルが一度に扱える文脈量（入力の上限）。'
+    },
+    category: 'general'
+  },
+  {
+    id: 'token',
+    term: 'Token',
+    synonyms: ['token', 'tokens', 'トークン'],
+    definitions: {
+      en: 'A chunk of text used for model input/output and billing.',
+      jp: 'モデルの入出力や課金で使われるテキストの単位。'
+    },
+    category: 'general'
+  },
+  {
+    id: 'latency',
+    term: 'Latency',
+    synonyms: ['latency', 'レイテンシ', 'レイテンシー'],
+    definitions: {
+      en: 'The time between a request and the response.',
+      jp: 'リクエストから応答までの遅延時間。'
+    },
+    category: 'general'
+  },
+  {
+    id: 'hallucination',
+    term: 'Hallucination',
+    synonyms: ['hallucination', 'Hallucination', '幻覚'],
+    definitions: {
+      en: 'A confident but incorrect model output.',
+      jp: '自信があるように見えて実は誤っている出力。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'guardrails',
+    term: 'Guardrails',
+    synonyms: ['guardrails', 'ガードレール'],
+    definitions: {
+      en: 'Rules, constraints, and approvals that keep systems safe.',
+      jp: '安全性を保つためのルール、制約、承認フロー。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'routing',
+    term: 'Routing',
+    synonyms: ['routing', 'ルーティング'],
+    definitions: {
+      en: 'Choosing which model or tool handles a task.',
+      jp: 'タスクに応じて使うモデルやツールを振り分けること。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'fallback',
+    term: 'Fallback',
+    synonyms: ['fallback', 'フォールバック'],
+    definitions: {
+      en: 'A backup path used when the primary choice fails.',
+      jp: '主要な手段が失敗したときに使う代替手段。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'evaluation',
+    term: 'Evaluation',
+    synonyms: ['evaluation', '評価'],
+    definitions: {
+      en: 'Measuring model performance with defined metrics and test sets.',
+      jp: '定義した指標やテストセットで性能を測定すること。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'agentops',
+    term: 'AgentOps',
+    synonyms: ['AgentOps', 'エージェント運用'],
+    definitions: {
+      en: 'Operational practices for deploying, monitoring, and improving agent systems.',
+      jp: 'エージェントの運用・監視・改善を行う実践的な取り組み。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'orchestration',
+    term: 'Orchestration',
+    synonyms: ['orchestration', 'オーケストレーション'],
+    definitions: {
+      en: 'Coordinating multiple steps, tools, or agents to complete a workflow.',
+      jp: '複数のステップ・ツール・エージェントを連携させてワークフローを完遂すること。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'monitoring',
+    term: 'Monitoring',
+    synonyms: ['monitoring', 'モニタリング'],
+    definitions: {
+      en: 'Tracking performance and issues in production.',
+      jp: '本番環境の性能や問題を継続的に監視すること。'
+    },
+    category: 'general'
   }
 ];

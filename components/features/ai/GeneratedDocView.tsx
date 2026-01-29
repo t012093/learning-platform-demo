@@ -7,6 +7,7 @@ import {
 import mermaid from 'mermaid';
 import { DocChapter, DocSection, LocalizedDocBlock, LocalizedText, QuizData } from '../../../types';
 import { GeneratedLesson } from '../../../services/curriculumAdapter';
+import GlossaryText from '../../common/GlossaryText';
 
 // Helper to handle both string (legacy/resolved) and LocalizedText
 const getText = (content: string | LocalizedText | undefined, lang: 'en' | 'jp'): string => {
@@ -91,14 +92,36 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
         }
     }[language];
 
+    const mermaidConfig = {
+        startOnLoad: false,
+        theme: 'base',
+        securityLevel: 'loose',
+        fontFamily: '"IBM Plex Sans","Noto Sans JP",ui-sans-serif,system-ui,sans-serif',
+        flowchart: {
+            curve: 'basis',
+            nodeSpacing: 40,
+            rankSpacing: 50
+        },
+        themeVariables: {
+            primaryColor: '#ffffff',
+            primaryTextColor: '#0f172a',
+            primaryBorderColor: '#e2e8f0',
+            lineColor: '#94a3b8',
+            secondaryColor: '#fff7ed',
+            tertiaryColor: '#f1f5f9',
+            edgeLabelBackground: '#ffffff',
+            clusterBkg: '#f8fafc',
+            clusterBorder: '#e2e8f0',
+            noteBkgColor: '#ecfeff',
+            noteTextColor: '#0f172a',
+            noteBorderColor: '#67e8f9',
+            fontSize: '14px'
+        }
+    } as const;
+
     useEffect(() => {
         // Note: Theme is handled by context, no need to override here
-        mermaid.initialize({
-            startOnLoad: false,
-            theme: 'neutral',
-            securityLevel: 'loose',
-            fontFamily: 'sans-serif'
-        });
+        mermaid.initialize(mermaidConfig);
     }, []);
 
     // Scroll Spy Logic
@@ -431,18 +454,173 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
     );
 };
 
+// --- Mermaid Helpers ---
+type MermaidDiagramType = 'flowchart' | 'sequence' | 'er' | 'other';
+
+const detectMermaidType = (chart: string): MermaidDiagramType => {
+    const stripped = chart
+        .replace(/%%\{[\s\S]*?\}%%/g, '')
+        .replace(/^%%.*$/gm, '')
+        .trim();
+    const firstLine = stripped.split('\n').find((line) => line.trim().length > 0)?.trim().toLowerCase() || '';
+    if (firstLine.startsWith('flowchart') || firstLine.startsWith('graph')) return 'flowchart';
+    if (firstLine.startsWith('sequencediagram')) return 'sequence';
+    if (firstLine.startsWith('erdiagram')) return 'er';
+    return 'other';
+};
+
+const getMermaidThemeForType = (type: MermaidDiagramType) => {
+    switch (type) {
+        case 'sequence':
+            return {
+                primaryColor: '#ffffff',
+                primaryTextColor: '#0f172a',
+                primaryBorderColor: '#bae6fd',
+                lineColor: '#38bdf8',
+                secondaryColor: '#ecfeff',
+                tertiaryColor: '#f0f9ff',
+                edgeLabelBackground: '#ffffff',
+                noteBkgColor: '#cffafe',
+                noteTextColor: '#0f172a',
+                noteBorderColor: '#22d3ee',
+                actorBkg: '#f0f9ff',
+                actorBorder: '#38bdf8',
+                actorTextColor: '#0f172a',
+                actorLineColor: '#38bdf8',
+                signalColor: '#0284c7',
+                signalTextColor: '#0f172a'
+            };
+        case 'er':
+            return {
+                primaryColor: '#ffffff',
+                primaryTextColor: '#0f172a',
+                primaryBorderColor: '#c4b5fd',
+                lineColor: '#8b5cf6',
+                secondaryColor: '#f5f3ff',
+                tertiaryColor: '#f8fafc',
+                edgeLabelBackground: '#ffffff'
+            };
+        case 'flowchart':
+            return {
+                primaryColor: '#ffffff',
+                primaryTextColor: '#0f172a',
+                primaryBorderColor: '#fed7aa',
+                lineColor: '#f59e0b',
+                secondaryColor: '#fff7ed',
+                tertiaryColor: '#f8fafc',
+                edgeLabelBackground: '#ffffff',
+                clusterBkg: '#fff7ed',
+                clusterBorder: '#fed7aa',
+                noteBkgColor: '#fef9c3',
+                noteTextColor: '#0f172a',
+                noteBorderColor: '#fbbf24'
+            };
+        default:
+            return null;
+    }
+};
+
+const injectMermaidTheme = (chart: string, type: MermaidDiagramType) => {
+    if (/%%\{\s*init:/i.test(chart)) return chart;
+    const themeVariables = getMermaidThemeForType(type);
+    if (!themeVariables) return chart;
+    const directive = `%%{init: ${JSON.stringify({ theme: 'base', themeVariables })}}%%`;
+    return `${directive}\n${chart}`;
+};
+
+const injectFlowchartClasses = (chart: string) => {
+    const importantKeywords = [/重要/, /Important/i, /Key/i, /Critical/i, /必須/];
+    const warningKeywords = [/注意/, /Warning/i, /Caution/i, /Risk/i, /危険/];
+    const patterns = [
+        /\b([A-Za-z0-9_]+)\s*\[\[([^\]]+)\]\]/g,
+        /\b([A-Za-z0-9_]+)\s*\[([^\]]+)\]/g,
+        /\b([A-Za-z0-9_]+)\s*\(\(([^)]+)\)\)/g,
+        /\b([A-Za-z0-9_]+)\s*\(([^)]+)\)/g,
+        /\b([A-Za-z0-9_]+)\s*\{([^}]+)\}/g
+    ];
+
+    const importantNodes = new Set<string>();
+    const warningNodes = new Set<string>();
+
+    patterns.forEach((pattern) => {
+        for (const match of chart.matchAll(pattern)) {
+            const id = match[1];
+            const rawLabel = match[2] || '';
+            const label = rawLabel.replace(/^["'`]|["'`]$/g, '').trim();
+            if (!label) continue;
+            if (warningKeywords.some((r) => r.test(label))) {
+                warningNodes.add(id);
+            } else if (importantKeywords.some((r) => r.test(label))) {
+                importantNodes.add(id);
+            }
+        }
+    });
+
+    if (importantNodes.size === 0 && warningNodes.size === 0) return chart;
+
+    const classLines: string[] = [];
+    if (!/classDef\s+important\b/i.test(chart)) {
+        classLines.push('classDef important fill:#fff7ed,stroke:#fb923c,stroke-width:2.5px,color:#7c2d12;');
+    }
+    if (!/classDef\s+warning\b/i.test(chart)) {
+        classLines.push('classDef warning fill:#fff1f2,stroke:#f97316,stroke-width:2px,stroke-dasharray:4 2,color:#7f1d1d;');
+    }
+    if (importantNodes.size > 0) {
+        classLines.push(`class ${Array.from(importantNodes).join(',')} important;`);
+    }
+    if (warningNodes.size > 0) {
+        classLines.push(`class ${Array.from(warningNodes).join(',')} warning;`);
+    }
+
+    return `${chart}\n\n%% auto styles %%\n${classLines.join('\n')}\n`;
+};
+
 // --- Mermaid Block Component ---
 const MermaidBlock: React.FC<{ chart: string; caption?: LocalizedText | string; language: 'en' | 'jp' }> = ({ chart, caption, language }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [svgContent, setSvgContent] = useState<string>('');
     const id = useId().replace(/:/g, '');
+    const diagramType = detectMermaidType(chart);
+    const containerStyleByType: Record<MermaidDiagramType, { bg: string; border: string; label: string }> = {
+        flowchart: {
+            bg: 'from-amber-50/70 via-white to-slate-50',
+            border: 'border-amber-200/60',
+            label: 'text-amber-600'
+        },
+        sequence: {
+            bg: 'from-cyan-50/70 via-white to-slate-50',
+            border: 'border-cyan-200/60',
+            label: 'text-cyan-600'
+        },
+        er: {
+            bg: 'from-violet-50/70 via-white to-slate-50',
+            border: 'border-violet-200/60',
+            label: 'text-violet-600'
+        },
+        other: {
+            bg: 'from-slate-50 via-white to-amber-50/60',
+            border: 'border-slate-200',
+            label: 'text-slate-500'
+        }
+    };
+    const containerStyle = containerStyleByType[diagramType];
+    const labelTextByType: Record<MermaidDiagramType, { en: string; jp: string }> = {
+        flowchart: { en: 'Flow', jp: 'フロー' },
+        sequence: { en: 'Sequence', jp: 'シーケンス' },
+        er: { en: 'ER', jp: 'ER' },
+        other: { en: 'Diagram', jp: '図' }
+    };
 
     useEffect(() => {
         const renderChart = async () => {
             if (!containerRef.current) return;
             try {
+                const themedChart = injectMermaidTheme(
+                    diagramType === 'flowchart' ? injectFlowchartClasses(chart) : chart,
+                    diagramType
+                );
                 const uniqueRenderId = `mermaid-svg-${id}-${Date.now()}`;
-                const { svg } = await mermaid.render(uniqueRenderId, chart);
+                const { svg } = await mermaid.render(uniqueRenderId, themedChart);
                 setSvgContent(svg);
             } catch (error) {
                 console.error('Mermaid rendering failed:', error);
@@ -453,9 +631,15 @@ const MermaidBlock: React.FC<{ chart: string; caption?: LocalizedText | string; 
     }, [chart, id]);
 
     return (
-        <div className="my-8 p-8 bg-slate-50 rounded-xl border border-slate-100 flex flex-col items-center justify-center relative">
-            <div className="absolute top-4 right-4 px-2 py-1 bg-white rounded border border-slate-200 text-[10px] font-bold text-slate-400 uppercase">Diagram</div>
-            <div ref={containerRef} className="w-full flex justify-center overflow-x-auto" dangerouslySetInnerHTML={{ __html: svgContent }} />
+        <div className={`my-10 p-8 bg-gradient-to-br ${containerStyle.bg} rounded-2xl border ${containerStyle.border} shadow-[0_12px_30px_rgba(15,23,42,0.08)] flex flex-col items-center justify-center relative`}>
+            <div className={`absolute top-4 right-4 px-2 py-1 bg-white/90 backdrop-blur rounded-full border border-slate-200 text-[10px] font-bold uppercase tracking-widest ${containerStyle.label}`}>
+                {labelTextByType[diagramType][language]}
+            </div>
+            <div
+                ref={containerRef}
+                className="w-full flex justify-center overflow-x-auto [&_svg]:max-w-full [&_svg]:h-auto [&_svg]:rounded-lg [&_svg]:drop-shadow-[0_8px_16px_rgba(15,23,42,0.08)]"
+                dangerouslySetInnerHTML={{ __html: svgContent }}
+            />
             {caption && <p className="mt-4 text-sm text-slate-500 font-medium text-center">{getText(caption, language)}</p>}
         </div>
     );
@@ -471,7 +655,7 @@ const BlockRenderer: React.FC<{ block: LocalizedDocBlock; language: 'en' | 'jp' 
                ${block.style === 'lead' ? 'text-xl font-light text-slate-600 mb-8' : 'text-base'}
                ${block.style === 'quote' ? 'font-serif text-lg italic text-slate-600 border-l-4 border-slate-200 pl-4 py-1' : ''}
             `}>
-                    {getText(block.text, language)}
+                    <GlossaryText text={getText(block.text, language)} />
                 </p>
             );
 
@@ -507,10 +691,14 @@ const BlockRenderer: React.FC<{ block: LocalizedDocBlock; language: 'en' | 'jp' 
                 <div className={`my-8 p-6 rounded-xl border ${style.bg} ${style.border} flex gap-4`}>
                     <div className={`mt-0.5 shrink-0 ${style.iconColor}`}><Icon size={20} /></div>
                     <div>
-                        {block.title && <h4 className={`font-bold text-sm uppercase tracking-wide mb-2 ${style.text} opacity-80`}>{getText(block.title, language)}</h4>}
+                        {block.title && (
+                            <h4 className={`font-bold text-sm uppercase tracking-wide mb-2 ${style.text} opacity-80`}>
+                                <GlossaryText text={getText(block.title, language)} />
+                            </h4>
+                        )}
                         {block.text && (
                             <p className={`text-sm leading-relaxed ${style.text}`}>
-                                {getText(block.text, language)}
+                                <GlossaryText text={getText(block.text, language)} />
                             </p>
                         )}
                     </div>
@@ -520,13 +708,42 @@ const BlockRenderer: React.FC<{ block: LocalizedDocBlock; language: 'en' | 'jp' 
         case 'list':
             if (!block.items || !Array.isArray(block.items)) return null;
             const listBlock = block as any;
-            const isNumbered = listBlock.style === 'number' || listBlock.listStyle === 'number';
+            const listStyle = listBlock.style || listBlock.listStyle || 'bullet';
+            const isNumbered = listStyle === 'number';
+            const isKeyed = listStyle === 'key';
+            const renderListItem = (item: LocalizedText) => {
+                const text = getText(item, language);
+                if (!isKeyed) return <GlossaryText text={text} />;
+                const match = text.match(/^(.+?)([:：])(.*)$/);
+                if (!match) return <GlossaryText text={text} />;
+                const label = match[1].trim();
+                const separator = match[2];
+                const rest = match[3].trim();
+                const spacer = separator === '：' ? '' : ' ';
+                return (
+                    <span>
+                        <span className="font-semibold underline decoration-amber-300 decoration-2 underline-offset-4">
+                            <GlossaryText text={`${label}${separator}`} />
+                        </span>
+                        {rest ? (
+                            <span>
+                                {spacer}
+                                <GlossaryText text={rest} />
+                            </span>
+                        ) : null}
+                    </span>
+                );
+            };
             return (
                 <ul className={`my-6 space-y-3 ${isNumbered ? 'list-decimal pl-5' : ''}`}>
                     {block.items.map((item, i) => (
                         <li key={i} className="flex gap-3 text-slate-700 leading-relaxed group">
-                            {!isNumbered && <span className="mt-2 w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0 group-hover:scale-125 transition-transform" />}
-                            <span>{getText(item, language)}</span>
+                            {!isNumbered && (
+                                <span
+                                    className={`mt-2 shrink-0 transition-transform ${isKeyed ? 'w-1 h-5 rounded bg-amber-300/80' : 'w-1.5 h-1.5 rounded-full bg-purple-400 group-hover:scale-125'}`}
+                                />
+                            )}
+                            {renderListItem(item)}
                         </li>
                     ))}
                 </ul>
@@ -544,7 +761,7 @@ const BlockRenderer: React.FC<{ block: LocalizedDocBlock; language: 'en' | 'jp' 
                             <tr className="bg-slate-50">
                                 {block.headers.map((header, i) => (
                                     <th key={i} className="px-4 py-3 text-left text-sm font-bold text-slate-700 border-b border-slate-200">
-                                        {getText(header, language)}
+                                        <GlossaryText text={getText(header, language)} />
                                     </th>
                                 ))}
                             </tr>
@@ -554,7 +771,7 @@ const BlockRenderer: React.FC<{ block: LocalizedDocBlock; language: 'en' | 'jp' 
                                 <tr key={ri} className="hover:bg-slate-50">
                                     {row.map((cell, ci) => (
                                         <td key={ci} className="px-4 py-3 text-sm text-slate-600 border-b border-slate-100">
-                                            {getText(cell, language)}
+                                            <GlossaryText text={getText(cell, language)} />
                                         </td>
                                     ))}
                                 </tr>
@@ -599,7 +816,9 @@ const MindMapNode: React.FC<{
         `}
             >
                 <div className="flex items-center justify-between gap-4">
-                    <span className={`font-bold ${isRoot ? 'text-lg' : 'text-sm'}`}>{getText(node.text, language)}</span>
+                    <span className={`font-bold ${isRoot ? 'text-lg' : 'text-sm'}`}>
+                        <GlossaryText text={getText(node.text, language)} />
+                    </span>
                     {node.children && (
                         <div className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
                             <ChevronDown size={16} className={isRoot ? 'text-white/70' : 'text-slate-400'} />
@@ -609,7 +828,7 @@ const MindMapNode: React.FC<{
 
                 {isOpen && node.details && (
                     <div className={`mt-2 text-xs leading-relaxed ${isRoot ? 'text-purple-100' : 'text-slate-500'}`}>
-                        {getText(node.details, language)}
+                        <GlossaryText text={getText(node.details, language)} />
                     </div>
                 )}
 

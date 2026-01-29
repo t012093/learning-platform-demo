@@ -5,6 +5,21 @@ import { Brain, MessageCircle, X, Maximize2, Minimize2, ChevronDown } from 'luci
 import { createChatSession, sendMessageStream } from '../../services/geminiService';
 import { Chat } from "@google/genai";
 import { useLanguage } from '../../context/LanguageContext';
+import ReactMarkdown from 'react-markdown';
+
+const markdownComponents = {
+    h1: ({ ...props }: React.HTMLAttributes<HTMLHeadingElement>) => <h1 className="text-base font-bold text-slate-900 my-2" {...props} />,
+    h2: ({ ...props }: React.HTMLAttributes<HTMLHeadingElement>) => <h2 className="text-sm font-bold text-slate-900 my-2" {...props} />,
+    h3: ({ ...props }: React.HTMLAttributes<HTMLHeadingElement>) => <h3 className="text-sm font-semibold text-slate-800 my-2" {...props} />,
+    p: ({ ...props }: React.HTMLAttributes<HTMLParagraphElement>) => <p className="my-2 leading-relaxed" {...props} />,
+    ul: ({ ...props }: React.HTMLAttributes<HTMLUListElement>) => <ul className="list-disc pl-5 my-2 space-y-1" {...props} />,
+    ol: ({ ...props }: React.HTMLAttributes<HTMLOListElement>) => <ol className="list-decimal pl-5 my-2 space-y-1" {...props} />,
+    li: ({ ...props }: React.HTMLAttributes<HTMLLIElement>) => <li className="leading-relaxed" {...props} />,
+    strong: ({ ...props }: React.HTMLAttributes<HTMLElement>) => <strong className="font-semibold text-slate-900" {...props} />,
+    em: ({ ...props }: React.HTMLAttributes<HTMLElement>) => <em className="italic text-slate-700" {...props} />,
+    code: ({ ...props }: React.HTMLAttributes<HTMLElement>) => <code className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 text-[12px] font-mono" {...props} />,
+    blockquote: ({ ...props }: React.HTMLAttributes<HTMLQuoteElement>) => <blockquote className="border-l-2 border-slate-200 pl-3 text-slate-600 my-2" {...props} />
+};
 
 const SYSTEM_PROMPTS = {
     en: `You are Lumina Concierge, a helpful AI tutor for Unity, Code, and Design.
@@ -158,7 +173,15 @@ export const FloatingChatbot: React.FC = () => {
                                 ? 'bg-indigo-600 text-white rounded-br-none' 
                                 : 'bg-white text-slate-700 border border-slate-100 shadow-sm rounded-bl-none'}
                         `}>
-                            {msg.text}
+                            {msg.role === 'model' ? (
+                                <div className="prose prose-sm prose-slate max-w-none">
+                                    <ReactMarkdown components={markdownComponents}>
+                                        {msg.text || ''}
+                                    </ReactMarkdown>
+                                </div>
+                            ) : (
+                                <p className="whitespace-pre-wrap">{msg.text}</p>
+                            )}
                         </div>
                     </div>
                 ))}

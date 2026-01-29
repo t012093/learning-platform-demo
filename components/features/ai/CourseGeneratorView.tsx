@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Sparkles, Zap, BrainCircuit, Loader2, Brain, CheckCircle, ArrowRight, Send, Infinity, User, Bot, RefreshCw, ThumbsUp, ThumbsDown, Paperclip, X as CloseIcon } from 'lucide-react';
+import { ArrowLeft, Sparkles, Zap, BrainCircuit, Loader2, Brain, CheckCircle, ArrowRight, Send, Infinity, User, Bot, RefreshCw, ThumbsUp, ThumbsDown, Paperclip, X as CloseIcon, Palette } from 'lucide-react';
 import { GeneratedCourse, ViewState, Message } from '../../../types';
 import { useTheme } from '../../../context/ThemeContext';
 import { useLanguage } from '../../../context/LanguageContext';
 import { sendAiChat, sendAiDecision, fetchGeneratedCourseById, uploadFile } from '../../../services/curriculumApi';
+import ReactMarkdown from 'react-markdown';
 
 interface CourseGeneratorViewProps {
   onBack: () => void;
@@ -15,6 +16,7 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
   const { language } = useLanguage();
   const [modelType, setModelType] = useState<'standard' | 'pro' | 'gemini-2.5-flash' | 'gemini-2.5-pro'>('gemini-2.5-flash');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [activeLogs, setActiveLogs] = useState<{agent: string, message: string, status?: string}[]>([]);
   const [error, setError] = useState<string | null>(null);
   
   // V2 Flow State
@@ -65,7 +67,11 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
       statusRoadmap: 'ロードマップ作成中',
       statusCurriculum: 'カリキュラム構築中',
       doneTitle: '完成しました！',
-      doneMessage: 'あなた専用のコースが生成・保存されました。'
+      doneMessage: 'あなた専用のコースが生成・保存されました。',
+      demoPromptPython: 'AI開発のためのPython入門を学びたい',
+      demoPromptArt: '美術史の変遷について体系的に学びたい',
+      demoPromptUnity: 'AIを活用したUnityゲーム開発をマスターしたい',
+      demoCta: 'デモを開始'
     }
   } as const;
 
@@ -75,6 +81,16 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const animateLogs = async (logs: any[]) => {
+    setActiveLogs([]);
+    if (!logs || logs.length === 0) return;
+    
+    for (const log of logs) {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        setActiveLogs(prev => [...prev, log]);
+    }
+  };
 
   useEffect(() => {
     setMessages([
@@ -109,6 +125,7 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
     setMessages(prev => [...prev, userMsg]);
     setInputValue('');
     setIsGenerating(true);
+    setActiveLogs([]); 
     setError(null);
 
     try {
@@ -126,7 +143,7 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
             response = await sendAiChat(msgText, sessionId || undefined, attachments);
         }
 
-        handleApiResponse(response);
+        await handleApiResponse(response);
 
     } catch (err) {
         console.error("Chat failed:", err);
@@ -136,18 +153,16 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
   };
 
   const handleApprove = async () => {
-    console.log("Handle Approve Clicked:", { curriculumId, sessionId, pendingApproval });
-    
     if (!curriculumId || !sessionId || !pendingApproval) {
-        console.error("Missing state for approval");
-        setError(`Internal Error: Missing ID (${curriculumId ? 'OK' : 'Missing Course'}, ${sessionId ? 'OK' : 'Missing Session'}). Please reset chat.`);
+        setError(`Missing session state. Please reset chat.`);
         return;
     }
     
     setIsGenerating(true);
+    setActiveLogs([]); 
     try {
         const response = await sendAiDecision(curriculumId, sessionId, pendingApproval, 'approved');
-        handleApiResponse(response);
+        await handleApiResponse(response);
     } catch (err) {
         console.error("Approval Error:", err);
         setError(t.errorChat);
@@ -159,6 +174,12 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
       if (data.session_id) setSessionId(data.session_id);
       if (data.curriculum_id) setCurriculumId(data.curriculum_id);
       
+      // Animate logs if present
+      if (data.agent_logs) {
+          await animateLogs(data.agent_logs);
+          await new Promise(resolve => setTimeout(resolve, 600));
+      }
+
       setPendingApproval(data.pending_approval);
 
       if (data.message) {
@@ -174,16 +195,114 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
       setIsGenerating(false);
 
       if (data.status === 'approved') {
-          // Use response ID or fallback to state ID
           const targetId = data.curriculum_id || curriculumId;
           if (targetId) {
               const fullCourse = await fetchGeneratedCourseById(targetId);
               onCourseGenerated(fullCourse);
-          } else {
-              console.error("Missing Curriculum ID for final fetch");
-              setError("完了しましたが、コースIDが見つかりませんでした。ライブラリを確認してください。");
           }
       }
+  };
+
+  const getPlainText = (node: React.ReactNode): string => {
+    if (node === null || node === undefined || typeof node === 'boolean') return '';
+    if (typeof node === 'string' || typeof node === 'number') return String(node);
+    if (Array.isArray(node)) return node.map(getPlainText).join('');
+    if (React.isValidElement(node)) return getPlainText(node.props.children);
+    return '';
+  };
+
+  const renderModuleHeaderIfNeeded = (children: React.ReactNode) => {
+    const text = getPlainText(children).replace(/\s+/g, ' ').trim();
+    if (!text) return null;
+    if (!/module/i.test(text) && !/モジュール/.test(text)) return null;
+
+    const normalized = text
+      .replace(/^Module\s*\d+\s*:\s*/i, '')
+      .replace(/^\d+\s*:\s*/i, '')
+      .replace(/^Module\s*:/i, '')
+      .replace(/^Module\s*/i, '')
+      .replace(/^モジュール\s*\d+\s*:\s*/i, '')
+      .replace(/^モジュール\s*:/i, '')
+      .replace(/^モジュール\s*/i, '')
+      .trim();
+
+    return (
+      <div className="mt-4 rounded-2xl border border-indigo-100 bg-indigo-50/60 px-4 py-3 shadow-sm">
+        <div className="text-[11px] uppercase tracking-[0.3em] text-indigo-500 font-bold mb-1">Module</div>
+        <div className="text-sm font-semibold text-slate-800">{normalized}</div>
+      </div>
+    );
+  };
+
+  const renderRoadmapList = (children: React.ReactNode, getStep?: () => number) => {
+    const items = React.Children.toArray(children).filter(
+      (child) => React.isValidElement(child) && child.type === 'li'
+    ) as React.ReactElement[];
+    const normalized = items
+      .map((item) => {
+        const content = item.props.children;
+        const text = getPlainText(content).replace(/\s+/g, ' ').trim();
+        return text ? { content, text } : null;
+      })
+      .filter(Boolean) as Array<{ content: React.ReactNode; text: string }>;
+
+    if (!normalized.length) return null;
+
+    return (
+      <div className="relative mt-4 space-y-4 pl-2">
+        <div className="absolute left-3 top-2 bottom-2 w-px bg-indigo-100" />
+        {normalized.map((item, index) => {
+          const stepNumber = getStep ? getStep() : index + 1;
+          return (
+          <div key={index} className="relative flex items-start gap-4">
+            <div className="relative z-10 h-7 w-7 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center shadow-md">
+              {stepNumber}
+            </div>
+            <div className="flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+              <div className="text-sm text-slate-700 leading-relaxed">{item.content}</div>
+            </div>
+          </div>
+        )})}
+      </div>
+    );
+  };
+
+  const renderCardList = (children: React.ReactNode) => {
+    const items = React.Children.toArray(children).filter(
+      (child) => React.isValidElement(child) && child.type === 'li'
+    ) as React.ReactElement[];
+
+    if (!items.length) return null;
+
+    return (
+      <div className="mt-3 space-y-2">
+        {items.map((item, index) => (
+          <div key={index} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 px-3 py-2">
+            <span className="mt-2 h-2 w-2 rounded-full bg-indigo-400" />
+            <div className="text-sm text-slate-700 leading-relaxed">{item.props.children}</div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderCurriculumList = (children: React.ReactNode) => {
+    const items = React.Children.toArray(children).filter(
+      (child) => React.isValidElement(child) && child.type === 'li'
+    ) as React.ReactElement[];
+
+    if (!items.length) return null;
+
+    return (
+      <div className="mt-3 space-y-2">
+        {items.map((item, index) => (
+          <div key={index} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
+            <CheckCircle size={16} className="mt-0.5 text-emerald-500" />
+            <div className="text-sm text-slate-700 leading-relaxed">{item.props.children}</div>
+          </div>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -220,6 +339,40 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
           <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
             <div className="flex-1 flex flex-col min-w-0 bg-slate-50/30">
                 <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6">
+                    {/* Demo Starter Grid */}
+                    {messages.length === 1 && !isGenerating && (
+                        <div className="flex flex-col items-center justify-center h-full space-y-6 animate-in fade-in zoom-in duration-500">
+                            <div className="text-center max-w-lg">
+                                <p className="text-slate-600 text-sm mb-8 font-medium">
+                                    {language === 'jp' 
+                                        ? '学習したいテーマを選択して、AIエージェントによるカリキュラム生成プロセスを体験してください。' 
+                                        : 'Choose a topic to see how AI agents collaborate to build your curriculum.'}
+                                </p>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    {[
+                                        { id: 'python', prompt: t.demoPromptPython, icon: <Zap size={18} />, color: 'border-blue-500 text-blue-600', label: 'Python 入門' },
+                                        { id: 'art', prompt: t.demoPromptArt, icon: <Palette size={18} />, color: 'border-orange-500 text-orange-600', label: '美術史' },
+                                        { id: 'unity', prompt: t.demoPromptUnity, icon: <Brain size={18} />, color: 'border-indigo-500 text-indigo-600', label: 'Unity開発' }
+                                    ].map((demo) => (
+                                        <button
+                                            key={demo.id}
+                                            onClick={() => {
+                                                setInputValue(demo.prompt);
+                                                setTimeout(() => handleSendMessage(demo.prompt), 100);
+                                            }}
+                                            className={`flex flex-col items-center gap-3 p-6 bg-white border-2 ${demo.color} hover:bg-slate-50 rounded-2xl transition-all active:scale-95 shadow-md shadow-slate-100 group`}
+                                        >
+                                            <div className="p-3 rounded-xl bg-slate-50 group-hover:bg-white transition-colors">
+                                                {demo.icon}
+                                            </div>
+                                            <span className="text-xs font-black uppercase tracking-wider">{demo.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Error Banner */}
                     {error && (
                         <div className="mx-14 mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
@@ -231,20 +384,144 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
                         </div>
                     )}
                     
-                    {messages.map((msg) => (
+                    {messages.map((msg) => {
+                        const text = msg.text || '';
+                        const isRoadmapMessage = msg.role === 'model' && /(ロードマップ案|学習ロードマップ|Roadmap)/i.test(text);
+                        const isCurriculumMessage = msg.role === 'model' && /(カリキュラム詳細|詳細コンテンツ|Curriculum Details|カリキュラムを確定)/i.test(text);
+                        const roadmapLabel = language === 'jp' ? 'ロードマップ' : 'Roadmap';
+                        const curriculumLabel = language === 'jp' ? 'カリキュラム詳細' : 'Curriculum';
+                        let roadmapStep = 0;
+                        const nextRoadmapStep = () => {
+                          roadmapStep += 1;
+                          return roadmapStep;
+                        };
+                        return (
                         <div key={msg.id} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
                             <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${msg.role === 'user' ? 'bg-slate-900 text-white' : 'bg-white text-indigo-600 border border-indigo-50'}`}>
                                 {msg.role === 'user' ? <User size={20} /> : <Bot size={20} />}
                             </div>
-                            <div className={`max-w-[80%] p-4 rounded-3xl text-sm leading-relaxed shadow-sm whitespace-pre-wrap ${ 
-                                msg.role === 'user' 
-                                ? 'bg-indigo-600 text-white rounded-tr-none' 
-                                : 'bg-white text-slate-700 border border-slate-100 rounded-tl-none'
-                            }`}>
-                                {msg.text}
+                            <div
+                              className={`max-w-[80%] p-4 rounded-3xl text-sm leading-relaxed shadow-sm ${
+                                msg.role === 'user'
+                                  ? 'bg-indigo-600 text-white rounded-tr-none whitespace-pre-wrap'
+                                  : `bg-white text-slate-700 border border-slate-100 rounded-tl-none ${
+                                      isRoadmapMessage ? 'ring-1 ring-indigo-200/60 shadow-indigo-100/40' : isCurriculumMessage ? 'ring-1 ring-emerald-200/60 shadow-emerald-100/40' : ''
+                                    }`
+                              }`}
+                            >
+                              {msg.role === 'user' ? (
+                                msg.text
+                              ) : (
+                                <>
+                                  {(isRoadmapMessage || isCurriculumMessage) && (
+                                    <div className={`mb-3 inline-flex items-center gap-2 rounded-full text-[11px] font-bold uppercase tracking-widest px-3 py-1 ${
+                                      isRoadmapMessage ? 'bg-indigo-50 text-indigo-600' : 'bg-emerald-50 text-emerald-600'
+                                    }`}>
+                                      <Sparkles size={12} />
+                                      {isRoadmapMessage ? roadmapLabel : curriculumLabel}
+                                    </div>
+                                  )}
+                                <ReactMarkdown
+                                  components={{
+                                    h1: ({ children }) => {
+                                      const heading = getPlainText(children).trim();
+                                      if (!heading) return null;
+                                      if (/^(ロードマップ|Roadmap|カリキュラム|Curriculum|Module|モジュール)$/i.test(heading)) return null;
+                                      return (
+                                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-widest mb-3">
+                                          {children}
+                                        </div>
+                                      );
+                                    },
+                                    h2: ({ children }) => {
+                                      const heading = getPlainText(children).trim();
+                                      if (!heading) return null;
+                                      if (/^(ロードマップ|Roadmap|カリキュラム|Curriculum|Module|モジュール)$/i.test(heading)) return null;
+                                      return (
+                                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-widest mb-3">
+                                          {children}
+                                        </div>
+                                      );
+                                    },
+                                    h3: ({ children }) => {
+                                      const heading = getPlainText(children).trim();
+                                      if (!heading) return null;
+                                      if (/^(ロードマップ|Roadmap|カリキュラム|Curriculum|Module|モジュール)$/i.test(heading)) return null;
+                                      return (
+                                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-widest mb-3">
+                                          {children}
+                                        </div>
+                                      );
+                                    },
+                                    p: ({ children }) => (
+                                      <p className="text-sm text-slate-700 leading-relaxed mb-2 last:mb-0">
+                                        {children}
+                                      </p>
+                                    ),
+                                    strong: ({ children }) => {
+                                      const moduleHeader = (isRoadmapMessage || isCurriculumMessage) ? renderModuleHeaderIfNeeded(children) : null;
+                                      if (moduleHeader) return moduleHeader;
+                                      return (
+                                        <strong className="inline-flex items-center gap-1 text-slate-900 font-semibold">
+                                          <span className="text-indigo-500">【</span>
+                                          <span>{children}</span>
+                                          <span className="text-indigo-500">】</span>
+                                        </strong>
+                                      );
+                                    },
+                                    em: ({ children }) => (
+                                      <em className="text-slate-600 italic">{children}</em>
+                                    ),
+                                    ul: ({ children }) =>
+                                      isRoadmapMessage
+                                        ? renderRoadmapList(children, nextRoadmapStep) || (
+                                            <div className="mt-3 space-y-2">{children}</div>
+                                          )
+                                        : isCurriculumMessage
+                                          ? renderCurriculumList(children) || (
+                                              <div className="mt-3 space-y-2">{children}</div>
+                                            )
+                                          : renderCardList(children) || (
+                                            <div className="mt-3 space-y-2">{children}</div>
+                                          ),
+                                    ol: ({ children }) =>
+                                      isRoadmapMessage
+                                        ? renderRoadmapList(children, nextRoadmapStep) || (
+                                            <div className="mt-3 space-y-2">{children}</div>
+                                          )
+                                        : isCurriculumMessage
+                                          ? renderCurriculumList(children) || (
+                                              <div className="mt-3 space-y-2">{children}</div>
+                                            )
+                                          : renderCardList(children) || (
+                                            <div className="mt-3 space-y-2">{children}</div>
+                                          ),
+                                    hr: () => (
+                                      <div className="my-4 h-px w-full bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
+                                    ),
+                                    code: ({ inline, children }) => (
+                                      <code
+                                        className={`rounded px-1.5 py-0.5 text-xs font-semibold ${
+                                          inline ? 'bg-slate-100 text-slate-700' : 'bg-slate-900 text-slate-100'
+                                        }`}
+                                      >
+                                        {children}
+                                      </code>
+                                    ),
+                                    blockquote: ({ children }) => (
+                                      <div className="mt-3 border-l-4 border-indigo-200 bg-indigo-50/50 text-slate-700 px-3 py-2 rounded-r-xl">
+                                        {children}
+                                      </div>
+                                    )
+                                  }}
+                                >
+                                  {msg.text}
+                                </ReactMarkdown>
+                                </>
+                              )}
                             </div>
                         </div>
-                    ))}
+                    )})}
                     
                     {!isGenerating && pendingApproval && pendingApproval !== 'none' && (
                         <div className="mx-14 mb-6 animate-in fade-in zoom-in duration-300">
@@ -279,15 +556,32 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
                     )}
 
                     {isGenerating && (
-                        <div className="flex gap-4 animate-pulse mx-4">
-                            <div className="w-10 h-10 rounded-2xl bg-white border border-indigo-50 flex items-center justify-center text-indigo-400">
-                                <Bot size={20} />
+                        <div className="flex flex-col gap-4 mx-4">
+                            <div className="flex gap-4 animate-pulse">
+                                <div className="w-10 h-10 rounded-2xl bg-white border border-indigo-50 flex items-center justify-center text-indigo-400">
+                                    <Bot size={20} />
+                                </div>
+                                <div className="bg-white p-4 rounded-3xl rounded-tl-none border border-slate-100 flex gap-1 items-center shadow-sm">
+                                    <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></div>
+                                    <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce delay-75"></div>
+                                    <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce delay-150"></div>
+                                    <span className="ml-2 text-xs text-slate-400 font-medium">{t.generating}</span>
+                                </div>
                             </div>
-                            <div className="bg-white p-4 rounded-3xl rounded-tl-none border border-slate-100 flex gap-1 items-center">
-                                <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></div>
-                                <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce delay-75"></div>
-                                <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce delay-150"></div>
-                                <span className="ml-2 text-xs text-slate-400 font-medium">{t.generating}</span>
+
+                            {/* Agent Logs Animation */}
+                            <div className="ml-14 space-y-2">
+                                {activeLogs.map((log, idx) => (
+                                    <div key={idx} className="flex items-center gap-3 animate-in fade-in slide-in-from-left-2 duration-500">
+                                        <div className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                                            {log.agent}
+                                        </div>
+                                        <div className="text-[11px] text-slate-500 font-medium">
+                                            {log.message}
+                                        </div>
+                                        <div className="w-1 h-1 rounded-full bg-emerald-500"></div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     )}

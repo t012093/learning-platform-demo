@@ -1,15 +1,36 @@
 import React, { useState } from 'react';
 import { Fingerprint, ChevronLeft } from 'lucide-react';
 import { BIG_FIVE_QUESTIONS, RATING_OPTIONS } from './assessmentConstants';
-import { Big5Profile } from '../../../../types';
+import { Big5Profile, LocalizedText } from '../../../../types';
+import { useLanguage } from '../../../../context/LanguageContext';
 
 interface PersonalityAssessmentProps {
   onComplete: (scores: Big5Profile) => void;
 }
 
 const PersonalityAssessment: React.FC<PersonalityAssessmentProps> = ({ onComplete }) => {
+  const { language } = useLanguage();
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
+  const getText = (text: LocalizedText) => text?.[language] || text?.jp || '';
+
+  const t = {
+    en: {
+      query: 'QUESTION',
+      analyzing: 'Analyzing identity...',
+      negative: 'Negative Response',
+      positive: 'Positive Response',
+      back: 'BACK'
+    },
+    jp: {
+      query: '質問',
+      analyzing: '分析中...',
+      negative: '否定寄り',
+      positive: '肯定寄り',
+      back: '戻る'
+    }
+  } as const;
+  const labels = t[language];
 
   const handleAnswer = (value: number) => {
     const newAnswers = { ...answers, [BIG_FIVE_QUESTIONS[currentIdx].id]: value };
@@ -55,12 +76,12 @@ const PersonalityAssessment: React.FC<PersonalityAssessmentProps> = ({ onComplet
         <div className="flex justify-between items-center mb-8">
           <div className="px-4 py-1.5 bg-indigo-50 rounded-full">
             <span className="text-indigo-600 font-bold text-sm tracking-widest">
-              QUERY {String(currentIdx + 1).padStart(2, '0')} / {BIG_FIVE_QUESTIONS.length}
+              {labels.query} {String(currentIdx + 1).padStart(2, '0')} / {BIG_FIVE_QUESTIONS.length}
             </span>
           </div>
           <div className="flex items-center space-x-2 text-slate-400">
             <Fingerprint className="w-4 h-4 animate-pulse" />
-            <span className="text-[10px] uppercase font-bold tracking-tighter">Analyzing identity...</span>
+            <span className="text-[10px] uppercase font-bold tracking-tighter">{labels.analyzing}</span>
           </div>
         </div>
 
@@ -73,7 +94,7 @@ const PersonalityAssessment: React.FC<PersonalityAssessmentProps> = ({ onComplet
 
         <div className="min-h-[140px] flex items-center justify-center mb-16">
           <h2 className="text-2xl font-bold text-slate-800 text-center leading-relaxed max-w-xl">
-            {currentQuestion.text}
+            {getText(currentQuestion.text)}
           </h2>
         </div>
 
@@ -88,14 +109,14 @@ const PersonalityAssessment: React.FC<PersonalityAssessmentProps> = ({ onComplet
                   ${option.color} flex items-center justify-center
                   border-2 border-transparent hover:border-white
                 `}
-                aria-label={option.label}
+                aria-label={getText(option.label)}
               >
                 <div className="opacity-0 group-hover:opacity-100 transition-opacity text-white text-[10px] font-bold">
                   {option.value}
                 </div>
               </button>
               <span className="mt-4 text-[10px] sm:text-xs font-bold text-slate-400 group-hover:text-indigo-600 transition-colors opacity-0 group-hover:opacity-100 absolute top-full whitespace-nowrap pt-2">
-                {option.label}
+                {getText(option.label)}
               </span>
             </div>
           ))}
@@ -103,8 +124,8 @@ const PersonalityAssessment: React.FC<PersonalityAssessmentProps> = ({ onComplet
         
         {/* 指導線 */}
         <div className="flex justify-between mt-12 px-2 sm:px-8 border-t border-slate-50 pt-8">
-          <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Negative Response</span>
-          <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Positive Response</span>
+          <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">{labels.negative}</span>
+          <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">{labels.positive}</span>
         </div>
       </div>
 
@@ -115,7 +136,7 @@ const PersonalityAssessment: React.FC<PersonalityAssessmentProps> = ({ onComplet
             className="flex items-center space-x-2 text-slate-400 hover:text-indigo-600 text-xs font-bold transition-all px-4 py-2 rounded-full hover:bg-white/20"
           >
             <ChevronLeft className="w-4 h-4" />
-            <span>BACK</span>
+            <span>{labels.back}</span>
           </button>
         )}
       </div>

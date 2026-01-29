@@ -103,6 +103,7 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
       dashboard: 'Dashboard',
       learningHub: 'Learning Hub',
       aiDiagnosis: 'AI Learning Diagnosis',
+      courseGenerator: 'AI Course Generator',
       luminaLab: 'Design Samples',
       checklist: 'Checklist Page',
       checklistGenerator: 'Checklist Generator',
@@ -123,6 +124,7 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
       dashboard: 'ダッシュボード',
       learningHub: '学習コンテンツ',
       aiDiagnosis: 'AI学習診断',
+      courseGenerator: 'AIカリキュラム生成',
       luminaLab: 'デザインサンプル',
       checklist: 'チェックリストページ',
       checklistGenerator: 'チェックリスト生成',
@@ -148,6 +150,7 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
     { view: ViewState.COURSES, label: t.learningHub, icon: Layers },
 
     { view: ViewState.AI_DIAGNOSIS, label: t.aiDiagnosis, icon: Brain },
+    { view: ViewState.COURSE_GENERATOR, label: t.courseGenerator, icon: MapIcon },
     {
       id: 'lab',
       label: t.luminaLab,

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Wind, Swords, HeartHandshake, Lightbulb, Box, Infinity, Zap, Map, ChevronRight } from 'lucide-react';
 import { AssessmentProfile } from '../../../../types';
+import { useLanguage } from '../../../../context/LanguageContext';
 
 interface IntroSequenceProps {
   profile: AssessmentProfile;
@@ -8,42 +9,79 @@ interface IntroSequenceProps {
 }
 
 const IntroSequence: React.FC<IntroSequenceProps> = ({ profile, onFinish }) => {
+  const { language } = useLanguage();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [contentVisible, setContentVisible] = useState(true);
   const [isExiting, setIsExiting] = useState(false);
 
-  const typeConfigs: Record<string, { icon: React.ReactNode; bg: string; message: string; sub: string }> = {
-    '冒険家': { icon: <Wind className="w-full h-full" />, bg: 'from-orange-400 to-red-500', message: 'あなたは、未知を恐れぬ探求者。', sub: 'あなたの好奇心は、新しい世界を創り出すエネルギーに満ちています。' },
-    '戦略家': { icon: <Swords className="w-full h-full" />, bg: 'from-blue-500 to-indigo-600', message: 'あなたは、盤面を支配する理知の人。', sub: '混沌とした状況から最適解を導き出す、鋭い洞察力を持っています。' },
-    'サポーター': { icon: <HeartHandshake className="w-full h-full" />, bg: 'from-pink-400 to-rose-500', message: 'あなたは、調和をもたらす慈愛の人。', sub: '他者に寄り添い、絆を深めることで、集団に真の強さを与えます。' },
-    '思想家': { icon: <Lightbulb className="w-full h-full" />, bg: 'from-purple-500 to-indigo-700', message: 'あなたは、深淵を覗く哲学者。', sub: '目に見える現象の裏にある本質を、誰よりも深く追求する性質です。' },
-    '職人': { icon: <Box className="w-full h-full" />, bg: 'from-amber-400 to-orange-500', message: 'あなたは、卓越を追求する専門家。', sub: '一つのことを極め、完璧な形にするための執念と技術を持っています。' },
-    'バランサー': { icon: <Infinity className="w-full h-full" />, bg: 'from-green-400 to-emerald-600', message: 'あなたは、自在に適応する柔軟な人。', sub: 'どんな環境でも自分の場所を見つけ、調和を保つことができる希有な才能です。' },
+  const typeConfigs: Record<string, { icon: React.ReactNode; bg: string; display: { en: string; jp: string }; sub: { en: string; jp: string } }> = {
+    '冒険家': { icon: <Wind className="w-full h-full" />, bg: 'from-orange-400 to-red-500', display: { en: 'Explorer', jp: '冒険家' }, sub: { en: 'Your curiosity opens new worlds and possibilities.', jp: 'あなたの好奇心は、新しい世界を創り出すエネルギーに満ちています。' } },
+    '戦略家': { icon: <Swords className="w-full h-full" />, bg: 'from-blue-500 to-indigo-600', display: { en: 'Strategist', jp: '戦略家' }, sub: { en: 'You derive optimal moves from complex situations.', jp: '混沌とした状況から最適解を導き出す、鋭い洞察力を持っています。' } },
+    'サポーター': { icon: <HeartHandshake className="w-full h-full" />, bg: 'from-pink-400 to-rose-500', display: { en: 'Supporter', jp: 'サポーター' }, sub: { en: 'You strengthen teams with empathy and harmony.', jp: '他者に寄り添い、絆を深めることで、集団に真の強さを与えます。' } },
+    '思想家': { icon: <Lightbulb className="w-full h-full" />, bg: 'from-purple-500 to-indigo-700', display: { en: 'Thinker', jp: '思想家' }, sub: { en: 'You seek the essence behind what is seen.', jp: '目に見える現象の裏にある本質を、誰よりも深く追求する性質です。' } },
+    '職人': { icon: <Box className="w-full h-full" />, bg: 'from-amber-400 to-orange-500', display: { en: 'Artisan', jp: '職人' }, sub: { en: 'You pursue excellence with focus and craft.', jp: '一つのことを極め、完璧な形にするための執念と技術を持っています。' } },
+    'バランサー': { icon: <Infinity className="w-full h-full" />, bg: 'from-green-400 to-emerald-600', display: { en: 'Balancer', jp: 'バランサー' }, sub: { en: 'You adapt flexibly and keep balance.', jp: 'どんな環境でも自分の場所を見つけ、調和を保つことができる希有な才能です。' } },
   };
 
   const config = typeConfigs[profile.personalityType] || typeConfigs['バランサー'];
+  const displayName = config.display[language] || profile.personalityType;
+  const configSub = config.sub[language] || config.sub.jp;
+
+  const t = {
+    en: {
+      slideIdentity: 'IDENTITY ARCHETYPE',
+      slideStrength: 'CORE SUPERPOWER',
+      slideGrowth: 'GROWTH STRATEGY',
+      highlightIdentity: 'Core Essence',
+      highlightStrength: 'Signature Strength',
+      highlightGrowth: 'Growth Key',
+      defaultStrengthTitle: 'Focused Drive',
+      defaultStrengthBody: 'Your strongest capability has emerged.',
+      defaultPlanTitle: 'Efficient Learning Plan',
+      defaultPlanBody: 'We will propose a learning plan optimized for you.',
+      skip: 'Skip to results'
+    },
+    jp: {
+      slideIdentity: 'IDENTITY ARCHETYPE',
+      slideStrength: 'CORE SUPERPOWER',
+      slideGrowth: 'GROWTH STRATEGY',
+      highlightIdentity: '本質の特定',
+      highlightStrength: '際立つ強み',
+      highlightGrowth: '進化の鍵',
+      defaultStrengthTitle: '卓越した集中力',
+      defaultStrengthBody: 'あなたの最大の武器が明らかになりました。',
+      defaultPlanTitle: '効率的な学習法',
+      defaultPlanBody: 'あなたに最適な学習プランを提案します。',
+      skip: '結果へスキップ'
+    }
+  } as const;
+  const labels = t[language];
 
   const slides = [
     {
-      label: "IDENTITY ARCHETYPE",
-      title: profile.personalityType,
-      description: config.sub,
+      label: labels.slideIdentity,
+      title: displayName,
+      description: configSub,
       icon: config.icon,
-      highlight: "本質の特定"
+      highlight: labels.highlightIdentity
     },
     {
-      label: "CORE SUPERPOWER",
-      title: profile.aiAdvice?.strengths[0]?.title || "卓越した集中力",
-      description: profile.aiAdvice?.strengths[0]?.description || "あなたの最大の武器が明らかになりました。",
+      label: labels.slideStrength,
+      title: profile.aiAdvice?.strengths?.[0]?.title || labels.defaultStrengthTitle,
+      description: profile.aiAdvice?.strengths?.[0]?.description || labels.defaultStrengthBody,
       icon: <Zap className="w-full h-full" />,
-      highlight: "際立つ強み"
+      highlight: labels.highlightStrength
     },
     {
-      label: "GROWTH STRATEGY",
-      title: profile.aiAdvice?.learningStrategy?.title || "効率的な学習法",
-      description: profile.aiAdvice?.learningStrategy?.approach ? `「${profile.aiAdvice.learningStrategy.approach}」を軸に成長を加速させましょう。` : "あなたに最適な学習プランを提案します。",
+      label: labels.slideGrowth,
+      title: profile.aiAdvice?.learningStrategy?.title || labels.defaultPlanTitle,
+      description: profile.aiAdvice?.learningStrategy?.approach
+        ? (language === 'jp'
+            ? `「${profile.aiAdvice.learningStrategy.approach}」を軸に成長を加速させましょう。`
+            : `Accelerate growth by focusing on “${profile.aiAdvice.learningStrategy.approach}”.`)
+        : labels.defaultPlanBody,
       icon: <Map className="w-full h-full" />,
-      highlight: "進化の鍵"
+      highlight: labels.highlightGrowth
     }
   ];
 
@@ -59,8 +97,8 @@ const IntroSequence: React.FC<IntroSequenceProps> = ({ profile, onFinish }) => {
           setIsExiting(true);
           setTimeout(onFinish, 1000);
         }
-      }, 800);
-    }, 5000);
+      }, 400);
+    }, 2500);
 
     return () => clearInterval(timer);
   }, [currentSlide, slides.length, onFinish]);
@@ -111,7 +149,7 @@ const IntroSequence: React.FC<IntroSequenceProps> = ({ profile, onFinish }) => {
         }}
         className="absolute bottom-10 right-10 flex items-center space-x-3 text-white/60 hover:text-white transition-all group"
       >
-        <span className="text-[10px] font-black uppercase tracking-[0.3em]">Skip to results</span>
+        <span className="text-[10px] font-black uppercase tracking-[0.3em]">{labels.skip}</span>
         <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center group-hover:bg-white/10">
           <ChevronRight className="w-4 h-4" />
         </div>

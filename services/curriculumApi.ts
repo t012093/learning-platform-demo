@@ -2,6 +2,7 @@ import { Course, GeneratedCourse } from '../types';
 import { isVibeCodingCurriculum, mapVibeCodingToGeneratedCourse } from './vibeCodingAdapter';
 
 const API_BASE = '/api/v2';
+const USE_DEMO_MODE = true; // Toggle this for demo animation
 
 type CurriculumListResponse = {
   ok: boolean;
@@ -14,6 +15,45 @@ type CurriculumDetailResponse = {
   curriculum?: any;
   course?: any; // content_json
   error?: string;
+};
+
+// --- DEMO DATA ---
+const DEMO_CURRICULUM_ID = 'demo-curr-001';
+const DEMO_SESSION_ID = 'demo-sess-001';
+
+const DEMO_COURSE_DATA: GeneratedCourse = {
+  id: DEMO_CURRICULUM_ID,
+  title: 'Python for AI Development',
+  description: 'A comprehensive guide to mastering Python for Artificial Intelligence, covering basics to advanced neural networks.',
+  modules: [
+    {
+      title: { en: 'Python Basics', jp: 'Pythonの基礎' },
+      lessons: [
+        { title: { en: 'Variables and Types', jp: '変数とデータ型' }, reading_time: { en: '10 min', jp: '10分' }, type: 'text' },
+        { title: { en: 'Control Flow', jp: '制御構文' }, reading_time: { en: '15 min', jp: '15分' }, type: 'text' }
+      ]
+    },
+    {
+      title: { en: 'Data Science Libraries', jp: 'データサイエンスライブラリ' },
+      lessons: [
+        { title: { en: 'NumPy Essentials', jp: 'NumPyの基本' }, reading_time: { en: '20 min', jp: '20分' }, type: 'text' },
+        { title: { en: 'Pandas for Data Analysis', jp: 'Pandasでのデータ分析' }, reading_time: { en: '25 min', jp: '25分' }, type: 'text' }
+      ]
+    },
+    {
+      title: { en: 'Machine Learning', jp: '機械学習' },
+      lessons: [
+        { title: { en: 'Scikit-Learn Basics', jp: 'Scikit-Learnの基礎' }, reading_time: { en: '30 min', jp: '30分' }, type: 'text' },
+        { title: { en: 'Neural Networks Intro', jp: 'ニューラルネットワーク入門' }, reading_time: { en: '35 min', jp: '35分' }, type: 'text' }
+      ]
+    }
+  ],
+  chapters: [], // Filled by normalization
+  ui_template_id: 'doc_chapter',
+  createdAt: new Date(),
+  duration: '10 hours',
+  modelUsed: 'gemini-2.5-flash',
+  preferredTemplate: 'doc_chapter'
 };
 
 const normalizeGeneratedCourse = (raw: any): GeneratedCourse => {
@@ -141,6 +181,11 @@ export const fetchGeneratedCourses = async (): Promise<Course[]> => {
 };
 
 export const fetchGeneratedCourseById = async (id: string): Promise<GeneratedCourse> => {
+  if (USE_DEMO_MODE && id === DEMO_CURRICULUM_ID) {
+    // Return normalized demo data
+    return normalizeGeneratedCourse(DEMO_COURSE_DATA);
+  }
+
   const response = await fetch(`${API_BASE}/curricula/${id}`);
   if (!response.ok) {
     throw new Error('Failed to load curriculum.');
@@ -171,6 +216,28 @@ export const saveGeneratedCourse = async (course: GeneratedCourse): Promise<void
 // --- V2 AI Chat & Decision ---
 
 export const sendAiChat = async (message: string, sessionId?: string, attachments: any[] = []) => {
+  if (USE_DEMO_MODE) {
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate 2s latency
+
+    // Simulating Initial Response for any input
+    if (!sessionId) {
+      return {
+        session_id: DEMO_SESSION_ID,
+        curriculum_id: DEMO_CURRICULUM_ID,
+        message: "興味深いテーマですね！\n\nご希望に合わせて、以下の要件で学習プランを提案させていただきます。\n\n### 学習要件案\n- **対象レベル**: 初心者からスタート\n- **ゴール**: 実践的なスキルの習得\n- **形式**: 講義とハンズオン\n\nこの方向性で進めてよろしいでしょうか？",
+        pending_approval: 'requirements'
+      };
+    }
+
+    // Default chat fallback in demo
+    return {
+      session_id: sessionId || DEMO_SESSION_ID,
+      curriculum_id: DEMO_CURRICULUM_ID,
+      message: "ありがとうございます。ご要望を取り入れながら調整を進めます。\n\n確認のため、一度現状の内容で承認プロセスに進んでいただけますか？",
+      pending_approval: 'requirements'
+    };
+  }
+
   const response = await fetch(`${API_BASE}/ai/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -184,6 +251,44 @@ export const sendAiChat = async (message: string, sessionId?: string, attachment
 };
 
 export const sendAiDecision = async (curriculumId: string, sessionId: string, stage: string, decision: 'approved' | 'revise', feedbackText?: string) => {
+  if (USE_DEMO_MODE) {
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    if (decision === 'revise') {
+      return {
+        status: 'revised',
+        message: "フィードバックありがとうございます。内容を修正しました。\n再度ご確認ください。",
+        pending_approval: stage
+      };
+    }
+
+    if (stage === 'requirements') {
+      return {
+        session_id: sessionId,
+        curriculum_id: curriculumId,
+        message: "要件を確定しました。\n\n続いて、具体的な学習ロードマップを作成しました。\n\n### ロードマップ案\n1. **基礎編**: 基本概念の理解\n2. **応用編**: ツールとライブラリの活用\n3. **実践編**: プロジェクト制作\n\nこのステップで進めますか？",
+        pending_approval: 'roadmap'
+      };
+    }
+
+    if (stage === 'roadmap') {
+      return {
+        session_id: sessionId,
+        curriculum_id: curriculumId,
+        message: "ロードマップを確定しました。\n\n最後に、各レッスンの詳細内容（カリキュラム）を構築しました。\n\n詳細を確認し、問題なければ最終生成を行ってください。",
+        pending_approval: 'curriculum'
+      };
+    }
+
+    if (stage === 'curriculum') {
+      return {
+        status: 'approved',
+        curriculum_id: curriculumId,
+        message: "承認ありがとうございます。\n\nあなた専用のコースを生成し、ライブラリに保存しました！"
+      };
+    }
+  }
+
   const response = await fetch(`${API_BASE}/ai/curricula/${curriculumId}/decision`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

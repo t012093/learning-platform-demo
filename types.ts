@@ -314,7 +314,7 @@ export interface GeneratedCourse {
   ui_template_id?: string;
 }
 
-export type CourseTemplate = 'focus_slide' | 'workshop_split' | 'dialogue_chat' | 'explore_map';
+export type CourseTemplate = 'focus_slide' | 'workshop_split' | 'dialogue_chat' | 'explore_map' | 'doc_chapter';
 
 // --- Vibe Coding Document Types ---
 

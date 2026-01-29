@@ -1,1 +1,93 @@
-/* Empty index.css to satisfy link tag */
+/* Dashboard animation utilities */
+:root {
+  --dashboard-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@keyframes dashboardFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dashboardFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes dashboardGlow {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes dashboardPop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes dashboardProgress {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--progress);
+  }
+}
+
+.dashboard-fade {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: dashboardFadeUp 0.8s var(--dashboard-ease) forwards;
+}
+
+.dashboard-fade-float {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: dashboardFadeUp 0.8s var(--dashboard-ease) forwards,
+    dashboardFloat 8s ease-in-out infinite;
+}
+
+.dashboard-glow {
+  animation: dashboardGlow 6s ease-in-out infinite;
+}
+
+.dashboard-pop {
+  opacity: 0;
+  animation: dashboardPop 0.5s var(--dashboard-ease) forwards;
+}
+
+.dashboard-progress {
+  width: var(--progress);
+  animation: dashboardProgress 0.9s var(--dashboard-ease) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-fade,
+  .dashboard-fade-float,
+  .dashboard-glow,
+  .dashboard-pop,
+  .dashboard-progress {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    width: var(--progress) !important;
+  }
+}

@@ -57,8 +57,7 @@ You can browse most screens without a key. AI features will prompt for a key whe
 
 ### Prerequisites
 - Node.js (v20+ recommended)
-- Google Cloud / Gemini API Key
-- **PostgreSQL** with **pgvector** extension enabled
+- Google Cloud / Gemini API Key (optional for demo)
 
 ### Installation
 
@@ -71,36 +70,23 @@ You can browse most screens without a key. AI features will prompt for a key whe
 2. **Environment Setup**
    Create a `.env.local` file in the root directory:
    ```env
-   GEMINI_API_KEY=your_api_key_here
    VITE_GEMINI_API_KEY=your_api_key_here
-   DATABASE_URL_PHASE1=postgres://user:password@localhost:5432/lumina_db
    ```
-   - `GEMINI_API_KEY` is used by the backend.
+   - `VITE_GEMINI_API_KEY` is used by the frontend (Vite exposes `VITE_` vars).
+   - `GEMINI_API_KEY` is used by the backend (optional if you run the server).
    - `VITE_GEMINI_API_KEY` is used by the frontend (Vite exposes `VITE_` vars).
    - **Never commit** `.env.local` (already ignored).
 
-3. **Database Setup**
-   Initialize the PostgreSQL database schema and seed initial data.
-   ```bash
-   # 1. Create tables
-   psql -d lumina_db -f doc/ai-curriculum-spec/local_postgres_phase1.sql
-   
-   # 2. Run migration (if needed) & Seed initial courses
-   node scripts/migrate_curricula.js
-   node scripts/seed_full_integrated.js
-   ```
-
-4. **Install Dependencies**
+3. **Install Dependencies**
    ```bash
    npm install
    ```
 
-5. **Run Development Environment**
-   This starts the frontend (Vite) and the backend (Express with LangGraph).
+4. **Run Development Environment**
+   This starts the frontend (Vite).
    ```bash
    npm run dev
    # Frontend: http://localhost:3007
-   # Backend: http://localhost:3006
    ```
 
 ---
@@ -157,6 +143,12 @@ We have successfully migrated to a **LangGraph-based Multi-Agent Backend**.
 - **Keys & secrets**: Use `.env.local` or localStorage; never commit secrets.
 - **Large files**: Avoid committing large binaries (PDFs, datasets) unless agreed.
 - **Demo vs full stack**: UI-only is fine for quick reviews; full stack is needed for AI generation flows.
+
+### Optional: Full Stack (Advanced)
+If you need the full AI generation flow with backend + database, you’ll need:
+- `GEMINI_API_KEY` set in `.env.local`
+- PostgreSQL with `pgvector`
+- DB schema + seed scripts (see `doc/ai-curriculum-spec/local_postgres_phase1.sql` and `scripts/`)
 
 ---
 

@@ -153,8 +153,12 @@ const AppContent: React.FC = () => {
     if (path === '/learning-hub') return ViewState.LEARNING_HUB;
     if (path.startsWith('/courses')) return ViewState.COURSES;
     if (path.startsWith('/generated-course')) return ViewState.GENERATED_COURSE_PATH;
+    if (path.startsWith('/generated-lesson')) return ViewState.GENERATED_LESSON_VIEW;
     if (path.startsWith('/my-content')) return ViewState.MY_CONTENT;
     if (path.startsWith('/profile')) return ViewState.PROFILE;
+    if (path.startsWith('/assessment')) return ViewState.AI_DIAGNOSIS;
+    if (path.startsWith('/course-generator')) return ViewState.COURSE_GENERATOR;
+    if (path.startsWith('/characters') || path.startsWith('/character')) return ViewState.AI_CHARACTERS;
     if (path.startsWith('/blender')) return ViewState.BLENDER;
     if (path.startsWith('/programming')) return ViewState.PROGRAMMING;
     if (path.startsWith('/art')) return ViewState.ART_MUSEUM;

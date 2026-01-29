@@ -987,7 +987,7 @@ export const fetchGeneratedCourses = async (): Promise<Course[]> => {
     const demoItems = [
       { id: PYTHON_DEMO_DATA.id, title: PYTHON_DEMO_DATA.title.jp, desc: PYTHON_DEMO_DATA.description.jp, img: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&q=80&w=800' },
       { id: ART_DEMO_DATA.id, title: ART_DEMO_DATA.title.jp, desc: ART_DEMO_DATA.description.jp, img: 'https://images.unsplash.com/photo-1577720580479-7d839d829c73?auto=format&fit=crop&q=80&w=1000' },
-      { id: UNITY_DEMO_DATA.id, title: UNITY_DEMO_DATA.title.jp, desc: UNITY_DEMO_DATA.description.jp, img: 'https://images.unsplash.com/photo-1596727147705-54a9d0a514d7?auto=format&fit=crop&q=80&w=800' },
+      { id: UNITY_DEMO_DATA.id, title: UNITY_DEMO_DATA.title.jp, desc: UNITY_DEMO_DATA.description.jp, img: 'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?auto=format&fit=crop&q=80&w=800' },
       { id: AI_AGENTS_DEMO_DATA.id, title: AI_AGENTS_DEMO_DATA.title.jp, desc: AI_AGENTS_DEMO_DATA.description.jp, img: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=800' }
     ];
 

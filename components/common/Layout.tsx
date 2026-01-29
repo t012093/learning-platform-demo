@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { ViewState } from '../../types';
 import {
   LayoutDashboard,
@@ -45,6 +46,7 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState<string | null>('lab');
+  const location = useLocation();
   const { theme, setTheme } = useTheme();
   const { language, setLanguage } = useLanguage();
 
@@ -408,7 +410,9 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
       {/* Main Content Area */}
       <main className={`flex-1 overflow-y-auto h-full w-full pt-16 md:pt-0 relative ${styles.main}`}>
         <div className={`h-full ${currentView === ViewState.LESSON || currentView === ViewState.BLENDER_LESSON || currentView === ViewState.GENERATED_LESSON_VIEW ? '' : 'max-w-7xl mx-auto'}`}>
-          {children}
+          <div key={location.pathname} className="page-transition">
+            {children}
+          </div>
         </div>
       </main>
 

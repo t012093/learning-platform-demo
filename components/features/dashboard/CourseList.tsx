@@ -77,57 +77,67 @@ const CourseList: React.FC<CourseListProps> = ({ onSelectCourse }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {courses.map((course) => (
-          <div 
-            key={course.id} 
-            onClick={() => onSelectCourse(course)}
-            className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group cursor-pointer flex flex-col h-full"
-          >
-            <div className="relative h-48 overflow-hidden">
-              <img 
-                src={course.thumbnail} 
-                alt={course.title} 
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        {courses.map((course, index) => {
+          const cardDelay = `${index * 90}ms`;
+          const shimmerDelay = `${index * 90 + 160}ms`;
+          return (
+            <div 
+              key={course.id} 
+              onClick={() => onSelectCourse(course)}
+              className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group cursor-pointer flex flex-col h-full relative course-card-animate"
+              style={{ animationDelay: cardDelay }}
+            >
+              <div
+                className="course-card-shimmer"
+                style={{ animationDelay: shimmerDelay }}
+                aria-hidden="true"
               />
-              <div className="absolute top-4 left-4">
-                <span className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-lg text-xs font-bold text-slate-900 shadow-sm uppercase tracking-wider">
-                  {course.category}
-                </span>
-              </div>
-            </div>
-            
-            <div className="p-5 flex-1 flex flex-col">
-              <h3 className="font-bold text-lg text-slate-900 mb-2">{course.title}</h3>
-              <p className="text-slate-500 text-sm mb-4 flex-1">{course.description}</p>
-              
-              <div className="flex items-center gap-4 text-xs text-slate-500 font-medium mb-4">
-                 <div className="flex items-center gap-1">
-                   <Briefcase size={14} /> 
-                   <span>{course.totalLessons} {t.lessons}</span>
-                 </div>
-              </div>
-
-              {course.progress > 0 ? (
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs font-bold text-slate-700">
-                    <span>{course.progress}% {t.completed}</span>
-                    <span>{course.completedLessons}/{course.totalLessons}</span>
-                  </div>
-                  <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                    <div 
-                      className={`${course.color} h-full rounded-full`} 
-                      style={{ width: `${course.progress}%` }} 
-                    />
-                  </div>
+              <div className="relative h-48 overflow-hidden">
+                <img 
+                  src={course.thumbnail} 
+                  alt={course.title} 
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute top-4 left-4">
+                  <span className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-lg text-xs font-bold text-slate-900 shadow-sm uppercase tracking-wider">
+                    {course.category}
+                  </span>
                 </div>
-              ) : (
-                <button className="w-full py-3 text-center text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors">
-                  {t.startLearning}
-                </button>
-              )}
+              </div>
+              
+              <div className="p-5 flex-1 flex flex-col relative z-10">
+                <h3 className="font-bold text-lg text-slate-900 mb-2">{course.title}</h3>
+                <p className="text-slate-500 text-sm mb-4 flex-1">{course.description}</p>
+                
+                <div className="flex items-center gap-4 text-xs text-slate-500 font-medium mb-4">
+                   <div className="flex items-center gap-1">
+                     <Briefcase size={14} /> 
+                     <span>{course.totalLessons} {t.lessons}</span>
+                   </div>
+                </div>
+
+                {course.progress > 0 ? (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs font-bold text-slate-700">
+                      <span>{course.progress}% {t.completed}</span>
+                      <span>{course.completedLessons}/{course.totalLessons}</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                      <div 
+                        className={`${course.color} h-full rounded-full`} 
+                        style={{ width: `${course.progress}%` }} 
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <button className="w-full py-3 text-center text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors">
+                    {t.startLearning}
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

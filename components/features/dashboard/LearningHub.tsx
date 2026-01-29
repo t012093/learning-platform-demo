@@ -431,7 +431,7 @@ const LearningHub: React.FC<LearningHubProps> = ({ onNavigate }) => {
 
             {/* 3 Column Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {displayPortals.map((portal) => {
+                {displayPortals.map((portal, index) => {
                     const Icon = iconMap[portal.icon] || BookOpen;
                     const subtitle = resolveLocalizedText(portal.subtitle, language);
                     const title = resolveLocalizedText(portal.title, language);
@@ -442,6 +442,8 @@ const LearningHub: React.FC<LearningHubProps> = ({ onNavigate }) => {
                     const iconColor = portal.color || 'text-slate-500';
                     const image = portal.image || '';
                     const portalIndex = orderedPortals.findIndex((item) => item.id === portal.id);
+                    const cardDelay = `${index * 90}ms`;
+                    const shimmerDelay = `${index * 90 + 160}ms`;
 
                     return (
                         <div
@@ -452,12 +454,18 @@ const LearningHub: React.FC<LearningHubProps> = ({ onNavigate }) => {
                                 }
                             }}
                             className={`
-                              group relative bg-white rounded-2xl p-0 cursor-pointer
+                              group relative bg-white rounded-2xl p-0 cursor-pointer portal-card-animate
                               border ${borderColor} shadow-sm hover:shadow-xl hover:-translate-y-1
                               transition-all duration-300 overflow-hidden flex flex-col h-[280px]
                               ${isEditing ? 'cursor-default' : 'cursor-pointer'}
                             `}
+                            style={{ animationDelay: cardDelay }}
                         >
+                            <div
+                                className="portal-card-shimmer"
+                                style={{ animationDelay: shimmerDelay }}
+                                aria-hidden="true"
+                            />
                             {/* Image Header Area (Height 45%) */}
                             <div className="h-[45%] w-full relative overflow-hidden bg-slate-100">
                                 <img
@@ -474,7 +482,7 @@ const LearningHub: React.FC<LearningHubProps> = ({ onNavigate }) => {
                             </div>
 
                             {/* Content Area */}
-                            <div className="flex-1 p-6 relative">
+                            <div className="flex-1 p-6 relative z-10">
                                 {isEditing && (
                                     <div className="flex items-center gap-2 mb-2">
                                         <button

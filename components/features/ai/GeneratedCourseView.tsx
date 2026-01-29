@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Play, Clock, Award, BookOpen, Share2 } from 'lucide-react';
 import { GeneratedCourse, LocalizedText } from '../../../types';
 import { useLanguage } from '../../../context/LanguageContext';
@@ -18,6 +18,9 @@ interface GeneratedCourseViewProps {
 
 const GeneratedCourseView: React.FC<GeneratedCourseViewProps> = ({ course, onBack, onStartLesson }) => {
     const { language } = useLanguage();
+    const [activeChapter, setActiveChapter] = useState<number | null>(null);
+    const [isNavigating, setIsNavigating] = useState(false);
+    const navTimerRef = useRef<number | null>(null);
     console.log("GeneratedCourseView: Rendering with course:", {
         id: course.id,
         title: course.title,
@@ -30,7 +33,7 @@ const GeneratedCourseView: React.FC<GeneratedCourseViewProps> = ({ course, onBac
 
     const copy = {
         en: {
-            back: 'Back to Library',
+            back: 'Back to Courses',
             generatedWith: 'Generated with',
             modelPro: 'Gemini 3.0 Pro',
             modelFlash: 'Gemini 2.0 Flash',
@@ -40,7 +43,7 @@ const GeneratedCourseView: React.FC<GeneratedCourseViewProps> = ({ course, onBac
             completion: 'Completion Certificate'
         },
         jp: {
-            back: 'ライブラリに戻る',
+            back: 'コース一覧に戻る',
             generatedWith: '生成モデル',
             modelPro: 'Gemini 3.0 Pro',
             modelFlash: 'Gemini 2.0 Flash',
@@ -58,9 +61,22 @@ const GeneratedCourseView: React.FC<GeneratedCourseViewProps> = ({ course, onBac
     };
 
     const handleChapterClick = (chapterIndex: number) => {
+        if (isNavigating) return;
         console.log("Chapter clicked:", chapterIndex);
-        onStartLesson(chapterIndex, 0);
+        setActiveChapter(chapterIndex);
+        setIsNavigating(true);
+        navTimerRef.current = window.setTimeout(() => {
+            onStartLesson(chapterIndex, 0);
+        }, 180);
     };
+
+    useEffect(() => {
+        return () => {
+            if (navTimerRef.current) {
+                window.clearTimeout(navTimerRef.current);
+            }
+        };
+    }, []);
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20">
@@ -113,16 +129,19 @@ const GeneratedCourseView: React.FC<GeneratedCourseViewProps> = ({ course, onBac
                             {course.chapters.map((chapter, index) => (
                                 <div
                                     key={chapter.id}
-                                    className="relative flex items-start gap-4 group cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors"
+                                    className={`relative flex items-start gap-4 group cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors path-card ${
+                                        activeChapter === index ? 'path-card-active' : ''
+                                    }`}
                                     onClick={() => handleChapterClick(index)}
                                 >
+                                    <div className="path-card-glow" aria-hidden="true" />
                                     {/* Node */}
                                     <div className="w-12 h-12 rounded-full bg-white border-4 border-indigo-100 flex items-center justify-center relative z-10 shrink-0 shadow-sm group-hover:scale-110 transition-transform group-hover:border-indigo-200">
                                         <span className="text-lg font-bold text-indigo-600">{index + 1}</span>
                                     </div>
 
                                     {/* Content */}
-                                    <div className="flex-1 pt-1.5">
+                                    <div className="flex-1 pt-1.5 relative z-10">
                                         <h3 className="font-bold text-slate-900 text-lg group-hover:text-indigo-700 transition-colors">{getText(chapter.title, language)}</h3>
                                         <div className="flex items-center gap-3 text-sm text-slate-500 mt-1">
                                             <span className="flex items-center gap-1"><Clock size={12} /> {getText(chapter.duration, language) || chapter.duration}</span>
@@ -134,7 +153,7 @@ const GeneratedCourseView: React.FC<GeneratedCourseViewProps> = ({ course, onBac
                                         )}
                                     </div>
 
-                                    <div className="pt-3 text-slate-300 group-hover:text-indigo-400">
+                                    <div className="pt-3 text-slate-300 group-hover:text-indigo-400 transition-transform group-hover:translate-x-1 relative z-10">
                                         <Play size={20} />
                                     </div>
                                 </div>

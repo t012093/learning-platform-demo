@@ -142,6 +142,65 @@
   animation: portalShimmer 1.8s ease-in-out forwards;
 }
 
+@keyframes pathCardPulse {
+  0% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.08);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 16px 32px rgba(79, 70, 229, 0.16);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.08);
+  }
+}
+
+@keyframes pathCardSweep {
+  0% {
+    opacity: 0;
+    background-position: 0% 50%;
+  }
+  35% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    background-position: 100% 50%;
+  }
+}
+
+.path-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.path-card-glow {
+  position: absolute;
+  inset: -1px;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 0.5rem;
+  background: linear-gradient(120deg, rgba(99, 102, 241, 0.25), rgba(56, 189, 248, 0.15), rgba(167, 139, 250, 0.2));
+  background-size: 200% 100%;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.path-card:hover .path-card-glow {
+  opacity: 0.2;
+}
+
+.path-card-active {
+  animation: pathCardPulse 0.5s var(--dashboard-ease);
+}
+
+.path-card-active .path-card-glow {
+  animation: pathCardSweep 0.6s ease;
+  opacity: 0.35;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dashboard-fade,
   .dashboard-fade-float,
@@ -149,14 +208,16 @@
   .dashboard-pop,
   .page-transition,
   .portal-card-animate,
-  .course-card-animate {
+  .course-card-animate,
+  .path-card-active {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
   }
 
   .portal-card-shimmer,
-  .course-card-shimmer {
+  .course-card-shimmer,
+  .path-card-glow {
     animation: none !important;
     opacity: 0 !important;
   }

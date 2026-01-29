@@ -50,10 +50,10 @@ const GeneratedCourseViewWrapper: React.FC = () => {
           <h2 className="text-2xl font-bold text-red-500 mb-4">{error || "Course not found"}</h2>
           <p className="text-slate-500 mb-6">The course you're looking for doesn't exist or couldn't be loaded.</p>
           <button
-            onClick={() => navigate('/my-content')}
+            onClick={() => navigate('/courses')}
             className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-800 transition-all"
           >
-            Back to My Content
+            Back to Courses
           </button>
         </div>
       </div>
@@ -68,7 +68,7 @@ const GeneratedCourseViewWrapper: React.FC = () => {
   return (
     <GeneratedCourseView
       course={course}
-      onBack={() => navigate('/my-content')}
+      onBack={() => navigate('/courses')}
       onStartLesson={handleStartLesson}
     />
   );

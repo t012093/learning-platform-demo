@@ -12,8 +12,8 @@ import {
   Wand2
 } from 'lucide-react';
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   ResponsiveContainer,
   Tooltip as RechartsTooltip
 } from 'recharts';
@@ -68,11 +68,37 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         { label: 'Energy', value: '64%', percent: 64, tone: 'emerald', note: 'Afternoons dip a bit' },
         { label: 'Sleep', value: '7h 10m', percent: 78, tone: 'amber', note: 'Average per night' }
       ],
-      focusStack: 'Focus Stack',
-      focusItems: [
-        'Run the demo assessment',
-        'Generate a 3-week learning path',
-        'Ask Lumina for next steps'
+      questBoardTitle: 'Quest Board',
+      questBoardSubtitle: 'Complete quests to earn XP and unlock badges.',
+      questSeeAll: 'See all quests',
+      quests: [
+        {
+          title: '15-min Focus Sprint',
+          description: 'Finish one focused block without distractions.',
+          reward: '+40 XP',
+          progress: '0 / 1',
+          percent: 20,
+          difficulty: '★',
+          tone: 'indigo'
+        },
+        {
+          title: 'AI Diagnosis',
+          description: 'Run today’s 5-question assessment.',
+          reward: '+30 XP',
+          progress: '0 / 1',
+          percent: 0,
+          difficulty: '★★',
+          tone: 'emerald'
+        },
+        {
+          title: 'Lesson Complete',
+          description: 'Finish one lesson in any track.',
+          reward: '+60 XP',
+          progress: '1 / 3',
+          percent: 35,
+          difficulty: '★★★',
+          tone: 'amber'
+        }
       ],
       gamificationTitle: 'Level Up',
       gamificationSubtitle: 'Complete one quest to gain +40 XP.',
@@ -122,11 +148,37 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         { label: 'エネルギー', value: '64%', percent: 64, tone: 'emerald', note: '午後に少し低下' },
         { label: '睡眠', value: '7h 10m', percent: 78, tone: 'amber', note: '平均 7時間10分' }
       ],
-      focusStack: 'フォーカススタック',
-      focusItems: [
-        'デモ診断を実行',
-        '3週間の学習パスを生成',
-        'Luminaに次の一手を相談'
+      questBoardTitle: 'クエストボード',
+      questBoardSubtitle: 'クエスト達成でXPとバッジを獲得。',
+      questSeeAll: 'すべてのクエスト',
+      quests: [
+        {
+          title: '集中15分スプリント',
+          description: '集中ブロックを1回完了する。',
+          reward: '+40 XP',
+          progress: '0 / 1',
+          percent: 20,
+          difficulty: '★',
+          tone: 'indigo'
+        },
+        {
+          title: 'AI学習診断',
+          description: '5問の診断を実施する。',
+          reward: '+30 XP',
+          progress: '0 / 1',
+          percent: 0,
+          difficulty: '★★',
+          tone: 'emerald'
+        },
+        {
+          title: 'レッスン完了',
+          description: '任意のレッスンを1つ完了する。',
+          reward: '+60 XP',
+          progress: '1 / 3',
+          percent: 35,
+          difficulty: '★★★',
+          tone: 'amber'
+        }
       ],
       gamificationTitle: 'レベルアップ',
       gamificationSubtitle: 'クエスト達成で +40 XP',
@@ -161,6 +213,26 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     indigo: 'bg-indigo-500',
     emerald: 'bg-emerald-500',
     amber: 'bg-amber-500'
+  } as const;
+  const questToneMap = {
+    indigo: {
+      ring: 'ring-indigo-200/70',
+      glow: 'from-indigo-500/20 via-sky-500/10 to-transparent',
+      icon: 'bg-indigo-500 text-white',
+      bar: 'bg-indigo-500'
+    },
+    emerald: {
+      ring: 'ring-emerald-200/70',
+      glow: 'from-emerald-500/20 via-teal-500/10 to-transparent',
+      icon: 'bg-emerald-500 text-white',
+      bar: 'bg-emerald-500'
+    },
+    amber: {
+      ring: 'ring-amber-200/80',
+      glow: 'from-amber-400/20 via-orange-400/10 to-transparent',
+      icon: 'bg-amber-500 text-white',
+      bar: 'bg-amber-500'
+    }
   } as const;
   const xpProgress = Math.min(100, Math.round((t.gamificationXpValue / t.gamificationXpGoal) * 100));
   const xpProgressStyle = { ['--progress' as any]: `${xpProgress}%` } as React.CSSProperties;
@@ -278,15 +350,51 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </div>
 
         <div className="rounded-3xl border border-slate-100 bg-white/80 backdrop-blur p-6 shadow-sm dashboard-fade" style={{ animationDelay: '320ms' }}>
-          <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-400 mb-4">{t.focusStack}</h3>
-          <ul className="space-y-3">
-            {t.focusItems.map((item) => (
-              <li key={item} className="flex items-center gap-3 text-slate-700">
-                <span className="h-2 w-2 rounded-full bg-slate-400" />
-                <span className="text-sm">{item}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-400">{t.questBoardTitle}</h3>
+              <p className="text-xs text-slate-500 mt-2">{t.questBoardSubtitle}</p>
+            </div>
+            <button className="text-xs font-semibold text-indigo-600 hover:text-indigo-500 transition-colors">
+              {t.questSeeAll}
+            </button>
+          </div>
+          <div className="space-y-3">
+            {t.quests.map((quest, index) => {
+              const styles = questToneMap[quest.tone as keyof typeof questToneMap];
+              return (
+                <div
+                  key={quest.title}
+                  className={`relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ring-1 ${styles.ring}`}
+                >
+                  <div className="relative z-10 flex items-start gap-3">
+                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${styles.icon} shadow-md`}>
+                      <Sparkles size={18} />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold text-slate-800">{quest.title}</h4>
+                        <span className="text-xs font-semibold text-slate-500">{quest.difficulty}</span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1">{quest.description}</p>
+                      <div className="mt-3">
+                        <div className="flex items-center justify-between text-[11px] text-slate-500">
+                          <span>{quest.progress}</span>
+                          <span className="font-semibold text-emerald-600">{quest.reward}</span>
+                        </div>
+                        <div className="mt-2 h-2 rounded-full bg-slate-100">
+                          <div
+                            className={`h-2 rounded-full ${styles.bar} dashboard-progress`}
+                            style={{ ['--progress' as any]: `${quest.percent}%` } as React.CSSProperties}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </section>
 
@@ -343,12 +451,36 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           <div className="h-[140px] w-full min-w-[240px]">
             {chartReady && (
               <ResponsiveContainer width="100%" height="100%" minWidth={240} minHeight={120}>
-                <LineChart data={activityData}>
-                  <Line
+                <AreaChart data={activityData}>
+                  <defs>
+                    <linearGradient id="momentumStroke" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#818cf8" />
+                      <stop offset="100%" stopColor="#38bdf8" />
+                    </linearGradient>
+                    <filter id="momentumGlow" x="-30%" y="-30%" width="160%" height="160%">
+                      <feGaussianBlur stdDeviation="6" result="coloredBlur" />
+                      <feMerge>
+                        <feMergeNode in="coloredBlur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                  </defs>
+                  <Area
                     type="monotone"
                     dataKey="count"
-                    stroke="#64748b"
+                    stroke="#6366f1"
+                    strokeOpacity={0.35}
+                    strokeWidth={10}
+                    fill="transparent"
+                    filter="url(#momentumGlow)"
+                    isAnimationActive={false}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="count"
+                    stroke="url(#momentumStroke)"
                     strokeWidth={3}
+                    fill="transparent"
                     dot={{ r: 4, fill: '#cbd5e1', strokeWidth: 0 }}
                     activeDot={{ r: 6, fill: '#6366f1' }}
                   />
@@ -357,7 +489,7 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                     itemStyle={{ color: 'white' }}
                     cursor={false}
                   />
-                </LineChart>
+                </AreaChart>
               </ResponsiveContainer>
             )}
           </div>

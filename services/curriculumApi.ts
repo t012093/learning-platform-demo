@@ -53,6 +53,49 @@ const PYTHON_DEMO_DATA: any = {
                   caption: { en: 'Variables pointing to the same object', jp: '同じオブジェクトを参照する複数の変数' }
                 }
               ]
+            },
+            {
+              id: 's2',
+              title: { en: 'Reference vs Copy', jp: '参照とコピー' },
+              content: [
+                { type: 'text', text: { en: 'Assigning a list copies the reference, not the data. Use copy() or slicing to duplicate.', jp: 'リストの代入は「参照」をコピーするだけで、データ自体は複製されません。copy() やスライスで複製します。' } },
+                {
+                  type: 'code',
+                  language: 'python',
+                  code: 'a = [1, 2, 3]\nb = a\nc = a.copy()\n\nb.append(4)\nprint(a)  # [1, 2, 3, 4]\nprint(c)  # [1, 2, 3]'
+                },
+                {
+                  type: 'callout',
+                  variant: 'tip',
+                  title: { en: 'Shallow vs Deep', jp: '浅いコピーと深いコピー' },
+                  text: { en: 'Nested lists need deepcopy to avoid shared inner references.', jp: 'ネストしたリストは deepcopy を使わないと内部参照が共有されます。' }
+                }
+              ]
+            },
+            {
+              id: 's3',
+              title: { en: 'Mutable vs Immutable', jp: 'ミュータブルとイミュータブル' },
+              content: [
+                { type: 'text', text: { en: 'Lists and dicts are mutable; numbers and strings are immutable. Mutations change memory references differently.', jp: 'リストや辞書はミュータブル、数値や文字列はイミュータブルです。変更時の参照の動きが変わります。' } },
+                {
+                  type: 'code',
+                  language: 'python',
+                  code: 'x = 10\nx_id = id(x)\nx += 1\nprint(x_id == id(x))  # False\n\ny = [1, 2]\ny_id = id(y)\ny.append(3)\nprint(y_id == id(y))  # True'
+                }
+              ]
+            },
+            {
+              id: 's4',
+              title: { en: 'Memory & Garbage Collection', jp: 'メモリとガーベジコレクション' },
+              content: [
+                { type: 'text', text: { en: 'Python uses reference counting plus a cyclic garbage collector. Unused objects are reclaimed automatically.', jp: 'Pythonは参照カウントと循環GCを使い、不要なオブジェクトを自動回収します。' } },
+                {
+                  type: 'callout',
+                  variant: 'warning',
+                  title: { en: 'Leaky References', jp: '参照の残り' },
+                  text: { en: 'Global variables or long-lived caches can keep objects alive longer than expected.', jp: 'グローバル変数や長寿命キャッシュはオブジェクトを予想以上に保持します。' }
+                }
+              ]
             }
           ]
         },

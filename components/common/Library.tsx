@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { CORE_TEMPLATES, BRIDGING_TEMPLATES, SOFTENING_TEMPLATES } from '../../services/curriculumData';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useNavigate } from 'react-router-dom';
 
 const Library: React.FC = () => {
   const { language } = useLanguage();
+  const navigate = useNavigate();
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'core' | 'softening' | 'bridging'>('all');
 
@@ -12,6 +14,7 @@ const Library: React.FC = () => {
     en: {
       title: 'Template Library',
       subtitle: 'Your toolkit for clearer, safer, and more logical English.',
+      backToCourses: 'Back to Courses',
       filters: {
         all: 'All',
         core: 'Core Patterns',
@@ -27,6 +30,7 @@ const Library: React.FC = () => {
     jp: {
       title: 'テンプレートライブラリ',
       subtitle: 'より明確で安全、論理的な英語表現のツールキット。',
+      backToCourses: 'コース一覧に戻る',
       filters: {
         all: 'すべて',
         core: 'コアパターン',
@@ -57,7 +61,14 @@ const Library: React.FC = () => {
   return (
     <div className="p-6 md:p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">{t.title}</h1>
+        <button
+          onClick={() => navigate('/courses')}
+          className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors"
+        >
+          <ArrowLeft size={16} />
+          {t.backToCourses}
+        </button>
+        <h1 className="text-3xl font-bold text-slate-900 mt-4">{t.title}</h1>
         <p className="text-slate-500 mt-2">{t.subtitle}</p>
         
         <div className="flex gap-2 mt-6 overflow-x-auto pb-2 scrollbar-hide">

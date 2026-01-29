@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation, Navigate, useParams } from 'react-router-dom';
 import { ViewState, GeneratedCourse, Course } from './types';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
@@ -139,7 +139,7 @@ const AppContent: React.FC = () => {
   const { language, setLanguage } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // Auth state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -148,21 +148,21 @@ const AppContent: React.FC = () => {
   // Derive current view from location for Layout highlight
   // This is a simple mapping for the Layout's navigation prop
   const getCurrentViewState = (): ViewState => {
-     const path = location.pathname;
-     if (path === '/') return ViewState.DASHBOARD;
-     if (path === '/learning-hub') return ViewState.LEARNING_HUB;
-     if (path.startsWith('/courses')) return ViewState.COURSES;
-     if (path.startsWith('/generated-course')) return ViewState.GENERATED_COURSE_PATH;
-     if (path.startsWith('/my-content')) return ViewState.MY_CONTENT;
-     if (path.startsWith('/profile')) return ViewState.PROFILE;
-     if (path.startsWith('/blender')) return ViewState.BLENDER;
-     if (path.startsWith('/programming')) return ViewState.PROGRAMMING;
-     if (path.startsWith('/art')) return ViewState.ART_MUSEUM;
-     if (path.startsWith('/sonic')) return ViewState.SONIC_LAB;
-     if (path.startsWith('/vibe')) return ViewState.PROGRAMMING_VIBE;
-     if (path.startsWith('/unity')) return ViewState.UNITY_AI_GAME_DEV;
-     if (path === '/library') return ViewState.LIBRARY;
-     return ViewState.DASHBOARD;
+    const path = location.pathname;
+    if (path === '/') return ViewState.DASHBOARD;
+    if (path === '/learning-hub') return ViewState.LEARNING_HUB;
+    if (path.startsWith('/courses')) return ViewState.COURSES;
+    if (path.startsWith('/generated-course')) return ViewState.GENERATED_COURSE_PATH;
+    if (path.startsWith('/my-content')) return ViewState.MY_CONTENT;
+    if (path.startsWith('/profile')) return ViewState.PROFILE;
+    if (path.startsWith('/blender')) return ViewState.BLENDER;
+    if (path.startsWith('/programming')) return ViewState.PROGRAMMING;
+    if (path.startsWith('/art')) return ViewState.ART_MUSEUM;
+    if (path.startsWith('/sonic')) return ViewState.SONIC_LAB;
+    if (path.startsWith('/vibe')) return ViewState.PROGRAMMING_VIBE;
+    if (path.startsWith('/unity')) return ViewState.UNITY_AI_GAME_DEV;
+    if (path === '/library') return ViewState.LIBRARY;
+    return ViewState.DASHBOARD;
   };
 
   const handleNavigate = (view: ViewState) => {
@@ -173,7 +173,21 @@ const AppContent: React.FC = () => {
       case ViewState.MY_CONTENT: navigate('/my-content'); break;
       case ViewState.PROFILE: navigate('/profile'); break;
       case ViewState.LIBRARY: navigate('/library'); break;
-      
+
+      case ViewState.LESSON:
+        const currentChapterId = sessionStorage.getItem('current_chapter_id');
+        const currentCourseId = sessionStorage.getItem('current_course_id');
+        // Simple heuristic: Generated IDs are usually UUIDs (>30 chars), static IDs are shorter
+        if (currentCourseId && currentCourseId.length > 30) {
+          navigate(`/generated-lesson/${currentCourseId}`);
+        } else if (currentCourseId) {
+          navigate(`/lesson/${currentCourseId}`);
+        } else {
+          console.warn("No course ID context for Lesson view");
+          navigate('/');
+        }
+        break;
+
       // Feature Hubs
       case ViewState.BLENDER: navigate('/blender'); break;
       case ViewState.PROGRAMMING: navigate('/programming'); break;
@@ -185,19 +199,19 @@ const AppContent: React.FC = () => {
       case ViewState.ART_MUSEUM: navigate('/art'); break;
       case ViewState.SONIC_LAB: navigate('/sonic'); break;
       case ViewState.P_SCHOOL: navigate('/p-school'); break;
-      
+
       // Specific Tools
       case ViewState.COURSE_GENERATOR: navigate('/course-generator'); break;
       case ViewState.AI_DIAGNOSIS: navigate('/assessment'); break;
       case ViewState.AI_CHARACTERS: navigate('/characters'); break;
-      
+
       // Deep Links (Mapping known sub-routes)
       case ViewState.HTML_CSS_PATH: navigate('/programming/html-css'); break;
       case ViewState.HTML_CSS_COURSE: navigate('/programming/html-css/course'); break;
       case ViewState.HTML_CSS_PART_TWO: navigate('/programming/html-css/part2'); break;
       case ViewState.WEB_INSPECTOR: navigate('/programming/web-inspector'); break;
       case ViewState.PYTHON_COURSE: navigate('/programming/python'); break;
-      
+
       // Art Sub-routes
       case ViewState.ART_HISTORY: navigate('/art/history'); break;
       case ViewState.ART_CURRICULUM: navigate('/art/curriculum'); break;
@@ -207,7 +221,7 @@ const AppContent: React.FC = () => {
       case ViewState.ART_KINTSUGI: navigate('/art/kintsugi'); break;
       case ViewState.ART_TRIBAL: navigate('/art/tribal'); break;
       case ViewState.ART_TRIBAL_DETAIL: navigate('/art/tribal/intro'); break; // Default
-      
+
       // Fallback
       default: console.warn('Unhandled navigation:', view); navigate('/'); break;
     }
@@ -224,10 +238,10 @@ const AppContent: React.FC = () => {
 
     // Generated Courses
     if (course.source === 'generated') {
-        navigate(`/generated-course/${course.id}`);
+      navigate(`/generated-course/${course.id}`);
     } else {
-        // Static/Standard Courses
-        navigate(`/course/${course.id}`);
+      // Static/Standard Courses
+      navigate(`/course/${course.id}`);
     }
   };
 
@@ -243,7 +257,7 @@ const AppContent: React.FC = () => {
 
   // Vibe Chapter Navigation Helper
   const navigateToVibeChapter = (chapter: string) => {
-      navigate(`/vibe/${chapter}`);
+    navigate(`/vibe/${chapter}`);
   };
 
   return (
@@ -255,14 +269,14 @@ const AppContent: React.FC = () => {
       ) : (
         <>
           <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} onLogin={handleLoginSuccess} />
-          
+
           <Layout currentView={getCurrentViewState()} onNavigate={handleNavigate}>
             <Routes>
               <Route path="/" element={<Dashboard onNavigate={handleNavigate} />} />
               <Route path="/learning-hub" element={<LearningHub onNavigate={handleNavigate} />} />
               <Route path="/courses" element={<CourseList onSelectCourse={handleCourseSelect} />} />
               <Route path="/course/:courseId" element={<CoursePathViewWrapper />} />
-              
+
               {/* My Content & Generated Courses */}
               <Route path="/my-content" element={<MyContent onNavigate={handleNavigate} onSelectCourse={handleGeneratedCourseSelect} />} />
               <Route path="/generated-course/:courseId" element={<GeneratedCourseViewWrapper />} />
@@ -340,7 +354,7 @@ const AppContent: React.FC = () => {
               {/* Demos */}
               <Route path="/demo/multi" element={<MultiFormatLessonView onBack={() => navigate('/')} />} />
               <Route path="/demo/checklist-gen" element={<BlenderChecklistGeneratorView onBack={() => navigate('/')} />} />
-              
+
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Layout>
@@ -354,50 +368,50 @@ const AppContent: React.FC = () => {
 // --- Inline Wrappers for less common dynamic routes ---
 
 const AICharacterDetailViewWrapper: React.FC<{ onNavigate: (v: ViewState) => void }> = ({ onNavigate }) => {
-    const { characterId } = useParams<{ characterId: string }>();
-    const navigate = useNavigate();
-    return <AICharacterDetailView characterId={characterId || 'openness'} onNavigate={onNavigate} onBack={() => navigate('/characters')} />;
+  const { characterId } = useParams<{ characterId: string }>();
+  const navigate = useNavigate();
+  return <AICharacterDetailView characterId={characterId || 'openness'} onNavigate={onNavigate} onBack={() => navigate('/characters')} />;
 };
 
 const BlenderLessonViewWrapper: React.FC = () => {
-    const { stageId } = useParams<{ stageId: string }>();
-    const navigate = useNavigate();
-    return <BlenderLessonView stageId={Number(stageId) || 1} onBack={() => navigate('/blender/path')} onComplete={() => navigate('/blender/path')} />;
+  const { stageId } = useParams<{ stageId: string }>();
+  const navigate = useNavigate();
+  return <BlenderLessonView stageId={Number(stageId) || 1} onBack={() => navigate('/blender/path')} onComplete={() => navigate('/blender/path')} />;
 };
 
 const UnityChapterWrapper: React.FC<{ language: any, setLanguage: any, onNavigate: any }> = ({ language, setLanguage, onNavigate }) => {
-    const { chapterId } = useParams<{ chapterId: string }>();
-    const navigate = useNavigate();
-    // Map URL param to ViewState for the component (it expects ViewState)
-    // NOTE: UnityChapterView expects 'viewState' prop to determine content. 
-    // We need to map chapterId to ViewState.
-    let vs = ViewState.UNITY_CHAPTER_0;
-    if (chapterId === 'chapter-1') vs = ViewState.UNITY_CHAPTER_1;
-    if (chapterId === 'chapter-2') vs = ViewState.UNITY_CHAPTER_2;
-    if (chapterId === 'chapter-3') vs = ViewState.UNITY_CHAPTER_3;
+  const { chapterId } = useParams<{ chapterId: string }>();
+  const navigate = useNavigate();
+  // Map URL param to ViewState for the component (it expects ViewState)
+  // NOTE: UnityChapterView expects 'viewState' prop to determine content. 
+  // We need to map chapterId to ViewState.
+  let vs = ViewState.UNITY_CHAPTER_0;
+  if (chapterId === 'chapter-1') vs = ViewState.UNITY_CHAPTER_1;
+  if (chapterId === 'chapter-2') vs = ViewState.UNITY_CHAPTER_2;
+  if (chapterId === 'chapter-3') vs = ViewState.UNITY_CHAPTER_3;
 
-    return <UnityChapterView viewState={vs} onBack={() => navigate('/unity')} onNavigate={onNavigate} language={language} setLanguage={setLanguage} />;
+  return <UnityChapterView viewState={vs} onBack={() => navigate('/unity')} onNavigate={onNavigate} language={language} setLanguage={setLanguage} />;
 };
 
 const ArtCraftDetailViewWrapper: React.FC<{ language: any, setLanguage: any }> = ({ language, setLanguage }) => {
-    const { craftId } = useParams<{ craftId: string }>();
-    const navigate = useNavigate();
-    if (craftId === 'kintsugi') return <ArtKintsugiView onBack={() => navigate('/art/crafts')} language={language} setLanguage={setLanguage} />;
-    return <ArtCraftDetailView craftId={craftId || 'urushi'} onBack={() => navigate('/art/crafts')} language={language} setLanguage={setLanguage} />;
+  const { craftId } = useParams<{ craftId: string }>();
+  const navigate = useNavigate();
+  if (craftId === 'kintsugi') return <ArtKintsugiView onBack={() => navigate('/art/crafts')} language={language} setLanguage={setLanguage} />;
+  return <ArtCraftDetailView craftId={craftId || 'urushi'} onBack={() => navigate('/art/crafts')} language={language} setLanguage={setLanguage} />;
 };
 
 const ArtTribalDetailViewWrapper: React.FC<{ language: any, setLanguage: any }> = ({ language, setLanguage }) => {
-    const { chapterId } = useParams<{ chapterId: string }>();
-    const navigate = useNavigate();
-    return <ArtTribalDetailView chapterId={chapterId || 'intro'} onBack={() => navigate('/art/tribal')} language={language} setLanguage={setLanguage} />;
+  const { chapterId } = useParams<{ chapterId: string }>();
+  const navigate = useNavigate();
+  return <ArtTribalDetailView chapterId={chapterId || 'intro'} onBack={() => navigate('/art/tribal')} language={language} setLanguage={setLanguage} />;
 };
 
 const LessonViewWrapper: React.FC = () => {
-    const { courseId } = useParams<{ courseId: string }>();
-    const navigate = useNavigate();
-    // In a real app, we would fetch the specific lesson for this course.
-    // For now, we render the demo LessonView.
-    return <LessonView onBack={() => navigate(`/course/${courseId}`)} />;
+  const { courseId } = useParams<{ courseId: string }>();
+  const navigate = useNavigate();
+  // In a real app, we would fetch the specific lesson for this course.
+  // For now, we render the demo LessonView.
+  return <LessonView onBack={() => navigate(`/course/${courseId}`)} />;
 };
 
 const App: React.FC = () => (

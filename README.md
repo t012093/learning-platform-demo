@@ -44,6 +44,17 @@ Experience learning tailored just for you.
 
 ## 🚀 Getting Started for Engineers
 
+### Quick Start (UI Only)
+If you want to explore the UI without wiring the full backend, you can run the frontend only:
+
+```bash
+npm install
+npm run dev
+# Frontend: http://localhost:3007
+```
+
+You can browse most screens without a key. AI features will prompt for a key when used.
+
 ### Prerequisites
 - Node.js (v20+ recommended)
 - Google Cloud / Gemini API Key
@@ -61,8 +72,12 @@ Experience learning tailored just for you.
    Create a `.env.local` file in the root directory:
    ```env
    GEMINI_API_KEY=your_api_key_here
+   VITE_GEMINI_API_KEY=your_api_key_here
    DATABASE_URL_PHASE1=postgres://user:password@localhost:5432/lumina_db
    ```
+   - `GEMINI_API_KEY` is used by the backend.
+   - `VITE_GEMINI_API_KEY` is used by the frontend (Vite exposes `VITE_` vars).
+   - **Never commit** `.env.local` (already ignored).
 
 3. **Database Setup**
    Initialize the PostgreSQL database schema and seed initial data.
@@ -134,7 +149,14 @@ We have successfully migrated to a **LangGraph-based Multi-Agent Backend**.
 
 ### How to Contribute
 1. Check the [Issues](https://github.com/t012093/learning-platform-from-gemini/issues) tab.
-2. Follow the project's coding style (Functional React components, TypeScript, Tailwind).
+2. Create a feature branch from `main` (example: `feat/your-topic`).
+3. Keep commits scoped and descriptive.
+4. Follow the project's coding style (Functional React components, TypeScript, Tailwind).
+
+### Collaboration Tips
+- **Keys & secrets**: Use `.env.local` or localStorage; never commit secrets.
+- **Large files**: Avoid committing large binaries (PDFs, datasets) unless agreed.
+- **Demo vs full stack**: UI-only is fine for quick reviews; full stack is needed for AI generation flows.
 
 ---
 

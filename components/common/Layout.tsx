@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { ViewState } from '../../types';
 import {
@@ -47,6 +47,7 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState<string | null>('lab');
+  const mainRef = useRef<HTMLElement>(null);
   const location = useLocation();
   const { theme, setTheme } = useTheme();
   const { language, selectedLanguage, setLanguage } = useLanguage();
@@ -66,6 +67,14 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
       setTheme('default');
     }
   }, [currentView, setTheme]);
+
+  useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTo({ top: 0, left: 0 });
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [location.pathname]);
 
   const getThemeStyles = () => {
     switch (theme) {
@@ -439,7 +448,10 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
       </aside>
 
       {/* Main Content Area */}
-      <main className={`flex-1 min-w-0 overflow-y-auto h-full w-full pt-16 md:pt-0 relative overflow-x-hidden ${styles.main}`}>
+      <main
+        ref={mainRef}
+        className={`flex-1 min-w-0 overflow-y-auto h-full w-full pt-16 md:pt-0 relative overflow-x-hidden ${styles.main}`}
+      >
         <div
           className={`min-h-full w-full ${
             isFullBleedView

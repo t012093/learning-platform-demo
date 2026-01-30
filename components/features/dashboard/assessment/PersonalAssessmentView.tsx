@@ -3,12 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { ViewState, Big5Profile, AssessmentProfile, PersonalityType, AIAdvice } from '../../../../types';
 import PersonalityAssessment from './PersonalityAssessment';
 import IntroSequence from './IntroSequence';
-import ComprehensiveResults from './ComprehensiveResults';
 import { analyzePersonality } from '../../../../services/geminiService';
 import { useTheme } from '../../../../context/ThemeContext';
-import { Loader2, Sparkles, Brain, ArrowRight } from 'lucide-react';
+import { Sparkles, ArrowRight } from 'lucide-react';
 import { STORAGE_KEY } from './assessmentConstants';
 import { useLanguage } from '../../../../context/LanguageContext';
+import LoadingScreen from '../../../../ai-learning-diagnosis/components/LoadingScreen';
+import ResultScreen from '../../../../ai-learning-diagnosis/components/ResultScreen';
+import { DiagnosisResult } from '../../../../ai-learning-diagnosis/types';
 
 interface PersonalAssessmentViewProps {
   onNavigate: (view: ViewState) => void;
@@ -133,6 +135,78 @@ const DEMO_AI_ADVICE_BY_LANG: Record<'en' | 'jp' | 'fr', AIAdvice> = {
       description: '派手さはなくても、積み上げで大きな成果を出せる。'
     }
   }
+};
+
+const mapProfileToDiagnosisResult = (
+  profile: AssessmentProfile,
+  language: 'en' | 'jp' | 'fr'
+): DiagnosisResult => {
+  const traitScores = [
+    { subject: language === 'jp' ? '開放性' : language === 'fr' ? 'Ouverture' : 'Openness', A: Math.round(profile.scores.openness), fullMark: 100 },
+    { subject: language === 'jp' ? '誠実性' : language === 'fr' ? 'Conscience' : 'Conscientiousness', A: Math.round(profile.scores.conscientiousness), fullMark: 100 },
+    { subject: language === 'jp' ? '外向性' : language === 'fr' ? 'Extraversion' : 'Extraversion', A: Math.round(profile.scores.extraversion), fullMark: 100 },
+    { subject: language === 'jp' ? '協調性' : language === 'fr' ? 'Agréabilité' : 'Agreeableness', A: Math.round(profile.scores.agreeableness), fullMark: 100 },
+    { subject: language === 'jp' ? '安定性' : language === 'fr' ? 'Stabilité' : 'Stability', A: Math.round(100 - profile.scores.neuroticism), fullMark: 100 }
+  ];
+
+  const allocationBase = [
+    { key: 'explore', value: Math.max(1, profile.scores.openness) },
+    { key: 'execute', value: Math.max(1, profile.scores.conscientiousness) },
+    { key: 'share', value: Math.max(1, profile.scores.extraversion) }
+  ];
+  const allocationTotal = allocationBase.reduce((sum, item) => sum + item.value, 0);
+  const explore = Math.round((allocationBase[0].value / allocationTotal) * 100);
+  const execute = Math.round((allocationBase[1].value / allocationTotal) * 100);
+  const share = Math.max(0, 100 - explore - execute);
+
+  const allocationLabels = {
+    explore: language === 'jp' ? '探索' : language === 'fr' ? 'Exploration' : 'Explore',
+    execute: language === 'jp' ? '実践' : language === 'fr' ? 'Exécution' : 'Execute',
+    share: language === 'jp' ? '発信' : language === 'fr' ? 'Partage' : 'Share'
+  };
+
+  const studyAllocation = [
+    { name: allocationLabels.explore, value: explore },
+    { name: allocationLabels.execute, value: execute },
+    { name: allocationLabels.share, value: share }
+  ];
+
+  const characterMap = {
+    openness: { en: 'The Visionary', jp: 'ビジョナリー', fr: 'Visionnaire', bot: { en: 'Spark', jp: 'スパーク' } },
+    conscientiousness: { en: 'The Architect', jp: 'アーキテクト', fr: 'Architecte', bot: { en: 'Focus', jp: 'フォーカス' } },
+    extraversion: { en: 'The Catalyst', jp: 'カタリスト', fr: 'Catalyseur', bot: { en: 'Vibe', jp: 'バイブ' } },
+    agreeableness: { en: 'The Mediator', jp: 'メディエーター', fr: 'Médiateur', bot: { en: 'Echo', jp: 'エコー' } },
+    stability: { en: 'The Anchor', jp: 'アンカー', fr: 'Ancre', bot: { en: 'Luna', jp: 'ルナ' } }
+  };
+
+  const topTrait = [
+    { id: 'openness', score: profile.scores.openness },
+    { id: 'conscientiousness', score: profile.scores.conscientiousness },
+    { id: 'extraversion', score: profile.scores.extraversion },
+    { id: 'agreeableness', score: profile.scores.agreeableness },
+    { id: 'stability', score: 100 - profile.scores.neuroticism }
+  ].sort((a, b) => b.score - a.score)[0];
+
+  const character = characterMap[topTrait?.id as keyof typeof characterMap] || characterMap.openness;
+
+  const advice = profile.aiAdvice;
+  const strengths = advice?.strengths?.map((s) => s.title).slice(0, 4) || [];
+  const weaknesses = advice?.growthTips?.map((s) => s.title).slice(0, 4) || [];
+  const steps = advice?.learningStrategy?.steps?.map((s) => s.action) || [];
+
+  return {
+    archetypeName: language === 'jp' ? character.jp : language === 'fr' ? character.fr : character.en,
+    tagline: language === 'jp' ? `AI相棒: ${character.bot.jp}` : language === 'fr' ? `Compagnon IA : ${character.bot.en}` : `AI Companion: ${character.bot.en}`,
+    summary: advice?.learningStrategy?.approach || (language === 'jp' ? 'あなたの特性に合わせた学習設計を提案します。' : language === 'fr' ? 'Un parcours optimisé pour votre style.' : 'A learning path optimized for your style.'),
+    traits: traitScores,
+    studyAllocation,
+    strengths,
+    weaknesses: weaknesses.length ? weaknesses : (language === 'jp' ? ['集中の波を味方にする', '成果の可視化を強化'] : language === 'fr' ? ['Stabiliser le focus', 'Rendre les progrès visibles'] : ['Stabilize focus', 'Make progress visible']),
+    recommendedMethod: advice?.learningStrategy?.title || (language === 'jp' ? '短いサイクルで試す学習' : language === 'fr' ? 'Expérimentation en cycles courts' : 'Short-cycle experimentation'),
+    dailyRoutineAdvice: steps.length ? steps.join(' / ') : (language === 'jp' ? '1日30分の集中→小さく出力→翌日改善' : language === 'fr' ? '30 min de focus → petite sortie → amélioration le lendemain' : '30 min focus → small output → improve tomorrow'),
+    personalityInsight: advice?.relationshipAnalysis?.style || (language === 'jp' ? '柔軟に適応しながら前進できるタイプ。' : language === 'fr' ? 'Vous avancez en restant adaptable.' : 'You move forward with adaptable momentum.'),
+    tools: ['Notion', 'Cursor', 'GitHub', 'Figma']
+  };
 };
 
 const PersonalAssessmentView: React.FC<PersonalAssessmentViewProps> = ({ onNavigate }) => {
@@ -311,35 +385,7 @@ const PersonalAssessmentView: React.FC<PersonalAssessmentViewProps> = ({ onNavig
   }
 
   if (step === Step.ANALYZING) {
-    return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center text-center p-8">
-        <div className="relative mb-12">
-          <div className="absolute inset-0 bg-indigo-500/20 blur-3xl rounded-full animate-pulse"></div>
-          <div className="relative w-32 h-32 bg-white rounded-[2.5rem] shadow-2xl flex items-center justify-center border border-indigo-50">
-            <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
-          </div>
-          <Brain className="absolute -top-4 -right-4 w-10 h-10 text-amber-400 animate-bounce" />
-        </div>
-        <div className="space-y-4">
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">{labels.analyzingTitle}</h2>
-          <p className="text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px] animate-pulse">
-            {labels.analyzingSubtitle}
-          </p>
-          <div className="max-w-md mx-auto pt-8">
-             <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-indigo-600 animate-[progress_3s_ease-in-out_infinite]"></div>
-             </div>
-          </div>
-        </div>
-        <style>{`
-          @keyframes progress {
-            0% { width: 0%; transform: translateX(-100%); }
-            50% { width: 50%; transform: translateX(50%); }
-            100% { width: 0%; transform: translateX(200%); }
-          }
-        `}</style>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (step === Step.INTRO && profile) {
@@ -347,9 +393,10 @@ const PersonalAssessmentView: React.FC<PersonalAssessmentViewProps> = ({ onNavig
   }
 
   if (step === Step.RESULTS && profile) {
+    const result = mapProfileToDiagnosisResult(profile, assessmentLanguage);
     return (
-      <div className="pt-8">
-        <ComprehensiveResults profile={profile} onRestart={handleRestart} languageOverride={assessmentLanguage} />
+      <div className="bg-white text-slate-900">
+        <ResultScreen result={result} onRetake={handleRestart} />
       </div>
     );
   }

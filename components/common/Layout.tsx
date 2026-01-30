@@ -240,7 +240,8 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
   const isFullBleedView = (
     currentView === ViewState.LESSON ||
     currentView === ViewState.BLENDER_LESSON ||
-    currentView === ViewState.GENERATED_LESSON_VIEW
+    currentView === ViewState.GENERATED_LESSON_VIEW ||
+    currentView === ViewState.AI_DIAGNOSIS
   );
 
   return (

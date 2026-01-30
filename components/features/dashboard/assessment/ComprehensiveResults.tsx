@@ -1,10 +1,12 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Eye, Compass, CheckCircle2, Wind, Zap, Moon, HeartHandshake, Scale, 
-  ShieldCheck, Gem, BarChart3, Quote, Briefcase, Sparkles, Fingerprint, Brain, Infinity, Swords, Box, Lightbulb
+  ShieldCheck, Gem, BarChart3, Quote, Briefcase, Sparkles, Fingerprint, Brain, Infinity, Swords, Box, Lightbulb, Heart, Anchor
 } from 'lucide-react';
 import { AssessmentProfile } from '../../../../types';
 import { useLanguage } from '../../../../context/LanguageContext';
+import CharacterRevealPanel from './CharacterRevealPanel';
 
 interface ComprehensiveResultsProps {
   profile: AssessmentProfile;
@@ -140,6 +142,7 @@ const SectionHeader: React.FC<{ title: string; subtitle: string; icon: React.Rea
 
 const ComprehensiveResults: React.FC<ComprehensiveResultsProps> = ({ profile, onRestart, languageOverride }) => {
   const { language } = useLanguage();
+  const navigate = useNavigate();
   const resolvedLang = languageOverride || (language as 'en' | 'jp' | 'fr');
   const advice = profile.aiAdvice;
   const t = {
@@ -176,7 +179,10 @@ const ComprehensiveResults: React.FC<ComprehensiveResultsProps> = ({ profile, on
       defaultRole: 'Professional Role',
       defaultSync: 'High Synergy Type',
       defaultWarning: 'Risk/Warning',
-      dimensionLabel: 'Dimension Log'
+      dimensionLabel: 'Dimension Log',
+      aiCharacterTitle: 'AI Character Assigned',
+      aiCharacterSubtitle: 'Personality → Companion',
+      aiCharacterCta: 'View character profile'
     },
     jp: {
       profileProtocol: 'Profile Protocol V2.4',
@@ -211,7 +217,10 @@ const ComprehensiveResults: React.FC<ComprehensiveResultsProps> = ({ profile, on
       defaultRole: 'Professional Role',
       defaultSync: 'High Synergy Type',
       defaultWarning: 'Risk/Warning',
-      dimensionLabel: 'Dimension Log'
+      dimensionLabel: 'Dimension Log',
+      aiCharacterTitle: 'AIキャラクターが確定しました',
+      aiCharacterSubtitle: '性格診断 → 相棒',
+      aiCharacterCta: 'キャラクタープロフィールを見る'
     },
     fr: {
       profileProtocol: 'Profile Protocol V2.4',
@@ -246,7 +255,10 @@ const ComprehensiveResults: React.FC<ComprehensiveResultsProps> = ({ profile, on
       defaultRole: 'Rôle professionnel',
       defaultSync: 'Synergie élevée',
       defaultWarning: 'Risque / Alerte',
-      dimensionLabel: 'Dimension Log'
+      dimensionLabel: 'Dimension Log',
+      aiCharacterTitle: 'Personnage IA attribué',
+      aiCharacterSubtitle: 'Personnalité → Compagnon',
+      aiCharacterCta: 'Voir le profil du personnage'
     }
   } as const;
   const labels = t[resolvedLang === 'fr' ? 'fr' : resolvedLang];
@@ -276,29 +288,127 @@ const ComprehensiveResults: React.FC<ComprehensiveResultsProps> = ({ profile, on
   };
 
   const config = typeConfigs[profile.personalityType] || { icon: <Zap className="w-full h-full" />, bg: 'from-indigo-500 to-purple-600', display: { en: 'Unique', jp: 'ユニーク' }, description: { en: 'A unique balance of traits.', jp: '独自のバランスを持つユニークな特性。' } };
-  const displayName = config.display[resolvedLang] || config.display.jp;
-  const description = config.description[resolvedLang] || config.description.jp;
+  const characterCandidates = [
+    { id: 'openness', score: profile.scores.openness },
+    { id: 'conscientiousness', score: profile.scores.conscientiousness },
+    { id: 'extraversion', score: profile.scores.extraversion },
+    { id: 'agreeableness', score: profile.scores.agreeableness },
+    { id: 'stability', score: 100 - profile.scores.neuroticism }
+  ];
+
+  const selectedCharacterId = characterCandidates.sort((a, b) => b.score - a.score)[0]?.id || 'openness';
+
+  const characterMap: Record<string, { name: { en: string; jp: string; fr?: string }; botName: { en: string; jp: string }; description: { en: string; jp: string; fr?: string }; gradient: string; icon: React.ReactNode }> = {
+    openness: {
+      name: { en: 'The Visionary', jp: 'ビジョナリー', fr: 'Visionnaire' },
+      botName: { en: 'Spark', jp: 'スパーク' },
+      description: {
+        en: 'Creative explorer who unlocks bold ideas and innovative paths.',
+        jp: '大胆な発想と新しい可能性を切り拓く創造的な探究者。',
+        fr: 'Explorateur créatif qui ouvre de nouvelles idées et voies innovantes.'
+      },
+      gradient: 'from-purple-500 to-indigo-600',
+      icon: <Sparkles className="w-10 h-10" />
+    },
+    conscientiousness: {
+      name: { en: 'The Architect', jp: 'アーキテクト', fr: 'Architecte' },
+      botName: { en: 'Focus', jp: 'フォーカス' },
+      description: {
+        en: 'Strategic planner who builds steady, reliable progress.',
+        jp: '着実な前進を設計する戦略家。',
+        fr: 'Planificateur stratégique qui construit un progrès fiable.'
+      },
+      gradient: 'from-blue-500 to-cyan-600',
+      icon: <Brain className="w-10 h-10" />
+    },
+    extraversion: {
+      name: { en: 'The Catalyst', jp: 'カタリスト', fr: 'Catalyseur' },
+      botName: { en: 'Vibe', jp: 'バイブ' },
+      description: {
+        en: 'Energizer who boosts momentum and action.',
+        jp: '勢いと行動を加速させる起爆剤。',
+        fr: 'Un moteur d’énergie qui accélère l’action.'
+      },
+      gradient: 'from-orange-400 to-red-500',
+      icon: <Zap className="w-10 h-10" />
+    },
+    agreeableness: {
+      name: { en: 'The Mediator', jp: 'メディエーター', fr: 'Médiateur' },
+      botName: { en: 'Echo', jp: 'エコー' },
+      description: {
+        en: 'Empathetic partner who supports balance and collaboration.',
+        jp: '共感と調和でチームを支える相棒。',
+        fr: 'Partenaire empathique qui soutient l’équilibre et la collaboration.'
+      },
+      gradient: 'from-emerald-400 to-teal-500',
+      icon: <Heart className="w-10 h-10" />
+    },
+    stability: {
+      name: { en: 'The Anchor', jp: 'アンカー', fr: 'Ancre' },
+      botName: { en: 'Luna', jp: 'ルナ' },
+      description: {
+        en: 'Calm stabilizer who brings clarity under pressure.',
+        jp: '落ち着きと安定感で状況を整える支柱。',
+        fr: 'Stabilisateur calme qui apporte de la clarté sous pression.'
+      },
+      gradient: 'from-slate-500 to-slate-700',
+      icon: <Anchor className="w-10 h-10" />
+    }
+  };
+
+  const selectedCharacter = characterMap[selectedCharacterId];
+  const characterName = selectedCharacter?.name[resolvedLang] || selectedCharacter?.name.jp || '';
+  const characterBotName = resolvedLang === 'jp' ? selectedCharacter?.botName.jp : selectedCharacter?.botName.en;
+  const characterDescription = selectedCharacter?.description[resolvedLang] || selectedCharacter?.description.jp || '';
+
+  const traitMeta = {
+    openness: { label: { en: 'Openness', jp: '開放性', fr: 'Ouverture' }, color: 'from-amber-400 to-orange-500', icon: <Eye className="w-5 h-5" /> },
+    conscientiousness: { label: { en: 'Conscientiousness', jp: '誠実性', fr: 'Conscience' }, color: 'from-blue-500 to-indigo-600', icon: <CheckCircle2 className="w-5 h-5" /> },
+    extraversion: { label: { en: 'Extraversion', jp: '外向性', fr: 'Extraversion' }, color: 'from-yellow-400 to-orange-500', icon: <Zap className="w-5 h-5" /> },
+    agreeableness: { label: { en: 'Agreeableness', jp: '協調性', fr: 'Agréabilité' }, color: 'from-pink-400 to-rose-500', icon: <HeartHandshake className="w-5 h-5" /> },
+    stability: { label: { en: 'Stability', jp: '安定性', fr: 'Stabilité' }, color: 'from-slate-500 to-slate-700', icon: <Anchor className="w-5 h-5" /> }
+  } as const;
+
+  const topTraits = [
+    { id: 'openness', score: profile.scores.openness },
+    { id: 'conscientiousness', score: profile.scores.conscientiousness },
+    { id: 'extraversion', score: profile.scores.extraversion },
+    { id: 'agreeableness', score: profile.scores.agreeableness },
+    { id: 'stability', score: 100 - profile.scores.neuroticism }
+  ]
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map((trait) => {
+      const meta = traitMeta[trait.id as keyof typeof traitMeta];
+      const label = meta.label[resolvedLang] || meta.label.jp;
+      return {
+        id: trait.id,
+        label,
+        score: Math.round(trait.score),
+        color: meta.color,
+        icon: meta.icon
+      };
+    });
 
   return (
-    <div className="max-w-6xl xl:max-w-7xl mx-auto space-y-16 sm:space-y-24 lg:space-y-32 pb-24 sm:pb-32 px-4 sm:px-6 lg:px-8">
+    <div className="max-w-6xl xl:max-w-7xl mx-auto space-y-12 sm:space-y-16 lg:space-y-20 pb-16 sm:pb-20 px-4 sm:px-6 lg:px-8">
       
-      <section className="min-h-[60vh] sm:min-h-[70vh] flex flex-col items-center justify-center text-center relative pt-6 sm:pt-10">
-        <div className={`w-28 h-28 sm:w-36 sm:h-36 md:w-48 md:h-48 lg:w-56 lg:h-56 bg-gradient-to-br ${config.bg} rounded-[2rem] sm:rounded-[2.5rem] md:rounded-[3rem] flex items-center justify-center p-6 sm:p-8 md:p-10 text-white shadow-2xl animate-float relative z-10 mb-8 sm:mb-10`}>
-          {config.icon}
-          <div className="absolute inset-0 rounded-[2rem] sm:rounded-[2.5rem] md:rounded-[3rem] border-4 border-white/20 scale-110 animate-pulse"></div>
-        </div>
-        <div className="space-y-6 max-w-4xl">
-          <div className="inline-flex items-center px-4 py-1.5 bg-slate-900 text-white rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-2 shadow-lg">
-            {labels.profileProtocol}
-          </div>
-          <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black text-slate-900 tracking-tighter leading-none filter drop-shadow-sm">
-            {displayName}
-          </h1>
-          <p className="text-base sm:text-lg md:text-2xl text-slate-500 font-medium italic leading-relaxed opacity-80 max-w-2xl mx-auto">
-            "{description}"
-          </p>
-        </div>
-      </section>
+      <CharacterRevealPanel
+        title={labels.aiCharacterTitle}
+        subtitle={labels.aiCharacterSubtitle}
+        protocolLabel={labels.profileProtocol}
+        ctaLabel={labels.aiCharacterCta}
+        character={{
+          id: selectedCharacterId,
+          name: characterName,
+          botName: characterBotName || '',
+          description: characterDescription,
+          gradient: selectedCharacter?.gradient || 'from-indigo-500 to-purple-600',
+          icon: selectedCharacter?.icon || <Sparkles className="w-10 h-10" />
+        }}
+        topTraits={topTraits}
+        onOpenProfile={() => navigate(`/character/${selectedCharacterId}`)}
+      />
 
       <section>
         <SectionHeader title={labels.coreArchetypeTitle} subtitle={labels.coreArchetypeSubtitle} icon={<BarChart3 className="w-full h-full" />} />
@@ -314,7 +424,7 @@ const ComprehensiveResults: React.FC<ComprehensiveResultsProps> = ({ profile, on
       <section>
         <SectionHeader title={labels.relationalTitle} subtitle={labels.relationalSubtitle} icon={<HeartHandshake className="w-full h-full" />} />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
-          <div className="lg:col-span-7 bg-slate-900 p-6 sm:p-8 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] text-white shadow-2xl relative overflow-hidden group">
+          <div className="lg:col-span-7 bg-slate-900 p-5 sm:p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700"></div>
             <h4 className="text-[10px] font-black text-rose-400 uppercase tracking-[0.4em] mb-12 flex items-center">
               <span className="w-8 h-px bg-rose-400/40 mr-4"></span> {labels.relationshipMode}
@@ -332,7 +442,7 @@ const ComprehensiveResults: React.FC<ComprehensiveResultsProps> = ({ profile, on
               </div>
             </div>
           </div>
-          <div className="lg:col-span-5 bg-white p-6 sm:p-8 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] border border-slate-100 shadow-xl flex flex-col justify-center text-center relative">
+          <div className="lg:col-span-5 bg-white p-5 sm:p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 shadow-xl flex flex-col justify-center text-center relative">
              <Quote className="w-8 h-8 text-indigo-100 mb-8 mx-auto" />
              <p className="text-slate-600 font-medium leading-relaxed italic text-lg sm:text-xl px-2">
                "{advice?.relationshipAnalysis?.advice || labels.generating}"
@@ -347,7 +457,7 @@ const ComprehensiveResults: React.FC<ComprehensiveResultsProps> = ({ profile, on
       <section>
         <SectionHeader title={labels.systemIdentityTitle} subtitle={labels.systemIdentitySubtitle} icon={<Briefcase className="w-full h-full" />} />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-          <div className="lg:col-span-2 bg-white rounded-[2.5rem] md:rounded-[3.5rem] p-6 sm:p-8 md:p-12 border border-slate-100 shadow-xl space-y-10 md:space-y-12">
+          <div className="lg:col-span-2 bg-white rounded-[2rem] md:rounded-[2.5rem] p-5 sm:p-6 md:p-8 border border-slate-100 shadow-xl space-y-8 md:space-y-10">
             <div>
               <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest block mb-2">{labels.professionalRole}</span>
               <h5 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tighter leading-none mb-6">
@@ -368,7 +478,7 @@ const ComprehensiveResults: React.FC<ComprehensiveResultsProps> = ({ profile, on
               </div>
             </div>
           </div>
-          <div className={`bg-gradient-to-br ${config.bg} rounded-[2.5rem] md:rounded-[3.5rem] p-6 sm:p-8 md:p-12 text-white shadow-xl relative overflow-hidden flex flex-col group`}>
+          <div className={`bg-gradient-to-br ${config.bg} rounded-[2rem] md:rounded-[2.5rem] p-5 sm:p-6 md:p-8 text-white shadow-xl relative overflow-hidden flex flex-col group`}>
             <h4 className="text-[10px] font-black text-white/60 uppercase tracking-[0.4em] mb-12">{labels.latentEssence}</h4>
             <div className="relative z-10 mt-auto">
               <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center p-3 text-white mb-6 shadow-inner">
@@ -382,10 +492,10 @@ const ComprehensiveResults: React.FC<ComprehensiveResultsProps> = ({ profile, on
         </div>
       </section>
 
-      <section className="bg-slate-950 sm:-mx-6 lg:-mx-8 px-4 sm:px-10 lg:px-16 py-16 sm:py-24 rounded-[2.5rem] sm:rounded-[3rem] md:rounded-[4rem] text-white overflow-hidden relative shadow-2xl">
+      <section className="bg-slate-950 sm:-mx-6 lg:-mx-8 px-4 sm:px-10 lg:px-16 py-12 sm:py-16 rounded-[2rem] sm:rounded-[2.5rem] md:rounded-[3rem] text-white overflow-hidden relative shadow-2xl">
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[120px] -mr-40 -mt-40"></div>
         <SectionHeader title={labels.insightsTitle} subtitle={labels.insightsSubtitle} icon={<Brain className="w-full h-full" />} />
-        <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 mt-10 sm:mt-16 relative z-10">
+        <div className="grid lg:grid-cols-2 gap-6 sm:gap-10 mt-8 sm:mt-12 relative z-10">
           <div className="space-y-8 sm:space-y-12">
             <h4 className="text-indigo-400 font-black uppercase tracking-[0.5em] text-[10px] flex items-center">
               <span className="w-12 h-px bg-indigo-400/40 mr-4"></span> {labels.coreCapabilities}
@@ -415,13 +525,13 @@ const ComprehensiveResults: React.FC<ComprehensiveResultsProps> = ({ profile, on
         </div>
       </section>
 
-      <section className="pt-16 sm:pt-24 border-t border-slate-100">
-        <div className="max-w-4xl mx-auto space-y-10 sm:space-y-16">
+      <section className="pt-12 sm:pt-16 border-t border-slate-100">
+        <div className="max-w-4xl mx-auto space-y-8 sm:space-y-12">
           <div className="text-center">
             <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] mb-4">{labels.baselineTitle}</h4>
             <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{labels.baselineSubtitle}</h3>
           </div>
-          <div className="grid grid-cols-1 gap-4 bg-white p-6 sm:p-8 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] shadow-xl shadow-slate-200/40 border border-slate-50">
+          <div className="grid grid-cols-1 gap-4 bg-white p-5 sm:p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-xl shadow-slate-200/40 border border-slate-50">
             <DetailedBar dimensionLabel={labels.dimensionLabel} label="Openness / 開放性" score={profile.scores.openness} color="from-orange-400 to-amber-500" icon={<Eye className="w-full h-full" />} />
             <DetailedBar dimensionLabel={labels.dimensionLabel} label="Conscientiousness / 誠実性" score={profile.scores.conscientiousness} color="from-blue-500 to-indigo-600" icon={<CheckCircle2 className="w-full h-full" />} />
             <DetailedBar dimensionLabel={labels.dimensionLabel} label="Extraversion / 外向性" score={profile.scores.extraversion} color="from-yellow-400 to-orange-500" icon={<Zap className="w-full h-full" />} />
@@ -431,9 +541,9 @@ const ComprehensiveResults: React.FC<ComprehensiveResultsProps> = ({ profile, on
         </div>
       </section>
 
-      <section className="text-center pt-16 sm:pt-20">
-        <div className="max-w-3xl mx-auto space-y-10 sm:space-y-16">
-          <h2 className="text-3xl sm:text-4xl md:text-6xl font-black text-slate-900 leading-tight tracking-tighter">
+      <section className="text-center pt-12 sm:pt-16">
+        <div className="max-w-3xl mx-auto space-y-8 sm:space-y-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 leading-tight tracking-tighter">
             {resolvedLang === 'jp' ? (
               <>
                 あなたの物語を、<br />
@@ -444,12 +554,12 @@ const ComprehensiveResults: React.FC<ComprehensiveResultsProps> = ({ profile, on
             )}
           </h2>
           <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
-            <button className="px-8 sm:px-12 py-4 sm:py-6 bg-slate-900 text-white rounded-[1.75rem] sm:rounded-[2rem] font-black text-[11px] uppercase tracking-[0.3em] hover:scale-105 transition-all shadow-xl active:scale-95">
+            <button className="px-6 sm:px-10 py-3 sm:py-4 bg-slate-900 text-white rounded-[1.5rem] sm:rounded-[1.75rem] font-black text-[11px] uppercase tracking-[0.3em] hover:scale-105 transition-all shadow-xl active:scale-95">
               {labels.saveReport}
             </button>
             <button 
               onClick={onRestart} 
-              className="px-8 sm:px-12 py-4 sm:py-6 bg-white text-slate-500 border-2 border-slate-100 rounded-[1.75rem] sm:rounded-[2rem] font-black text-[11px] uppercase tracking-[0.3em] hover:bg-slate-50 transition-all active:scale-95"
+              className="px-6 sm:px-10 py-3 sm:py-4 bg-white text-slate-500 border-2 border-slate-100 rounded-[1.5rem] sm:rounded-[1.75rem] font-black text-[11px] uppercase tracking-[0.3em] hover:bg-slate-50 transition-all active:scale-95"
             >
               {labels.restart}
             </button>

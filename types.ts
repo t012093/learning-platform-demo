@@ -330,7 +330,7 @@ export type LocalizedText = {
 
 export type LocalizedDocBlock =
   | { type: 'text'; text: LocalizedText; style?: 'normal' | 'lead' | 'quote' }
-  | { type: 'image'; src: string; alt: string; caption?: LocalizedText; layout?: 'full' | 'float-right' }
+  | { type: 'image'; src?: string; fallbackSrc?: string; prompt?: string; alt: string; caption?: LocalizedText; layout?: 'full' | 'float-right' }
   | { type: 'code'; code: string; language: string; filename?: string; highlightLines?: number[] }
   | { type: 'list'; items: LocalizedText[]; style?: 'bullet' | 'number' | 'check' | 'key' }
   | { type: 'callout'; title?: LocalizedText; text: LocalizedText; variant: 'info' | 'warning' | 'tip' | 'success' }

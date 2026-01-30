@@ -68,6 +68,13 @@ const PYTHON_DEMO_DATA: any = {
               content: [
                 { type: 'text', style: 'lead', text: { en: 'In Python, variables are just labels.', jp: 'Pythonにおいて、変数は箱ではなく「ラベル」に過ぎません。' } },
                 { type: 'text', text: { en: 'Multiple names can point to the same object. Changing a mutable object affects every name that references it.', jp: '同じオブジェクトを複数の名前が参照できます。ミュータブルなオブジェクトは、どの参照から変更しても全てに影響します。' } },
+                {
+                  type: 'image',
+                  prompt: 'Isometric high-contrast vector diagram of a Python memory model: elegant name tags pointing to object blocks with glowing arrows, subtle grid, indigo and teal highlights on a deep slate gradient background, clean geometry, cinematic lighting, no text, no letters, no watermark',
+                  src: 'https://image.pollinations.ai/prompt/Isometric%20high-contrast%20vector%20diagram%20of%20a%20Python%20memory%20model%3A%20elegant%20name%20tags%20pointing%20to%20object%20blocks%20with%20glowing%20arrows%2C%20subtle%20grid%2C%20indigo%20and%20teal%20highlights%20on%20a%20deep%20slate%20gradient%20background%2C%20clean%20geometry%2C%20cinematic%20lighting%2C%20no%20text%2C%20no%20letters%2C%20no%20watermark?nologo=true',
+                  alt: 'Minimalist vector illustration of Python memory model',
+                  caption: { en: 'Names reference objects (conceptual view)', jp: '名前がオブジェクトを参照する概念図' }
+                },
                 { 
                   type: 'mermaid', 
                   chart: 'graph LR\n  A[Variable: x] -->|Reference| B(Object: 10)\n  C[Variable: y] -->|Reference| B\n  style B fill:#f9f,stroke:#333',
@@ -81,6 +88,13 @@ const PYTHON_DEMO_DATA: any = {
               content: [
                 { type: 'text', text: { en: 'Assigning a list copies the reference, not the data. Use copy() or slicing to duplicate.', jp: 'リストの代入は「参照」をコピーするだけで、データ自体は複製されません。copy() やスライスで複製します。' } },
                 { type: 'text', text: { en: 'Shallow copies only duplicate the outer list. Nested objects still share references.', jp: '浅いコピーは外側だけを複製します。ネスト内のオブジェクトは共有されたままです。' } },
+                {
+                  type: 'image',
+                  prompt: 'Split-screen diagram: left shows two labels pointing to the same list object, right shows a copied list object, minimalist vector style with clean arrows, blue and mint accents on a muted slate background, strong contrast, no text',
+                  src: 'https://image.pollinations.ai/prompt/Split-screen%20diagram%3A%20left%20shows%20two%20labels%20pointing%20to%20the%20same%20list%20object%2C%20right%20shows%20a%20copied%20list%20object%2C%20minimalist%20vector%20style%20with%20clean%20arrows%2C%20blue%20and%20mint%20accents%20on%20a%20muted%20slate%20background%2C%20strong%20contrast%2C%20no%20text?nologo=true',
+                  alt: 'Split screen reference vs copy diagram',
+                  caption: { en: 'Reference vs copy at a glance', jp: '参照とコピーの違い（概観）' }
+                },
                 {
                   type: 'code',
                   language: 'python',
@@ -99,6 +113,13 @@ const PYTHON_DEMO_DATA: any = {
               title: { en: 'Mutable vs Immutable', jp: 'ミュータブルとイミュータブル' },
               content: [
                 { type: 'text', text: { en: 'Lists and dicts are mutable; numbers and strings are immutable. Mutations change memory references differently.', jp: 'リストや辞書はミュータブル、数値や文字列はイミュータブルです。変更時の参照の動きが変わります。' } },
+                {
+                  type: 'image',
+                  prompt: 'Conceptual diagram of mutable vs immutable: a flexible list object morphing next to a locked string object, minimalist vector illustration, indigo and teal accents on a soft charcoal gradient background, high contrast, no text',
+                  src: 'https://image.pollinations.ai/prompt/Conceptual%20diagram%20of%20mutable%20vs%20immutable%3A%20a%20flexible%20list%20object%20morphing%20next%20to%20a%20locked%20string%20object%2C%20minimalist%20vector%20illustration%2C%20indigo%20and%20teal%20accents%20on%20a%20soft%20charcoal%20gradient%20background%2C%20high%20contrast%2C%20no%20text?nologo=true',
+                  alt: 'Mutable vs immutable conceptual diagram',
+                  caption: { en: 'Mutable objects can change; immutable stay fixed', jp: '可変は変化し、不変は固定される' }
+                },
                 { type: 'table', headers: [
                   { en: 'Type', jp: '型' },
                   { en: 'Mutable?', jp: '可変か' },
@@ -129,6 +150,13 @@ const PYTHON_DEMO_DATA: any = {
               content: [
                 { type: 'text', text: { en: 'Python uses reference counting plus a cyclic garbage collector. Unused objects are reclaimed automatically.', jp: 'Pythonは参照カウントと循環GCを使い、不要なオブジェクトを自動回収します。' } },
                 { type: 'text', text: { en: 'Objects are freed when reference count drops to zero. Cycles are handled by a separate collector.', jp: '参照数が0になると解放され、循環参照は別のGCが検出します。' } },
+                {
+                  type: 'image',
+                  prompt: 'Abstract memory garbage collection flow: objects fading as references drop to zero, recycle motif, soft blue-to-slate gradient background, clean technical illustration, crisp glow accents, no text',
+                  src: 'https://image.pollinations.ai/prompt/Abstract%20memory%20garbage%20collection%20flow%3A%20objects%20fading%20as%20references%20drop%20to%20zero%2C%20recycle%20motif%2C%20soft%20blue-to-slate%20gradient%20background%2C%20clean%20technical%20illustration%2C%20crisp%20glow%20accents%2C%20no%20text?nologo=true',
+                  alt: 'Abstract garbage collection flow diagram',
+                  caption: { en: 'Garbage collection reclaims unused objects', jp: '不要なオブジェクトは回収される' }
+                },
                 {
                   type: 'callout',
                   variant: 'warning',
@@ -614,6 +642,13 @@ const ART_DEMO_DATA: any = {
                 { type: 'text', style: 'lead', text: { en: 'Cave paintings were not mere decorations; they were technology for survival and ritual.', jp: '洞窟壁画は単なる装飾ではなく、生存と儀式のための「技術」でした。' } },
                 { type: 'text', text: { en: 'In Lascaux and Chauvet, animals dominate the walls—bison, horses, deer—often drawn with motion, volume, and an uncanny vitality.', jp: 'ラスコーやショーヴェでは、バイソン・馬・鹿などの動物が壁面を支配します。動きや量感が巧みに表現され、生命力が宿っているように見えます。' } },
                 {
+                  type: 'image',
+                  prompt: 'Paleolithic cave wall painting of bison and horses, torchlight, ochre pigment, prehistoric style',
+                  src: 'https://image.pollinations.ai/prompt/Paleolithic%20cave%20wall%20painting%20of%20bison%20and%20horses%2C%20torchlight%2C%20ochre%20pigment%2C%20prehistoric%20style?nologo=true',
+                  alt: 'Paleolithic cave wall painting of bison and horses',
+                  caption: { en: 'Reimagined Lascaux wall under torchlight', jp: '松明の光で浮かぶラスコー壁画の再現イメージ' }
+                },
+                {
                   type: 'list',
                   style: 'key',
                   items: [
@@ -641,6 +676,13 @@ const ART_DEMO_DATA: any = {
               title: { en: 'Why Paint in the Dark?', jp: 'なぜ暗い洞窟に描くのか' },
               content: [
                 { type: 'text', text: { en: 'Many paintings are deep inside caves, far from daily living spaces. This suggests a ritual or ceremonial function.', jp: '多くの壁画は生活空間から離れた洞窟の奥にあります。日常ではなく儀礼の場であった可能性が高いと考えられています。' } },
+                {
+                  type: 'image',
+                  prompt: 'Deep cave interior lit by torchlight, ritual gathering, silhouettes and smoke',
+                  src: 'https://image.pollinations.ai/prompt/Deep%20cave%20interior%20lit%20by%20torchlight%2C%20ritual%20gathering%2C%20silhouettes%20and%20smoke?nologo=true',
+                  alt: 'Deep cave interior lit by torchlight with ritual silhouettes',
+                  caption: { en: 'Ritual spaces deep inside the cave', jp: '洞窟奥部にある儀礼空間のイメージ' }
+                },
                 {
                   type: 'table',
                   headers: [
@@ -681,6 +723,13 @@ const ART_DEMO_DATA: any = {
               content: [
                 { type: 'text', text: { en: 'Prehistoric artists used a surprisingly advanced toolkit: minerals, charcoal, binders, and airbrush-like blowing.', jp: '先史時代の作者は、鉱物・木炭・結合材・吹き付けなど、驚くほど高度なツールを使っていました。' } },
                 {
+                  type: 'image',
+                  prompt: 'Prehistoric artist grinding ochre pigment with stone tools, dark cave environment',
+                  src: 'https://image.pollinations.ai/prompt/Prehistoric%20artist%20grinding%20ochre%20pigment%20with%20stone%20tools%2C%20dark%20cave%20environment?nologo=true',
+                  alt: 'Prehistoric artist grinding ochre pigment with stone tools',
+                  caption: { en: 'Grinding ochre to prepare pigment', jp: '顔料を作るための黄土のすり潰し' }
+                },
+                {
                   type: 'table',
                   headers: [
                     { en: 'Material', jp: '素材' },
@@ -714,6 +763,13 @@ const ART_DEMO_DATA: any = {
               title: { en: 'Design Lessons for Today', jp: '現代へのデザイン示唆' },
               content: [
                 { type: 'text', text: { en: 'Cave art teaches that communication is environmental, multisensory, and ritualized.', jp: '洞窟壁画は、コミュニケーションが環境・感覚・儀礼に根ざしていることを教えてくれます。' } },
+                {
+                  type: 'image',
+                  prompt: 'Ancient cave hand stencils on rock wall, red ochre, torchlight, high contrast',
+                  src: 'https://image.pollinations.ai/prompt/Ancient%20cave%20hand%20stencils%20on%20rock%20wall%2C%20red%20ochre%2C%20torchlight%2C%20high%20contrast?nologo=true',
+                  alt: 'Ancient cave hand stencils on rock wall',
+                  caption: { en: 'Hand stencils as a shared signature', jp: '共同体の“署名”としての手形' }
+                },
                 {
                   type: 'list',
                   style: 'key',
@@ -1711,4 +1767,27 @@ export const uploadFile = async (file: File) => {
     throw new Error(err.error || 'Upload failed.');
   }
   return await response.json();
+};
+
+export const generateImagePreview = async (
+  prompt: string,
+  options?: { aspectRatio?: string; imageSize?: string }
+) => {
+  const response = await fetch(`${API_BASE}/image`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      prompt,
+      aspect_ratio: options?.aspectRatio,
+      image_size: options?.imageSize
+    })
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Image generation failed.');
+  }
+  const data = await response.json();
+  if (!data?.image) throw new Error('Image generation failed.');
+  const mime = data.mimeType || 'image/png';
+  return { url: `data:${mime};base64,${data.image}`, text: data.text || '' };
 };

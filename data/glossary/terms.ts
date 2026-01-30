@@ -144,6 +144,118 @@ export const GLOSSARY_TERMS: GlossaryTerm[] = [
     category: 'code'
   },
 
+  // --- Python Basics ---
+  {
+    id: 'variable',
+    term: 'Variable',
+    synonyms: ['variable', 'variables', '変数'],
+    definitions: {
+      en: 'A name that references an object in memory rather than storing the value itself.',
+      jp: '値そのものではなく、メモリ上のオブジェクトを参照する「名前」。'
+    },
+    category: 'code'
+  },
+  {
+    id: 'object',
+    term: 'Object',
+    synonyms: ['object', 'objects', 'オブジェクト'],
+    definitions: {
+      en: 'A value with type and identity stored in memory (e.g., list, string, number).',
+      jp: '型とID（同一性）を持つメモリ上の実体（例: リスト、文字列、数値）。'
+    },
+    category: 'code'
+  },
+  {
+    id: 'reference',
+    term: 'Reference',
+    synonyms: ['reference', 'references', '参照'],
+    definitions: {
+      en: 'A link from a name to an object. Multiple names can reference the same object.',
+      jp: '名前からオブジェクトへ向かうリンク。複数の名前が同じオブジェクトを指せる。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'mutable',
+    term: 'Mutable',
+    synonyms: ['mutable', 'ミュータブル', '可変'],
+    definitions: {
+      en: 'An object that can be changed in place (e.g., list, dict).',
+      jp: 'オブジェクト自体をその場で変更できる性質（例: リスト、辞書）。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'immutable',
+    term: 'Immutable',
+    synonyms: ['immutable', 'イミュータブル', '不変'],
+    definitions: {
+      en: 'An object that cannot be changed in place (e.g., int, str).',
+      jp: 'その場で変更できず、変更時は新しいオブジェクトになる性質（例: int, str）。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'shallow-copy',
+    term: 'Shallow copy',
+    synonyms: ['shallow copy', '浅いコピー'],
+    definitions: {
+      en: 'Copies only the outer container; nested objects are still shared.',
+      jp: '外側だけを複製し、内側の参照は共有されたままのコピー。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'deep-copy',
+    term: 'Deep copy',
+    synonyms: ['deep copy', 'deepcopy', '深いコピー'],
+    definitions: {
+      en: 'Copies the full structure recursively so nested objects are independent.',
+      jp: 'ネストも含めて再帰的に複製し、内側も独立させるコピー。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'identity',
+    term: 'Identity',
+    synonyms: ['identity', '同一性'],
+    definitions: {
+      en: 'Whether two names reference the exact same object (checked with `is`).',
+      jp: '2つの名前が同一オブジェクトを指しているかどうか（`is` で判定）。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'equality',
+    term: 'Equality',
+    synonyms: ['equality', '等価性'],
+    definitions: {
+      en: 'Whether two values are equal in content (checked with `==`).',
+      jp: '値の内容が等しいかどうか（`==` で判定）。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'ref-count',
+    term: 'Reference count',
+    synonyms: ['reference count', 'ref count', '参照カウント'],
+    definitions: {
+      en: 'The number of references pointing to an object; when it reaches zero, the object can be freed.',
+      jp: 'オブジェクトを参照している数。0になると解放対象になる。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'garbage-collection',
+    term: 'Garbage collection',
+    synonyms: ['garbage collection', 'GC', 'ガーベジコレクション'],
+    definitions: {
+      en: 'Automatic memory cleanup for objects that are no longer referenced.',
+      jp: '参照されなくなったオブジェクトを自動回収する仕組み。'
+    },
+    category: 'concept'
+  },
+
   // --- AI Agents ---
   {
     id: 'ai-agent',

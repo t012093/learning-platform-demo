@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { ingestMaterial } from '../ragService.js';
 import { getPool, ensurePhase1User, PHASE1_USER_ID } from '../db.js';
+import { generateImageWithGemini } from '../geminiBackendService.js';
 
 // ESM dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -124,6 +125,27 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     } catch (error) {
         console.error('Upload Error:', error);
         res.status(500).json({ error: 'Upload failed' });
+    }
+});
+
+// POST /api/v2/image
+router.post('/image', async (req, res) => {
+    const rawPrompt = req.body?.prompt;
+    const prompt = (rawPrompt || '').trim();
+    console.log(`[Content API] Image request: ${prompt ? `${prompt.slice(0, 120)}${prompt.length > 120 ? '…' : ''}` : '<empty>'}`);
+    if (!prompt) return res.status(400).json({ error: 'prompt required' });
+
+    try {
+        const result = await generateImageWithGemini({
+            prompt,
+            aspectRatio: req.body?.aspect_ratio || '16:9',
+            imageSize: req.body?.image_size || '1K'
+        });
+        console.log(`[Content API] Image generated: mime=${result.mimeType || 'image/png'} text=${(result.text || '').slice(0, 60)}`);
+        res.json({ ok: true, image: result.data, mimeType: result.mimeType, text: result.text });
+    } catch (error) {
+        console.error('[Content API] Image Error:', error.message);
+        res.status(500).json({ error: 'Image generation failed', detail: error.message });
     }
 });
 

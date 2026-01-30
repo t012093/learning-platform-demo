@@ -8,6 +8,7 @@ import mermaid from 'mermaid';
 import { DocChapter, DocSection, LocalizedDocBlock, LocalizedText, QuizData } from '../../../types';
 import { GeneratedLesson } from '../../../services/curriculumAdapter';
 import GlossaryText from '../../common/GlossaryText';
+import { generateImagePreview } from '../../../services/curriculumApi';
 
 // Helper to handle both string (legacy/resolved) and LocalizedText
 const getText = (content: string | LocalizedText | undefined, lang: 'en' | 'jp'): string => {
@@ -563,6 +564,116 @@ const getMermaidThemeForType = (type: MermaidDiagramType) => {
     }
 };
 
+type ImageDocBlock = Extract<LocalizedDocBlock, { type: 'image' }>;
+const imagePreviewCache = new Map<string, string>();
+
+const ImageBlock: React.FC<{ block: ImageDocBlock; language: 'en' | 'jp' }> = ({ block, language }) => {
+    const cached = block.prompt ? imagePreviewCache.get(block.prompt) : null;
+    const [src, setSrc] = useState<string | null>(
+        block.prompt ? cached || null : block.src || block.fallbackSrc || null
+    );
+    const [isLoading, setIsLoading] = useState(false);
+    const analysisRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        if (!block.prompt) {
+            setSrc(block.src || block.fallbackSrc || null);
+            return;
+        }
+        if (imagePreviewCache.has(block.prompt)) {
+            setSrc(imagePreviewCache.get(block.prompt) || null);
+            setIsLoading(false);
+            return;
+        }
+        let cancelled = false;
+        setSrc(null);
+        setIsLoading(true);
+        generateImagePreview(block.prompt, { aspectRatio: '16:9', imageSize: '1K' })
+            .then(({ url }) => {
+                if (cancelled) return;
+                imagePreviewCache.set(block.prompt || '', url);
+                setSrc(url);
+            })
+            .catch(() => {
+                if (cancelled) return;
+                setSrc(block.src || block.fallbackSrc || null);
+            })
+            .finally(() => {
+                if (!cancelled) setIsLoading(false);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [block.prompt, block.src, block.fallbackSrc]);
+
+    useEffect(() => {
+        analysisRef.current = null;
+    }, [block.prompt, block.src, block.fallbackSrc]);
+
+    const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
+        if (!src || !src.startsWith('data:') || !block.fallbackSrc) return;
+        if (analysisRef.current === src) return;
+        analysisRef.current = src;
+
+        try {
+            const img = event.currentTarget;
+            const width = Math.min(img.naturalWidth || 0, 80);
+            const height = Math.min(img.naturalHeight || 0, 80);
+            if (!width || !height) return;
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+            ctx.drawImage(img, 0, 0, width, height);
+            const data = ctx.getImageData(0, 0, width, height).data;
+            let sum = 0;
+            let sumSq = 0;
+            let count = 0;
+            for (let i = 0; i < data.length; i += 4) {
+                const alpha = data[i + 3];
+                if (alpha === 0) continue;
+                const lum = (0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2]) / 255;
+                sum += lum;
+                sumSq += lum * lum;
+                count += 1;
+            }
+            if (!count) return;
+            const mean = sum / count;
+            const variance = sumSq / count - mean * mean;
+            if (mean > 0.96 && variance < 0.002) {
+                setSrc(block.fallbackSrc);
+            }
+        } catch {
+            // If analysis fails, keep the current image.
+        }
+    };
+
+    if (!src) {
+        return (
+            <div className={`my-8 ${block.layout === 'full' ? '-mx-6 md:-mx-12' : ''}`}>
+                <div className="w-full h-64 rounded-xl border border-slate-100 bg-gradient-to-br from-slate-100 via-white to-slate-50 animate-pulse" />
+            </div>
+        );
+    }
+
+    return (
+        <figure className={`my-8 ${block.layout === 'full' ? '-mx-6 md:-mx-12' : ''}`}>
+            <img
+                src={src}
+                alt={block.alt}
+                onLoad={handleImageLoad}
+                className={`w-full rounded-xl shadow-md border border-slate-100 ${isLoading ? 'opacity-80' : 'opacity-100'}`}
+            />
+            {block.caption && (
+                <figcaption className="text-center text-xs text-slate-400 mt-2 font-medium">
+                    {getText(block.caption, language)}
+                </figcaption>
+            )}
+        </figure>
+    );
+};
+
 const injectMermaidTheme = (chart: string, type: MermaidDiagramType) => {
     if (/%%\{\s*init:/i.test(chart)) return chart;
     const themeVariables = getMermaidThemeForType(type);
@@ -703,12 +814,7 @@ const BlockRenderer: React.FC<{ block: LocalizedDocBlock; language: 'en' | 'jp' 
             );
 
         case 'image':
-            return (
-                <figure className={`my-8 ${block.layout === 'full' ? '-mx-6 md:-mx-12' : ''}`}>
-                    <img src={block.src} alt={block.alt} className="w-full rounded-xl shadow-md border border-slate-100" />
-                    {block.caption && <figcaption className="text-center text-xs text-slate-400 mt-2 font-medium">{getText(block.caption, language)}</figcaption>}
-                </figure>
-            );
+            return <ImageBlock block={block as ImageDocBlock} language={language} />;
 
         case 'code':
             return (

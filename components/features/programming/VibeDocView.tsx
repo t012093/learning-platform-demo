@@ -679,12 +679,16 @@ const BlockRenderer: React.FC<{ block: LocalizedDocBlock; language: 'en' | 'jp' 
          );
       
       case 'image':
-         return (
-            <figure className={`my-8 ${block.layout === 'full' ? '-mx-6 md:-mx-12' : ''}`}>
-               <img src={block.src} alt={block.alt} className="w-full rounded-xl shadow-md border border-slate-100" />
-               {block.caption && <figcaption className="text-center text-xs text-slate-400 mt-2 font-medium">{getText(block.caption, language)}</figcaption>}
-            </figure>
-         );
+         {
+            const src = block.src || block.fallbackSrc;
+            if (!src) return null;
+            return (
+               <figure className={`my-8 ${block.layout === 'full' ? '-mx-6 md:-mx-12' : ''}`}>
+                  <img src={src} alt={block.alt} className="w-full rounded-xl shadow-md border border-slate-100" />
+                  {block.caption && <figcaption className="text-center text-xs text-slate-400 mt-2 font-medium">{getText(block.caption, language)}</figcaption>}
+               </figure>
+            );
+         }
 
       case 'code':
          return (

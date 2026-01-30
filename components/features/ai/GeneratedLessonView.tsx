@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, Play, Pause, Volume2, Send, Bot, MessageSquare, X, Lightbulb, Target, Sparkles, Key, Palette } from 'lucide-react';
 import { GeneratedCourse } from '../../../types';
 import { useLanguage } from '../../../context/LanguageContext';
+import { generateImagePreview } from '../../../services/curriculumApi';
 
 interface GeneratedLessonViewProps {
     course: GeneratedCourse | null;
@@ -19,6 +20,10 @@ const GeneratedLessonView: React.FC<GeneratedLessonViewProps> = ({ course, onBac
     const [isMuted, setIsMuted] = useState(false);
     const [isAudioLoading, setIsAudioLoading] = useState(false);
     const audioRef = React.useRef<HTMLAudioElement | null>(null);
+    const imageCacheRef = React.useRef(new Map<string, string>());
+    const [heroImageUrl, setHeroImageUrl] = useState<string | null>(null);
+    const [isHeroLoading, setIsHeroLoading] = useState(false);
+    const lastPromptRef = React.useRef<string | null>(null);
     const copy = {
         en: {
             noCourseTitle: 'No Course Data Found',
@@ -115,6 +120,47 @@ const GeneratedLessonView: React.FC<GeneratedLessonViewProps> = ({ course, onBac
     const slideLabel = hasSlides
         ? `${t.slide} ${currentSlideIndex + 1} / ${slides.length}`
         : '';
+    const fallbackHeroUrl = currentSlide?.imagePrompt
+        ? `https://image.pollinations.ai/prompt/${encodeURIComponent(currentSlide.imagePrompt)}?nologo=true`
+        : `https://picsum.photos/seed/${course.id + currentChapterIndex}/1920/1080`;
+
+    React.useEffect(() => {
+        const prompt = currentSlide?.imagePrompt?.trim();
+        if (!prompt) {
+            setHeroImageUrl(null);
+            setIsHeroLoading(false);
+            lastPromptRef.current = null;
+            return;
+        }
+        if (imageCacheRef.current.has(prompt)) {
+            setHeroImageUrl(imageCacheRef.current.get(prompt) || null);
+            setIsHeroLoading(false);
+            lastPromptRef.current = prompt;
+            return;
+        }
+        if (lastPromptRef.current === prompt) return;
+
+        let cancelled = false;
+        lastPromptRef.current = prompt;
+        setIsHeroLoading(true);
+        generateImagePreview(prompt, { aspectRatio: '16:9', imageSize: '1K' })
+            .then(({ url }) => {
+                if (cancelled) return;
+                imageCacheRef.current.set(prompt, url);
+                setHeroImageUrl(url);
+            })
+            .catch(() => {
+                if (cancelled) return;
+                setHeroImageUrl(null);
+            })
+            .finally(() => {
+                if (!cancelled) setIsHeroLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [currentSlide?.imagePrompt]);
 
     // --- Audio Logic ---
     React.useEffect(() => {
@@ -262,13 +308,9 @@ const GeneratedLessonView: React.FC<GeneratedLessonViewProps> = ({ course, onBac
                     {/* Dynamic Background */}
                     <div className="absolute inset-0 opacity-30">
                         <img
-                            src={
-                                currentSlide?.imagePrompt 
-                                ? `https://image.pollinations.ai/prompt/${encodeURIComponent(currentSlide.imagePrompt)}?nologo=true`
-                                : `https://picsum.photos/seed/${course.id + currentChapterIndex}/1920/1080`
-                            }
+                            src={heroImageUrl || fallbackHeroUrl}
                             alt={t.lessonBackgroundAlt}
-                            className="w-full h-full object-cover blur-sm scale-105 transition-opacity duration-1000"
+                            className={`w-full h-full object-cover blur-sm scale-105 transition-opacity duration-1000 ${isHeroLoading ? 'opacity-70' : 'opacity-100'}`}
                         />
                         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/20 via-slate-950/60 to-slate-950"></div>
                     </div>

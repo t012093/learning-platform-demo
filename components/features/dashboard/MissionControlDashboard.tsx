@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowUpRight,
   Brain,
   Compass,
   Flame,
+  Gem,
   HeartPulse,
   Sparkles,
   Target,
@@ -29,6 +30,28 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const { setTheme } = useTheme();
   const { language } = useLanguage();
   const [chartReady, setChartReady] = useState(false);
+  const [levelNotice, setLevelNotice] = useState(true);
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [showLevelToast, setShowLevelToast] = useState(false);
+  const [showLevelCelebration, setShowLevelCelebration] = useState(false);
+  const [achievementPopup, setAchievementPopup] = useState<{
+    title: string;
+    subtitle: string;
+    body: string;
+    reward?: string;
+    progress?: { label: string; value: string; percent: number };
+    icon: React.ComponentType<{ size?: number }>;
+    accent: string;
+  } | null>(null);
+  const [showAchievementPopup, setShowAchievementPopup] = useState(false);
+  const [levelValue, setLevelValue] = useState(12);
+  const [toastProgress, setToastProgress] = useState(0);
+  const [toastXp, setToastXp] = useState(0);
+  const levelUpTimer = useRef<number | null>(null);
+  const levelToastTimer = useRef<number | null>(null);
+  const levelValueTimer = useRef<number | null>(null);
+  const levelCelebrateTimer = useRef<number | null>(null);
+  const achievementTimer = useRef<number | null>(null);
 
   useEffect(() => {
     setTheme('default');
@@ -38,6 +61,26 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     setChartReady(true);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (levelUpTimer.current) {
+        window.clearTimeout(levelUpTimer.current);
+      }
+      if (levelToastTimer.current) {
+        window.clearTimeout(levelToastTimer.current);
+      }
+      if (levelValueTimer.current) {
+        window.clearTimeout(levelValueTimer.current);
+      }
+      if (levelCelebrateTimer.current) {
+        window.clearTimeout(levelCelebrateTimer.current);
+      }
+      if (achievementTimer.current) {
+        window.clearTimeout(achievementTimer.current);
+      }
+    };
+  }, []);
+
   const copy = {
     en: {
       heroKicker: 'Mission Control',
@@ -45,7 +88,22 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       heroSubtitle: 'Pick a lane, ship a win, and let AI do the heavy lifting.',
       streak: '3 day streak',
       weeklyHours: '2.5h this week',
-      level: 'Level 12',
+      levelLabel: 'Level',
+      levelUpTitle: 'Level Up!',
+      levelUpBody: 'New rewards unlocked in your quest board.',
+      streakPopupTitle: 'Streak Bonus',
+      streakPopupBody: 'Keep your momentum for the 7-day reward.',
+      streakPopupReward: '+40 XP today',
+      streakPopupProgressLabel: 'Progress',
+      streakPopupProgressValue: '3 / 7 days',
+      badgePopupTitle: 'Badge Unlocked',
+      badgePopupRewardLabel: 'Reward',
+      badgePopupBodies: [
+        'Three days in a row. Next reward at day 7.',
+        'Your first AI curriculum shipped.',
+        'Explored a new AI pathway.'
+      ],
+      badgePopupRewards: ['+30 XP', '+50 XP', '+40 XP'],
       primaryKicker: 'Now Playing',
       primaryTitle: 'Vibe Coding: The Engine',
       primaryDescription: 'Master OSS workflows with Codex as your co-pilot. You are 75% through Chapter 3.',
@@ -125,7 +183,22 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       heroSubtitle: 'レーンを決めて、成果を出そう。重い作業はAIに任せる。',
       streak: '3日連続',
       weeklyHours: '今週 2.5h',
-      level: 'レベル 12',
+      levelLabel: 'レベル',
+      levelUpTitle: 'レベルアップ！',
+      levelUpBody: 'クエスト報酬が解放されました。',
+      streakPopupTitle: '連続ボーナス',
+      streakPopupBody: '7日連続でさらに報酬が増加します。',
+      streakPopupReward: '本日 +40 XP',
+      streakPopupProgressLabel: '進捗',
+      streakPopupProgressValue: '3 / 7 日',
+      badgePopupTitle: 'バッジ獲得',
+      badgePopupRewardLabel: '報酬',
+      badgePopupBodies: [
+        '3日連続で学習を継続。次は7日を狙いましょう。',
+        '初めてのAIカリキュラムを完成。',
+        '新しいAIパスを探索。'
+      ],
+      badgePopupRewards: ['+30 XP', '+50 XP', '+40 XP'],
       primaryKicker: '再開ポイント',
       primaryTitle: 'Vibe Coding: The Engine',
       primaryDescription: 'Codexを相棒にOSSワークフローを攻略。第3章は75%完了。',
@@ -202,6 +275,15 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   } as const;
 
   const t = copy[language];
+  const baseXp = t.gamificationXpValue;
+  const goalXp = t.gamificationXpGoal;
+  const startPercent = Math.min(100, Math.round((baseXp / goalXp) * 100));
+  const levelText = `${t.levelLabel} ${levelValue}`;
+  const streakProgress = {
+    label: t.streakPopupProgressLabel,
+    value: t.streakPopupProgressValue,
+    percent: Math.min(100, Math.round((3 / 7) * 100))
+  };
 
   const activityData = useMemo(() => (
     t.days.map((day, index) => ({
@@ -236,81 +318,258 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   } as const;
   const xpProgress = Math.min(100, Math.round((t.gamificationXpValue / t.gamificationXpGoal) * 100));
   const xpProgressStyle = { ['--progress' as any]: `${xpProgress}%` } as React.CSSProperties;
-  const badgeIcons = [Flame, Trophy, Sparkles];
+  const badgeTiles = [
+    {
+      icon: Flame,
+      accent: 'from-orange-400 via-amber-400 to-yellow-300',
+      glow: 'shadow-[0_18px_30px_rgba(251,146,60,0.35)]'
+    },
+    {
+      icon: Sparkles,
+      accent: 'from-sky-400 via-cyan-400 to-indigo-400',
+      glow: 'shadow-[0_18px_30px_rgba(56,189,248,0.35)]'
+    },
+    {
+      icon: Gem,
+      accent: 'from-fuchsia-400 via-pink-400 to-rose-400',
+      glow: 'shadow-[0_18px_30px_rgba(236,72,153,0.35)]'
+    }
+  ];
+  const badgePopupData = t.gamificationBadges.map((badge, index) => {
+    const style = badgeTiles[index % badgeTiles.length];
+    return {
+      title: t.badgePopupTitle,
+      subtitle: badge,
+      body: t.badgePopupBodies[index] || '',
+      reward: t.badgePopupRewards[index] || undefined,
+      icon: style.icon,
+      accent: style.accent
+    };
+  });
+
+  const triggerLevelUp = () => {
+    setLevelNotice(false);
+    setShowLevelUp(false);
+    setShowLevelToast(true);
+    setToastProgress(startPercent);
+    setToastXp(baseXp);
+    if (levelUpTimer.current) {
+      window.clearTimeout(levelUpTimer.current);
+    }
+    if (levelToastTimer.current) {
+      window.clearTimeout(levelToastTimer.current);
+    }
+    if (levelValueTimer.current) {
+      window.clearTimeout(levelValueTimer.current);
+    }
+    if (levelCelebrateTimer.current) {
+      window.clearTimeout(levelCelebrateTimer.current);
+    }
+    requestAnimationFrame(() => setShowLevelUp(true));
+    requestAnimationFrame(() => setToastProgress(100));
+    levelUpTimer.current = window.setTimeout(() => setShowLevelUp(false), 1200);
+    levelToastTimer.current = window.setTimeout(() => setShowLevelToast(false), 2000);
+    levelValueTimer.current = window.setTimeout(() => {
+      setToastXp(goalXp);
+      setLevelValue(13);
+      setShowLevelCelebration(true);
+      levelCelebrateTimer.current = window.setTimeout(() => setShowLevelCelebration(false), 900);
+    }, 900);
+  };
+
+  const triggerAchievementPopup = (data: {
+    title: string;
+    subtitle: string;
+    body: string;
+    reward?: string;
+    progress?: { label: string; value: string; percent: number };
+    icon: React.ComponentType<{ size?: number }>;
+    accent: string;
+  }) => {
+    setAchievementPopup(data);
+    setShowAchievementPopup(false);
+    if (achievementTimer.current) {
+      window.clearTimeout(achievementTimer.current);
+    }
+    requestAnimationFrame(() => setShowAchievementPopup(true));
+    achievementTimer.current = window.setTimeout(() => setShowAchievementPopup(false), 2200);
+  };
 
   return (
-    <div className="relative overflow-hidden p-6 md:p-12 max-w-[1200px] mx-auto min-h-screen space-y-10">
+    <div className="relative overflow-hidden p-6 md:p-12 max-w-[1200px] mx-auto min-h-screen">
+      <div
+        className={`absolute right-4 md:right-6 top-6 md:top-8 z-50 w-[300px] md:w-[320px] rounded-2xl border border-indigo-200/60 bg-white/95 px-5 py-4 shadow-xl backdrop-blur transition-all duration-300 ${
+          showLevelToast ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-3 pointer-events-none'
+        } ${showLevelCelebration ? 'level-toast-glow' : ''}`}
+      >
+        <div className={`level-toast-confetti ${showLevelCelebration ? 'level-toast-confetti-active' : ''}`}>
+          <span className="level-confetti" style={{ ['--x' as any]: '-16px', ['--y' as any]: '10px', ['--delay' as any]: '0ms', ['--size' as any]: '6px', ['--hue' as any]: '38' }} />
+          <span className="level-confetti" style={{ ['--x' as any]: '12px', ['--y' as any]: '12px', ['--delay' as any]: '60ms', ['--size' as any]: '5px', ['--hue' as any]: '210' }} />
+          <span className="level-confetti" style={{ ['--x' as any]: '22px', ['--y' as any]: '-6px', ['--delay' as any]: '90ms', ['--size' as any]: '4px', ['--hue' as any]: '280' }} />
+          <span className="level-confetti" style={{ ['--x' as any]: '-22px', ['--y' as any]: '-8px', ['--delay' as any]: '120ms', ['--size' as any]: '5px', ['--hue' as any]: '120' }} />
+          <span className="level-confetti" style={{ ['--x' as any]: '4px', ['--y' as any]: '-14px', ['--delay' as any]: '150ms', ['--size' as any]: '4px', ['--hue' as any]: '24' }} />
+        </div>
+        <div className="flex items-start gap-3">
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-300 via-yellow-200 to-rose-200 text-amber-900 flex items-center justify-center shadow-md">
+            <Trophy size={18} />
+          </div>
+          <div className="space-y-1">
+            <div className="text-xs font-bold uppercase tracking-[0.24em] text-indigo-500">{t.levelUpTitle}</div>
+            <div className="text-sm font-semibold text-slate-900">{levelText}</div>
+            <div className="text-xs text-slate-500">{t.levelUpBody}</div>
+            <div className="mt-2 space-y-1">
+              <div className="flex items-center justify-between text-[11px] text-slate-500">
+                <span>XP</span>
+                <span className="font-semibold text-slate-700">{toastXp} / {goalXp}</span>
+              </div>
+              <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                <div
+                  className="level-toast-bar h-2 rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-indigo-400"
+                  style={{ width: `${toastProgress}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {achievementPopup && (
+        <div
+          className={`absolute right-4 md:right-6 top-28 md:top-32 z-40 w-[260px] md:w-[280px] rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur transition-all duration-300 ${
+            showAchievementPopup ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            {(() => {
+              const PopupIcon = achievementPopup.icon;
+              return (
+                <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${achievementPopup.accent} text-white flex items-center justify-center shadow-md`}>
+                  <PopupIcon size={18} />
+                </div>
+              );
+            })()}
+            <div className="space-y-1">
+              <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-indigo-500">{achievementPopup.title}</div>
+              <div className="text-sm font-semibold text-slate-900">{achievementPopup.subtitle}</div>
+              <div className="text-xs text-slate-500">{achievementPopup.body}</div>
+              {achievementPopup.reward && (
+                <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                  {t.badgePopupRewardLabel}: {achievementPopup.reward}
+                </div>
+              )}
+              {achievementPopup.progress && (
+                <div className="mt-2 space-y-1">
+                  <div className="flex items-center justify-between text-[11px] text-slate-500">
+                    <span>{achievementPopup.progress.label}</span>
+                    <span className="font-semibold text-slate-700">{achievementPopup.progress.value}</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                    <div
+                      className="h-2 rounded-full bg-gradient-to-r from-orange-400 via-amber-300 to-yellow-300"
+                      style={{ width: `${achievementPopup.progress.percent}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       <div className="pointer-events-none absolute -top-40 -right-40 h-[420px] w-[420px] rounded-full bg-gradient-to-br from-indigo-400/40 via-purple-300/20 to-transparent blur-[120px]" />
       <div className="pointer-events-none absolute -bottom-32 -left-24 h-[360px] w-[360px] rounded-full bg-gradient-to-tr from-emerald-200/40 via-sky-200/20 to-transparent blur-[120px]" />
 
-      <header className="relative z-10 flex flex-col gap-6 dashboard-fade" style={{ animationDelay: '40ms' }}>
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{t.heroKicker}</p>
-            <h1 className="font-serif text-4xl md:text-5xl text-slate-900 mt-2">{t.heroTitle}</h1>
-            <p className="text-slate-500 mt-3 max-w-xl">{t.heroSubtitle}</p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <StatPill icon={Flame} label={t.streak} tone="orange" delay="120ms" />
+      <div className="space-y-10">
+        <header className="relative z-10 flex flex-col gap-6 dashboard-fade" style={{ animationDelay: '40ms' }}>
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{t.heroKicker}</p>
+              <h1 className="font-serif text-4xl md:text-5xl text-slate-900 mt-2">{t.heroTitle}</h1>
+              <p className="text-slate-500 mt-3 max-w-xl">{t.heroSubtitle}</p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+            <StatPill
+              icon={Flame}
+              label={t.streak}
+              tone="orange"
+              delay="120ms"
+              onClick={() =>
+                triggerAchievementPopup({
+                  title: t.streakPopupTitle,
+                  subtitle: t.streak,
+                  body: t.streakPopupBody,
+                  reward: t.streakPopupReward,
+                  progress: streakProgress,
+                  icon: Flame,
+                  accent: 'from-orange-400 via-amber-300 to-yellow-300'
+                })
+              }
+            />
             <StatPill icon={Target} label={t.weeklyHours} tone="indigo" delay="200ms" />
-            <StatPill icon={Trophy} label={t.level} tone="emerald" delay="280ms" />
+              <StatPill
+                icon={Trophy}
+                label={levelText}
+                tone="emerald"
+                delay="280ms"
+                notify={levelNotice}
+                animate={showLevelUp}
+                onClick={triggerLevelUp}
+              />
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <section className="grid lg:grid-cols-[1.15fr,0.85fr] gap-6">
-        <div className="relative overflow-hidden rounded-3xl bg-slate-900 text-white p-7 md:p-8 shadow-xl dashboard-fade-float" style={{ animationDelay: '120ms' }}>
-          <div className="pointer-events-none absolute -top-16 right-0 h-64 w-64 rounded-full bg-purple-500/30 blur-[90px] dashboard-glow" />
-          <div className="pointer-events-none absolute bottom-0 left-10 h-44 w-44 rounded-full bg-emerald-400/20 blur-[80px] dashboard-glow" />
-          <div className="relative z-10 space-y-5">
-            <div className="flex items-center gap-3 text-xs uppercase tracking-[0.25em] text-slate-300">
-              <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1">{t.primaryKicker}</span>
-              <span>{t.primaryMeta}</span>
-            </div>
-            <div>
-              <h2 className="font-serif text-2xl md:text-3xl">{t.primaryTitle}</h2>
-              <p className="text-slate-300 mt-3 text-sm md:text-base max-w-xl">{t.primaryDescription}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => onNavigate(ViewState.VIBE_PATH)}
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-slate-900 font-semibold shadow-lg shadow-white/20 hover:bg-purple-50 transition"
-            >
-              {t.primaryCta} <ArrowUpRight size={18} />
-            </button>
-          </div>
-        </div>
-
-        <div className="rounded-3xl border border-slate-100 bg-white/80 backdrop-blur p-7 md:p-8 shadow-sm flex flex-col gap-6 dashboard-fade" style={{ animationDelay: '200ms' }}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t.conditionTitle}</p>
-              <h3 className="text-lg md:text-xl font-semibold text-slate-900 mt-2">{t.conditionSubtitle}</h3>
-              <p className="text-sm text-slate-500 mt-2">{t.conditionMeta}</p>
-            </div>
-            <div className="h-12 w-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <HeartPulse size={22} />
-            </div>
-          </div>
-          <div className="space-y-4">
-            {t.conditionItems.map((item) => (
-              <div key={item.label}>
-                <div className="flex items-center justify-between text-sm text-slate-600">
-                  <span>{item.label}</span>
-                  <span className="font-semibold text-slate-800">{item.value}</span>
-                </div>
-                <div className="mt-2 h-2 w-full rounded-full bg-slate-100">
-                  <div
-                    className={`h-2 rounded-full ${conditionToneMap[item.tone]} dashboard-progress`}
-                    style={{ ['--progress' as any]: `${item.percent}%` } as React.CSSProperties}
-                  />
-                </div>
-                <p className="text-xs text-slate-400 mt-1">{item.note}</p>
+        <section className="grid lg:grid-cols-[1.15fr,0.85fr] gap-6">
+          <div className="relative overflow-hidden rounded-3xl bg-slate-900 text-white p-7 md:p-8 shadow-xl dashboard-fade-float" style={{ animationDelay: '120ms' }}>
+            <div className="pointer-events-none absolute -top-16 right-0 h-64 w-64 rounded-full bg-purple-500/30 blur-[90px] dashboard-glow" />
+            <div className="pointer-events-none absolute bottom-0 left-10 h-44 w-44 rounded-full bg-emerald-400/20 blur-[80px] dashboard-glow" />
+            <div className="relative z-10 space-y-5">
+              <div className="flex items-center gap-3 text-xs uppercase tracking-[0.25em] text-slate-300">
+                <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1">{t.primaryKicker}</span>
+                <span>{t.primaryMeta}</span>
               </div>
-            ))}
+              <div>
+                <h2 className="font-serif text-2xl md:text-3xl">{t.primaryTitle}</h2>
+                <p className="text-slate-300 mt-3 text-sm md:text-base max-w-xl">{t.primaryDescription}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onNavigate(ViewState.VIBE_PATH)}
+                className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-slate-900 font-semibold shadow-lg shadow-white/20 hover:bg-purple-50 transition"
+              >
+                {t.primaryCta} <ArrowUpRight size={18} />
+              </button>
+            </div>
           </div>
-        </div>
-      </section>
+
+          <div className="rounded-3xl border border-slate-100 bg-white/80 backdrop-blur p-7 md:p-8 shadow-sm flex flex-col gap-6 dashboard-fade" style={{ animationDelay: '200ms' }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t.conditionTitle}</p>
+                <h3 className="text-lg md:text-xl font-semibold text-slate-900 mt-2">{t.conditionSubtitle}</h3>
+                <p className="text-sm text-slate-500 mt-2">{t.conditionMeta}</p>
+              </div>
+              <div className="h-12 w-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <HeartPulse size={22} />
+              </div>
+            </div>
+            <div className="space-y-4">
+              {t.conditionItems.map((item) => (
+                <div key={item.label}>
+                  <div className="flex items-center justify-between text-sm text-slate-600">
+                    <span>{item.label}</span>
+                    <span className="font-semibold text-slate-800">{item.value}</span>
+                  </div>
+                  <div className="mt-2 h-2 w-full rounded-full bg-slate-100">
+                    <div
+                      className={`h-2 rounded-full ${conditionToneMap[item.tone]} dashboard-progress`}
+                      style={{ ['--progress' as any]: `${item.percent}%` } as React.CSSProperties}
+                    />
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">{item.note}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
       <section className="grid md:grid-cols-2 gap-6">
         <div className="rounded-3xl border border-slate-100 bg-white/80 backdrop-blur p-6 shadow-sm dashboard-fade" style={{ animationDelay: '280ms' }}>
@@ -407,15 +666,21 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </h3>
             <p className="text-sm text-slate-500 mt-2">{t.gamificationMeta}</p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {t.gamificationBadges.map((badge, index) => (
-              <BadgePill
-                key={badge}
-                label={badge}
-                icon={badgeIcons[index % badgeIcons.length]}
-                style={{ animationDelay: `${index * 80 + 120}ms` }}
-              />
-            ))}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {t.gamificationBadges.map((badge, index) => {
+              const style = badgeTiles[index % badgeTiles.length];
+              return (
+                <BadgeTile
+                  key={badge}
+                  label={badge}
+                  icon={style.icon}
+                  accent={style.accent}
+                  glow={style.glow}
+                  style={{ animationDelay: `${index * 80 + 120}ms` }}
+                  onClick={() => triggerAchievementPopup(badgePopupData[index])}
+                />
+              );
+            })}
           </div>
         </div>
         <div className="grid md:grid-cols-[1.1fr,0.9fr] gap-6 mt-6">
@@ -501,6 +766,7 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </div>
       </section>
     </div>
+  </div>
   );
 };
 
@@ -508,26 +774,45 @@ const StatPill = ({
   icon: Icon,
   label,
   tone,
-  delay
+  delay,
+  notify,
+  animate,
+  onClick
 }: {
   icon: any;
   label: string;
   tone: 'orange' | 'indigo' | 'emerald';
   delay?: string;
+  notify?: boolean;
+  animate?: boolean;
+  onClick?: () => void;
 }) => {
   const toneMap = {
     orange: 'bg-orange-50 text-orange-600 border-orange-100',
     indigo: 'bg-indigo-50 text-indigo-600 border-indigo-100',
     emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100'
   };
+  const Element = onClick ? 'button' : 'div';
+  const elementProps = onClick ? { type: 'button', onClick } : {};
   return (
-    <div
-      className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold dashboard-pop ${toneMap[tone]}`}
+    <Element
+      {...elementProps}
+      className={`relative rounded-full border px-4 py-2 text-sm font-semibold dashboard-pop ${toneMap[tone]}`}
       style={delay ? { animationDelay: delay } : undefined}
     >
-      <Icon size={16} />
-      {label}
-    </div>
+      {notify && <span className="level-notify-dot" />}
+      {animate && (
+        <>
+          <span className="level-up-flare" />
+          <span className="level-burst" />
+          <span className="level-burst level-burst-second" />
+        </>
+      )}
+      <span className={`level-pill-body ${animate ? 'level-up-pop' : ''}`}>
+        <Icon size={16} />
+        {label}
+      </span>
+    </Element>
   );
 };
 
@@ -568,22 +853,36 @@ const ActionCard = ({
   );
 };
 
-const BadgePill = ({
+const BadgeTile = ({
   label,
   icon: Icon,
-  style
+  accent,
+  glow,
+  style,
+  onClick
 }: {
   label: string;
   icon: any;
+  accent: string;
+  glow: string;
   style?: React.CSSProperties;
+  onClick?: () => void;
 }) => (
-  <div
-    className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600 dashboard-pop"
+  <button
+    type="button"
+    onClick={onClick}
+    className="rounded-2xl border border-white/80 bg-white p-3 text-center shadow-sm dashboard-pop transition hover:-translate-y-0.5 hover:shadow-md"
     style={style}
   >
-    <Icon size={14} className="text-slate-500" />
-    {label}
-  </div>
+    <div className="relative mx-auto w-12 h-12">
+      <div className={`absolute inset-0 rounded-[18px] bg-gradient-to-br ${accent} ${glow}`} />
+      <div className="absolute inset-[2px] rounded-[16px] bg-slate-950/20 border border-white/60" />
+      <div className="relative z-10 w-full h-full flex items-center justify-center text-white">
+        <Icon className="w-6 h-6 drop-shadow-[0_6px_12px_rgba(15,23,42,0.25)]" />
+      </div>
+    </div>
+    <div className="mt-3 text-[11px] font-semibold text-slate-700">{label}</div>
+  </button>
 );
 
 export default MissionControlDashboard;

@@ -52,6 +52,78 @@
   }
 }
 
+@keyframes levelDotPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+}
+
+@keyframes levelBurst {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+
+@keyframes levelPop {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes levelGlow {
+  0% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes levelToastGlow {
+  0% {
+    box-shadow: 0 0 0 rgba(251, 191, 36, 0);
+  }
+  45% {
+    box-shadow: 0 0 32px rgba(251, 191, 36, 0.35), 0 0 60px rgba(99, 102, 241, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(251, 191, 36, 0);
+  }
+}
+
+@keyframes levelConfetti {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.9) rotate(0deg);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--x), var(--y), 0) scale(0.6) rotate(140deg);
+  }
+}
+
 .dashboard-fade {
   opacity: 0;
   transform: translateY(16px);
@@ -77,6 +149,81 @@
 .dashboard-progress {
   width: var(--progress);
   animation: dashboardProgress 0.9s var(--dashboard-ease) forwards;
+}
+
+.level-notify-dot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: #ef4444;
+  box-shadow: 0 0 0 2px white;
+  animation: levelDotPulse 1.6s ease-in-out infinite;
+}
+
+.level-pill-body {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.level-burst {
+  position: absolute;
+  inset: -6px;
+  border-radius: 9999px;
+  border: 2px solid rgba(251, 191, 36, 0.6);
+  opacity: 0;
+  animation: levelBurst 0.9s ease-out forwards;
+  pointer-events: none;
+}
+
+.level-burst-second {
+  animation-delay: 0.15s;
+}
+
+.level-up-pop {
+  animation: levelPop 0.6s var(--dashboard-ease);
+}
+
+.level-up-flare {
+  position: absolute;
+  inset: -8px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.45), rgba(99, 102, 241, 0.2), rgba(255, 255, 255, 0));
+  animation: levelGlow 0.9s ease-out;
+  pointer-events: none;
+}
+
+.level-toast-glow {
+  animation: levelToastGlow 0.9s ease-out;
+}
+
+.level-toast-confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.level-confetti {
+  position: absolute;
+  top: 18px;
+  left: 28px;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 4px;
+  background: hsl(var(--hue) 85% 60%);
+  opacity: 0;
+}
+
+.level-toast-confetti-active .level-confetti {
+  animation: levelConfetti 0.8s ease-out forwards;
+  animation-delay: var(--delay);
+}
+
+.level-toast-bar {
+  transition: width 0.9s var(--dashboard-ease);
 }
 
 @keyframes pageTransition {
@@ -206,6 +353,8 @@
   .dashboard-fade-float,
   .dashboard-glow,
   .dashboard-pop,
+  .level-up-pop,
+  .level-toast-glow,
   .page-transition,
   .portal-card-animate,
   .course-card-animate,
@@ -217,7 +366,10 @@
 
   .portal-card-shimmer,
   .course-card-shimmer,
-  .path-card-glow {
+  .path-card-glow,
+  .level-notify-dot,
+  .level-burst,
+  .level-toast-confetti {
     animation: none !important;
     opacity: 0 !important;
   }

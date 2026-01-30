@@ -172,11 +172,61 @@ const mapProfileToDiagnosisResult = (
   ];
 
   const characterMap = {
-    openness: { en: 'The Visionary', jp: 'ビジョナリー', fr: 'Visionnaire', bot: { en: 'Spark', jp: 'スパーク' } },
-    conscientiousness: { en: 'The Architect', jp: 'アーキテクト', fr: 'Architecte', bot: { en: 'Focus', jp: 'フォーカス' } },
-    extraversion: { en: 'The Catalyst', jp: 'カタリスト', fr: 'Catalyseur', bot: { en: 'Vibe', jp: 'バイブ' } },
-    agreeableness: { en: 'The Mediator', jp: 'メディエーター', fr: 'Médiateur', bot: { en: 'Echo', jp: 'エコー' } },
-    stability: { en: 'The Anchor', jp: 'アンカー', fr: 'Ancre', bot: { en: 'Luna', jp: 'ルナ' } }
+    openness: {
+      en: 'The Visionary',
+      jp: 'ビジョナリー',
+      fr: 'Visionnaire',
+      bot: { en: 'Spark', jp: 'スパーク' },
+      description: {
+        en: 'Creative explorer who unlocks bold ideas and new paths.',
+        jp: '大胆な発想で新しい道を切り拓く創造的な探究者。',
+        fr: 'Explorateur créatif qui ouvre de nouvelles voies.'
+      }
+    },
+    conscientiousness: {
+      en: 'The Architect',
+      jp: 'アーキテクト',
+      fr: 'Architecte',
+      bot: { en: 'Focus', jp: 'フォーカス' },
+      description: {
+        en: 'Strategic planner who builds steady, reliable progress.',
+        jp: '着実に前進するための設計を描く戦略家。',
+        fr: 'Planificateur stratégique au progrès fiable.'
+      }
+    },
+    extraversion: {
+      en: 'The Catalyst',
+      jp: 'カタリスト',
+      fr: 'Catalyseur',
+      bot: { en: 'Vibe', jp: 'バイブ' },
+      description: {
+        en: 'Energizer who boosts momentum and action.',
+        jp: '勢いと行動を加速させる起爆剤。',
+        fr: 'Un moteur d’énergie qui accélère l’action.'
+      }
+    },
+    agreeableness: {
+      en: 'The Mediator',
+      jp: 'メディエーター',
+      fr: 'Médiateur',
+      bot: { en: 'Echo', jp: 'エコー' },
+      description: {
+        en: 'Empathetic partner who supports balance and collaboration.',
+        jp: '共感と調和でチームを支える相棒。',
+        fr: 'Partenaire empathique qui soutient la collaboration.'
+      }
+    },
+    stability: {
+      en: 'The Anchor',
+      jp: 'アンカー',
+      fr: 'Ancre',
+      bot: { en: 'Luna', jp: 'ルナ' },
+      description: {
+        en: 'Calm stabilizer who brings clarity under pressure.',
+        jp: '落ち着きで状況を整える安定の支柱。',
+        fr: 'Stabilisateur calme qui apporte de la clarté.'
+      }
+    }
   };
 
   const topTrait = [
@@ -198,6 +248,9 @@ const mapProfileToDiagnosisResult = (
     archetypeName: language === 'jp' ? character.jp : language === 'fr' ? character.fr : character.en,
     tagline: language === 'jp' ? `AI相棒: ${character.bot.jp}` : language === 'fr' ? `Compagnon IA : ${character.bot.en}` : `AI Companion: ${character.bot.en}`,
     summary: advice?.learningStrategy?.approach || (language === 'jp' ? 'あなたの特性に合わせた学習設計を提案します。' : language === 'fr' ? 'Un parcours optimisé pour votre style.' : 'A learning path optimized for your style.'),
+    characterId: topTrait?.id,
+    characterBotName: language === 'jp' ? character.bot.jp : character.bot.en,
+    characterDescription: character.description[language] || character.description.jp,
     traits: traitScores,
     studyAllocation,
     strengths,
@@ -276,6 +329,12 @@ const PersonalAssessmentView: React.FC<PersonalAssessmentViewProps> = ({ onNavig
       // ignore storage errors in demo
     }
   }, []);
+
+  useEffect(() => {
+    if (step === Step.INTRO && profile) {
+      setStep(Step.RESULTS);
+    }
+  }, [step, profile]);
 
   const handleAssessmentComplete = async (finalScores: Big5Profile) => {
     setStep(Step.ANALYZING);
@@ -389,7 +448,7 @@ const PersonalAssessmentView: React.FC<PersonalAssessmentViewProps> = ({ onNavig
   }
 
   if (step === Step.INTRO && profile) {
-    return <IntroSequence profile={profile} onFinish={() => setStep(Step.RESULTS)} languageOverride={assessmentLanguage} />;
+    return null;
   }
 
   if (step === Step.RESULTS && profile) {

@@ -238,6 +238,7 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
     return false;
   };
   const isFullBleedView = (
+    currentView === ViewState.DASHBOARD ||
     currentView === ViewState.LESSON ||
     currentView === ViewState.BLENDER_LESSON ||
     currentView === ViewState.GENERATED_LESSON_VIEW ||

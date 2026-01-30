@@ -32,6 +32,9 @@ export interface DiagnosisResult {
     archetypeName: string; // Catchy title like "The Strategic Architect"
     tagline: string; // Short subtitle
     summary: string;
+    characterId?: string;
+    characterBotName?: string;
+    characterDescription?: string;
     traits: TraitScore[];
     studyAllocation: TimeAllocation[];
     strengths: string[];

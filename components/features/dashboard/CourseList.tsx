@@ -55,10 +55,10 @@ const CourseList: React.FC<CourseListProps> = ({ onSelectCourse }) => {
   }, []);
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl xl:max-w-[1440px] w-full mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">{t.title}</h1>
-        <p className="text-slate-500 mt-2">{t.subtitle}</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 break-words">{t.title}</h1>
+        <p className="text-slate-500 mt-2 break-words">{t.subtitle}</p>
         
         <div className="flex gap-2 mt-6 overflow-x-auto pb-2 scrollbar-hide">
           {t.categories.map((cat, i) => (
@@ -84,7 +84,7 @@ const CourseList: React.FC<CourseListProps> = ({ onSelectCourse }) => {
             <div 
               key={course.id} 
               onClick={() => onSelectCourse(course)}
-              className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group cursor-pointer flex flex-col h-full relative course-card-animate"
+              className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group cursor-pointer flex flex-col h-full relative course-card-animate min-w-0"
               style={{ animationDelay: cardDelay }}
             >
               <div
@@ -92,7 +92,7 @@ const CourseList: React.FC<CourseListProps> = ({ onSelectCourse }) => {
                 style={{ animationDelay: shimmerDelay }}
                 aria-hidden="true"
               />
-              <div className="relative h-48 overflow-hidden">
+              <div className="relative h-40 sm:h-48 overflow-hidden">
                 <img 
                   src={course.thumbnail} 
                   alt={course.title} 
@@ -105,11 +105,11 @@ const CourseList: React.FC<CourseListProps> = ({ onSelectCourse }) => {
                 </div>
               </div>
               
-              <div className="p-5 flex-1 flex flex-col relative z-10">
-                <h3 className="font-bold text-lg text-slate-900 mb-2">{course.title}</h3>
-                <p className="text-slate-500 text-sm mb-4 flex-1">{course.description}</p>
+              <div className="p-5 flex-1 flex flex-col relative z-10 min-w-0">
+                <h3 className="font-bold text-lg text-slate-900 mb-2 break-words">{course.title}</h3>
+                <p className="text-slate-500 text-sm mb-4 flex-1 break-words line-clamp-3">{course.description}</p>
                 
-                <div className="flex items-center gap-4 text-xs text-slate-500 font-medium mb-4">
+                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 font-medium mb-4">
                    <div className="flex items-center gap-1">
                      <Briefcase size={14} /> 
                      <span>{course.totalLessons} {t.lessons}</span>
@@ -118,7 +118,7 @@ const CourseList: React.FC<CourseListProps> = ({ onSelectCourse }) => {
 
                 {course.progress > 0 ? (
                   <div className="space-y-2">
-                    <div className="flex justify-between text-xs font-bold text-slate-700">
+                    <div className="flex flex-wrap justify-between gap-2 text-xs font-bold text-slate-700">
                       <span>{course.progress}% {t.completed}</span>
                       <span>{course.completedLessons}/{course.totalLessons}</span>
                     </div>

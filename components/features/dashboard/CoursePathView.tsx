@@ -47,13 +47,13 @@ const CoursePathView: React.FC<CoursePathViewProps> = ({ course, onStartLesson, 
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero Header */}
-      <div className="relative bg-slate-900 text-white pb-20 pt-8">
+      <div className="relative bg-slate-900 text-white pb-16 sm:pb-20 pt-8">
         <div className="absolute inset-0 overflow-hidden">
           <img src={course.thumbnail} alt="Background" className="w-full h-full object-cover opacity-20 blur-sm" />
           <div className="absolute inset-0 bg-gradient-to-b from-slate-900/50 to-slate-900"></div>
         </div>
         
-        <div className="relative max-w-4xl mx-auto px-6">
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-10">
           <button 
             onClick={onBack}
             className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors mb-6 font-medium"
@@ -62,26 +62,26 @@ const CoursePathView: React.FC<CoursePathViewProps> = ({ course, onStartLesson, 
           </button>
           
           <div className="flex flex-col md:flex-row gap-6 items-start">
-             <div className="w-24 h-24 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-2xl">
+             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-2xl shrink-0">
                 <span className="text-3xl font-bold">{course.title.charAt(0)}</span>
              </div>
-             <div className="flex-1">
-               <div className="flex gap-3 mb-2">
+             <div className="flex-1 min-w-0">
+               <div className="flex flex-wrap gap-3 mb-2">
                  <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${course.color.replace('bg-', 'text-')} bg-white`}>
                     {course.category}
                  </span>
                </div>
-               <h1 className="text-3xl md:text-4xl font-bold mb-3">{course.title}</h1>
-               <p className="text-slate-300 text-lg leading-relaxed max-w-2xl">{course.description}</p>
+               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 break-words">{course.title}</h1>
+               <p className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-2xl break-words">{course.description}</p>
              </div>
           </div>
         </div>
       </div>
 
       {/* Path Content */}
-      <div className="max-w-3xl mx-auto px-6 -mt-12 relative z-10 pb-12">
-        <div className="bg-white rounded-3xl shadow-xl border border-slate-200 p-8">
-          <div className="flex justify-between items-center mb-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-10 -mt-12 relative z-10 pb-12">
+        <div className="bg-white rounded-3xl shadow-xl border border-slate-200 p-6 sm:p-8">
+          <div className="flex flex-wrap justify-between items-center gap-3 mb-8">
             <h2 className="text-2xl font-bold text-slate-900">{t.pathTitle}</h2>
             <div className="flex items-center gap-2 text-sm font-bold text-slate-500">
                <Star className="text-yellow-400 fill-yellow-400" size={18} />
@@ -100,7 +100,7 @@ const CoursePathView: React.FC<CoursePathViewProps> = ({ course, onStartLesson, 
                const isCompleted = week.status === 'completed';
 
                return (
-                 <div key={week.id} className={`relative flex gap-6 ${!isLast ? 'mb-8' : ''}`}>
+                 <div key={week.id} className={`relative flex gap-4 sm:gap-6 ${!isLast ? 'mb-8' : ''}`}>
                    {/* Status Icon */}
                    <div className={`
                       w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 z-10 border-4 transition-all
@@ -115,22 +115,22 @@ const CoursePathView: React.FC<CoursePathViewProps> = ({ course, onStartLesson, 
 
                    {/* Card Content */}
                    <div className={`
-                      flex-1 p-5 rounded-2xl border transition-all
+                      flex-1 p-5 rounded-2xl border transition-all min-w-0
                       ${isCurrent 
                         ? 'bg-white border-indigo-200 shadow-md ring-1 ring-indigo-50' 
                         : 'bg-slate-50 border-slate-100 opacity-80'}
                    `}>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className={`font-bold text-lg mb-1 ${isCurrent ? 'text-indigo-900' : 'text-slate-700'}`}>
+                      <div className="flex flex-wrap justify-between items-start gap-3">
+                        <div className="min-w-0">
+                          <h3 className={`font-bold text-lg mb-1 break-words ${isCurrent ? 'text-indigo-900' : 'text-slate-700'}`}>
                             {week.title}
                           </h3>
-                          <p className="text-slate-500 text-sm">{week.desc}</p>
+                          <p className="text-slate-500 text-sm break-words">{week.desc}</p>
                         </div>
                         {isCurrent && (
                           <button 
                             onClick={onStartLesson}
-                            className="bg-indigo-600 text-white px-5 py-2 rounded-xl font-bold text-sm shadow-md hover:bg-indigo-700 transition-transform active:scale-95 flex items-center gap-2"
+                            className="bg-indigo-600 text-white px-5 py-2 rounded-xl font-bold text-sm shadow-md hover:bg-indigo-700 transition-transform active:scale-95 flex items-center gap-2 shrink-0"
                           >
                             {t.start} <Play size={14} fill="currentColor" />
                           </button>

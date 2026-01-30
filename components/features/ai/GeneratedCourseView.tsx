@@ -91,12 +91,12 @@ const GeneratedCourseView: React.FC<GeneratedCourseViewProps> = ({ course, onBac
                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-40"></div>
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent"></div>
 
-                <div className="max-w-4xl mx-auto px-6 pt-12 pb-24 relative z-10">
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-10 pt-10 sm:pt-12 pb-20 sm:pb-24 relative z-10">
                     <button onClick={onBack} className="flex items-center gap-2 text-slate-300 hover:text-white mb-8 transition-colors">
                         <ArrowLeft size={20} /> {t.back}
                     </button>
 
-                    <div className="flex gap-4 mb-4">
+                    <div className="flex flex-wrap items-center gap-3 mb-4">
                         <span className={`px-3 py-1 rounded-full text-xs font-bold border backdrop-blur ${course.modelUsed === 'pro'
                             ? 'bg-purple-500/80 border-purple-400/50'
                             : 'bg-indigo-500/80 border-indigo-400/50'
@@ -106,10 +106,10 @@ const GeneratedCourseView: React.FC<GeneratedCourseViewProps> = ({ course, onBac
                         <span className="bg-white/10 backdrop-blur px-3 py-1 rounded-full text-xs font-bold border border-white/10 flex items-center gap-1"><Clock size={12} /> {course.duration}</span>
                     </div>
 
-                    <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">{displayTitle}</h1>
-                    <p className="text-xl text-slate-300 max-w-2xl leading-relaxed">{course.description}</p>
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 leading-tight break-words">{displayTitle}</h1>
+                    <p className="text-base sm:text-lg md:text-xl text-slate-300 max-w-2xl leading-relaxed break-words">{course.description}</p>
 
-                    <div className="mt-8 flex gap-4">
+                    <div className="mt-8 flex flex-wrap gap-4">
                         <button onClick={handleStartClick} className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/30 flex items-center gap-2">
                             <Play size={20} fill="currentColor" /> {t.start}
                         </button>
@@ -121,8 +121,8 @@ const GeneratedCourseView: React.FC<GeneratedCourseViewProps> = ({ course, onBac
             </div>
 
             {/* Path */}
-            <div className="max-w-3xl mx-auto px-6 -mt-16 relative z-20">
-                <div className="bg-white rounded-2xl shadow-xl p-8 border border-slate-200">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-10 -mt-16 relative z-20">
+                <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-slate-200">
                     <h2 className="text-xl font-bold text-slate-800 mb-8 flex items-center gap-2">
                         <BookOpen size={24} className="text-indigo-600" /> {t.pathTitle}
                     </h2>
@@ -131,7 +131,7 @@ const GeneratedCourseView: React.FC<GeneratedCourseViewProps> = ({ course, onBac
                         {/* Line */}
                         <div className="absolute left-6 top-4 bottom-4 w-0.5 bg-slate-200"></div>
 
-                        <div className="space-y-8">
+                        <div className="space-y-6 sm:space-y-8">
                             {course.chapters.map((chapter, index) => (
                                 <div
                                     key={chapter.id}
@@ -147,19 +147,19 @@ const GeneratedCourseView: React.FC<GeneratedCourseViewProps> = ({ course, onBac
                                     </div>
 
                                     {/* Content */}
-                                    <div className="flex-1 pt-1.5 relative z-10">
-                                        <h3 className="font-bold text-slate-900 text-lg group-hover:text-indigo-700 transition-colors">{getText(chapter.title, language)}</h3>
-                                        <div className="flex items-center gap-3 text-sm text-slate-500 mt-1">
+                                    <div className="flex-1 pt-1.5 relative z-10 min-w-0">
+                                        <h3 className="font-bold text-slate-900 text-lg group-hover:text-indigo-700 transition-colors break-words">{getText(chapter.title, language)}</h3>
+                                        <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 mt-1">
                                             <span className="flex items-center gap-1"><Clock size={12} /> {getText(chapter.duration, language) || chapter.duration}</span>
                                             <span className="w-1 h-1 rounded-full bg-slate-300"></span>
                                             <span>{getText(chapter.type, language) || chapter.type}</span>
                                         </div>
                                         {chapter.content && (
-                                            <p className="text-sm text-slate-500 mt-2 line-clamp-2">{getText(chapter.content, language)}</p>
+                                            <p className="text-sm text-slate-500 mt-2 line-clamp-2 break-words">{getText(chapter.content, language)}</p>
                                         )}
                                     </div>
 
-                                    <div className="pt-3 text-slate-300 group-hover:text-indigo-400 transition-transform group-hover:translate-x-1 relative z-10">
+                                    <div className="pt-3 text-slate-300 group-hover:text-indigo-400 transition-transform group-hover:translate-x-1 relative z-10 shrink-0">
                                         <Play size={20} />
                                     </div>
                                 </div>

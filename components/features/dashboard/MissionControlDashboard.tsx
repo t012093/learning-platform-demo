@@ -397,9 +397,9 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   };
 
   return (
-    <div className="relative overflow-hidden p-6 md:p-12 max-w-[1200px] mx-auto min-h-screen">
+    <div className="relative overflow-hidden p-4 sm:p-6 lg:p-10 max-w-[1200px] xl:max-w-[1280px] w-full mx-auto min-h-screen">
       <div
-        className={`absolute right-4 md:right-6 top-6 md:top-8 z-50 w-[300px] md:w-[320px] rounded-2xl border border-indigo-200/60 bg-white/95 px-5 py-4 shadow-xl backdrop-blur transition-all duration-300 ${
+        className={`absolute right-4 md:right-6 top-6 md:top-8 z-50 w-[88vw] max-w-[320px] rounded-2xl border border-indigo-200/60 bg-white/95 px-5 py-4 shadow-xl backdrop-blur transition-all duration-300 ${
           showLevelToast ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-3 pointer-events-none'
         } ${showLevelCelebration ? 'level-toast-glow' : ''}`}
       >
@@ -435,7 +435,7 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       </div>
       {achievementPopup && (
         <div
-          className={`absolute right-4 md:right-6 top-28 md:top-32 z-40 w-[260px] md:w-[280px] rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur transition-all duration-300 ${
+          className={`absolute right-4 md:right-6 top-28 md:top-32 z-40 w-[84vw] max-w-[280px] rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur transition-all duration-300 ${
             showAchievementPopup ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
           }`}
         >
@@ -481,10 +481,10 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       <div className="space-y-10">
         <header className="relative z-10 flex flex-col gap-6 dashboard-fade" style={{ animationDelay: '40ms' }}>
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-            <div>
+            <div className="min-w-0">
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{t.heroKicker}</p>
-              <h1 className="font-serif text-4xl md:text-5xl text-slate-900 mt-2">{t.heroTitle}</h1>
-              <p className="text-slate-500 mt-3 max-w-xl">{t.heroSubtitle}</p>
+              <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-slate-900 mt-2 break-words">{t.heroTitle}</h1>
+              <p className="text-slate-500 mt-3 max-w-xl break-words">{t.heroSubtitle}</p>
             </div>
             <div className="flex flex-wrap gap-3">
             <StatPill
@@ -519,17 +519,17 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </header>
 
         <section className="grid lg:grid-cols-[1.15fr,0.85fr] gap-6">
-          <div className="relative overflow-hidden rounded-3xl bg-slate-900 text-white p-7 md:p-8 shadow-xl dashboard-fade-float" style={{ animationDelay: '120ms' }}>
+          <div className="relative overflow-hidden rounded-3xl bg-slate-900 text-white p-6 sm:p-7 md:p-8 shadow-xl dashboard-fade-float min-w-0" style={{ animationDelay: '120ms' }}>
             <div className="pointer-events-none absolute -top-16 right-0 h-64 w-64 rounded-full bg-purple-500/30 blur-[90px] dashboard-glow" />
             <div className="pointer-events-none absolute bottom-0 left-10 h-44 w-44 rounded-full bg-emerald-400/20 blur-[80px] dashboard-glow" />
             <div className="relative z-10 space-y-5">
-              <div className="flex items-center gap-3 text-xs uppercase tracking-[0.25em] text-slate-300">
+              <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.25em] text-slate-300">
                 <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1">{t.primaryKicker}</span>
                 <span>{t.primaryMeta}</span>
               </div>
               <div>
-                <h2 className="font-serif text-2xl md:text-3xl">{t.primaryTitle}</h2>
-                <p className="text-slate-300 mt-3 text-sm md:text-base max-w-xl">{t.primaryDescription}</p>
+                <h2 className="font-serif text-2xl md:text-3xl break-words">{t.primaryTitle}</h2>
+                <p className="text-slate-300 mt-3 text-sm md:text-base max-w-xl break-words">{t.primaryDescription}</p>
               </div>
               <button
                 type="button"
@@ -541,7 +541,7 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-100 bg-white/80 backdrop-blur p-7 md:p-8 shadow-sm flex flex-col gap-6 dashboard-fade" style={{ animationDelay: '200ms' }}>
+          <div className="rounded-3xl border border-slate-100 bg-white/80 backdrop-blur p-6 sm:p-7 md:p-8 shadow-sm flex flex-col gap-6 dashboard-fade min-w-0" style={{ animationDelay: '200ms' }}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t.conditionTitle}</p>
@@ -573,7 +573,7 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </section>
 
       <section className="grid md:grid-cols-2 gap-6">
-        <div className="rounded-3xl border border-slate-100 bg-white/80 backdrop-blur p-6 shadow-sm dashboard-fade" style={{ animationDelay: '280ms' }}>
+        <div className="rounded-3xl border border-slate-100 bg-white/80 backdrop-blur p-6 shadow-sm dashboard-fade min-w-0" style={{ animationDelay: '280ms' }}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-400">{t.quickActions}</h3>
           </div>
@@ -609,7 +609,7 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-slate-100 bg-white/80 backdrop-blur p-6 shadow-sm dashboard-fade" style={{ animationDelay: '320ms' }}>
+        <div className="rounded-3xl border border-slate-100 bg-white/80 backdrop-blur p-6 shadow-sm dashboard-fade min-w-0" style={{ animationDelay: '320ms' }}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-400">{t.questBoardTitle}</h3>
@@ -631,10 +631,10 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                     <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${styles.icon} shadow-md`}>
                       <Sparkles size={18} />
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-semibold text-slate-800">{quest.title}</h4>
-                        <span className="text-xs font-semibold text-slate-500">{quest.difficulty}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <h4 className="font-semibold text-slate-800 break-words min-w-0 flex-1">{quest.title}</h4>
+                        <span className="text-xs font-semibold text-slate-500 shrink-0">{quest.difficulty}</span>
                       </div>
                       <p className="text-xs text-slate-500 mt-1">{quest.description}</p>
                       <div className="mt-3">
@@ -658,49 +658,49 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </div>
       </section>
 
-      <section className="rounded-3xl border border-slate-100 bg-white/90 backdrop-blur p-8 shadow-sm dashboard-fade" style={{ animationDelay: '380ms' }}>
+      <section className="rounded-3xl border border-slate-100 bg-white/90 backdrop-blur p-6 sm:p-8 shadow-sm dashboard-fade min-w-0" style={{ animationDelay: '380ms' }}>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
+          <div className="min-w-0">
             <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t.aiCoachTitle}</p>
-            <h3 className="text-2xl font-semibold text-slate-900 mt-2">{t.aiCoachSubtitle}</h3>
-            <p className="text-sm text-slate-500 mt-2">{t.aiCoachMeta}</p>
+            <h3 className="text-2xl font-semibold text-slate-900 mt-2 break-words">{t.aiCoachSubtitle}</h3>
+            <p className="text-sm text-slate-500 mt-2 break-words">{t.aiCoachMeta}</p>
           </div>
           <div className="h-12 w-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
             <Brain size={22} />
           </div>
         </div>
         <div className="grid md:grid-cols-[1.1fr,0.9fr] gap-6 mt-6">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3 min-w-0">
             {t.aiCoachCards.map((card) => (
-              <div key={card.title} className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+              <div key={card.title} className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm min-w-0">
                 <div className="flex items-start gap-3">
                   <div className="h-9 w-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
                     <Sparkles size={16} />
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-sm font-semibold text-slate-800">{card.title}</div>
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="text-sm font-semibold text-slate-800 break-words min-w-0 flex-1">{card.title}</div>
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full shrink-0">
                         {card.tag}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 mt-1">{card.body}</p>
+                    <p className="text-xs text-slate-500 mt-1 break-words">{card.body}</p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-          <div className="rounded-2xl bg-slate-900 text-white p-5 flex flex-col gap-4">
+          <div className="rounded-2xl bg-slate-900 text-white p-5 flex flex-col gap-4 min-w-0">
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
               <Zap size={14} />
               {t.aiScheduleTitle}
             </div>
-            <p className="text-sm text-slate-300">{t.aiScheduleSubtitle}</p>
+            <p className="text-sm text-slate-300 break-words">{t.aiScheduleSubtitle}</p>
             <div className="space-y-2">
               {t.aiScheduleSlots.map((slot) => (
-                <div key={`${slot.time}-${slot.label}`} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 flex items-center justify-between gap-3">
-                  <div className="text-sm font-semibold text-white">{slot.time}</div>
-                  <div className="text-xs text-slate-300">{slot.label}</div>
+                <div key={`${slot.time}-${slot.label}`} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 flex items-center gap-3 min-w-0">
+                  <div className="text-sm font-semibold text-white shrink-0">{slot.time}</div>
+                  <div className="text-xs text-slate-300 break-words">{slot.label}</div>
                 </div>
               ))}
             </div>
@@ -714,15 +714,15 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </div>
       </section>
 
-      <section className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm dashboard-fade" style={{ animationDelay: '460ms' }}>
+      <section className="rounded-3xl border border-slate-100 bg-white p-6 sm:p-8 shadow-sm dashboard-fade min-w-0" style={{ animationDelay: '460ms' }}>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-6">
           <h3 className="text-slate-800 font-bold">{t.momentumTitle}</h3>
           <span className="text-sm text-slate-400">{t.momentumMeta}</span>
         </div>
         <div className="grid md:grid-cols-[1fr,220px] gap-6 items-stretch">
-          <div className="h-[140px] w-full min-w-[240px]">
+          <div className="h-[140px] w-full min-w-[220px]">
             {chartReady && (
-              <ResponsiveContainer width="100%" height="100%" minWidth={240} minHeight={120}>
+              <ResponsiveContainer width="100%" height="100%" minWidth={220} minHeight={120}>
                 <AreaChart data={activityData}>
                   <defs>
                     <linearGradient id="momentumStroke" x1="0" y1="0" x2="1" y2="0">
@@ -846,14 +846,14 @@ const ActionCard = ({
     <button
       type="button"
       onClick={onClick}
-      className="group flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+      className="group flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md min-w-0"
     >
       <div className={`h-11 w-11 rounded-xl border flex items-center justify-center ${toneMap[tone]}`}>
         <Icon size={20} />
       </div>
-      <div className="flex-1">
-        <div className="font-semibold text-slate-800">{title}</div>
-        <div className="text-xs text-slate-500">{description}</div>
+      <div className="flex-1 min-w-0">
+        <div className="font-semibold text-slate-800 break-words">{title}</div>
+        <div className="text-xs text-slate-500 break-words">{description}</div>
       </div>
       <ArrowUpRight size={18} className="text-slate-400 group-hover:text-slate-600 transition" />
     </button>

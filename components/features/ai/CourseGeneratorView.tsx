@@ -307,8 +307,8 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
 
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center p-6 pt-12">
-      <div className="max-w-4xl w-full flex flex-col h-[85vh]">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center p-4 sm:p-6 pt-10 sm:pt-12">
+      <div className="max-w-5xl w-full flex flex-col h-[85vh] min-h-[640px]">
         <button 
           onClick={onBack} 
           className="flex items-center gap-2 text-slate-500 hover:text-slate-800 mb-6 transition-colors w-fit"
@@ -316,15 +316,15 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
           <ArrowLeft size={20} /> {t.backToLibrary}
         </button>
 
-        <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-200 flex flex-col overflow-hidden flex-1">
+        <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-200 flex flex-col overflow-hidden flex-1 min-w-0">
           
-          <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="flex items-center gap-4">
+          <div className="p-6 sm:p-8 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex items-center gap-4 min-w-0">
                 <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
                     <Sparkles size={24} />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-1">{t.headerTitle}</h1>
+                    <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-1 break-words">{t.headerTitle}</h1>
                     <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">{t.headerSubtitle}</p>
                 </div>
             </div>
@@ -339,7 +339,7 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
 
           <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
             <div className="flex-1 flex flex-col min-w-0 bg-slate-50/30">
-                <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6">
+                <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
                     {/* Demo Starter Grid */}
                     {messages.length === 1 && !isGenerating && (
                         <div className="flex flex-col items-center justify-center h-full space-y-6 animate-in fade-in zoom-in duration-500">
@@ -376,7 +376,7 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
 
                     {/* Error Banner */}
                     {error && (
-                        <div className="mx-14 mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                        <div className="mx-0 sm:mx-6 mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
                             <CloseIcon className="text-red-500 shrink-0" size={20} />
                             <p className="text-xs font-bold text-red-600">{error}</p>
                             <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-600">
@@ -402,7 +402,7 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
                                 {msg.role === 'user' ? <User size={20} /> : <Bot size={20} />}
                             </div>
                             <div
-                              className={`max-w-[80%] p-4 rounded-3xl text-sm leading-relaxed shadow-sm ${
+                              className={`max-w-[90%] sm:max-w-[80%] p-4 rounded-3xl text-sm leading-relaxed shadow-sm break-words ${
                                 msg.role === 'user'
                                   ? 'bg-indigo-600 text-white rounded-tr-none whitespace-pre-wrap'
                                   : `bg-white text-slate-700 border border-slate-100 rounded-tl-none ${
@@ -525,7 +525,7 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
                     )})}
                     
                     {!isGenerating && pendingApproval && pendingApproval !== 'none' && (
-                        <div className="mx-14 mb-6 animate-in fade-in zoom-in duration-300">
+                        <div className="mx-0 sm:mx-6 mb-6 animate-in fade-in zoom-in duration-300">
                             <div className="bg-white border border-indigo-100 rounded-3xl p-6 shadow-xl relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
                                 <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
@@ -557,7 +557,7 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
                     )}
 
                     {isGenerating && (
-                        <div className="flex flex-col gap-4 mx-4">
+                        <div className="flex flex-col gap-4 mx-0 sm:mx-4">
                             <div className="flex gap-4 animate-pulse">
                                 <div className="w-10 h-10 rounded-2xl bg-white border border-indigo-50 flex items-center justify-center text-indigo-400">
                                     <Bot size={20} />
@@ -571,7 +571,7 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
                             </div>
 
                             {/* Agent Logs Animation */}
-                            <div className="ml-14 space-y-2">
+                            <div className="ml-0 sm:ml-14 space-y-2">
                                 {activeLogs.map((log, idx) => (
                                     <div key={idx} className="flex items-center gap-3 animate-in fade-in slide-in-from-left-2 duration-500">
                                         <div className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-black uppercase text-slate-400 tracking-wider">
@@ -588,7 +588,7 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
                     )}
                 </div>
 
-                <div className="p-6 bg-white border-t border-slate-100">
+                <div className="p-4 sm:p-6 bg-white border-t border-slate-100">
                     {selectedFile && (
                         <div className="mb-3 flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-xl w-fit animate-in fade-in slide-in-from-bottom-1">
                             <Paperclip size={14} className="text-indigo-500" />
@@ -598,7 +598,7 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
                             </button>
                         </div>
                     )}
-                    <div className="flex gap-3 relative">
+                    <div className="flex gap-3 relative items-end min-w-0">
                         <input 
                             type="file"
                             ref={fileInputRef}
@@ -608,7 +608,7 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
                         <button 
                             onClick={() => fileInputRef.current?.click()}
                             disabled={isGenerating}
-                            className="p-4 bg-slate-100 text-slate-500 rounded-2xl hover:bg-slate-200 transition-all disabled:opacity-50"
+                            className="p-3 sm:p-4 bg-slate-100 text-slate-500 rounded-2xl hover:bg-slate-200 transition-all disabled:opacity-50"
                         >
                             <Paperclip size={20} />
                         </button>
@@ -619,7 +619,7 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
                             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                             placeholder={pendingApproval && pendingApproval !== 'none' ? t.revisePlaceholder : t.inputPlaceholder}
                             disabled={isGenerating}
-                            className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-indigo-500 transition-all pr-14 disabled:bg-slate-100 disabled:text-slate-400"
+                            className="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-2xl px-4 sm:px-6 py-3 sm:py-4 text-sm focus:outline-none focus:border-indigo-500 transition-all pr-14 disabled:bg-slate-100 disabled:text-slate-400"
                         />
                         <button 
                             onClick={() => handleSendMessage()}
@@ -632,7 +632,7 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
                 </div>
             </div>
 
-            <div className="w-full md:w-80 border-l border-slate-100 p-8 space-y-8 bg-slate-50/50">
+            <div className="w-full md:w-80 border-l border-slate-100 p-6 sm:p-8 space-y-8 bg-slate-50/50">
                 <div className="space-y-3">
                     <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Current Engine</h4>
                     <div className="bg-white p-4 rounded-2xl border border-slate-200 flex items-center justify-between">

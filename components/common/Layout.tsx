@@ -228,9 +228,14 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
     }
     return false;
   };
+  const isFullBleedView = (
+    currentView === ViewState.LESSON ||
+    currentView === ViewState.BLENDER_LESSON ||
+    currentView === ViewState.GENERATED_LESSON_VIEW
+  );
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
+    <div className="flex h-screen w-full overflow-hidden bg-slate-50">
       {/* Mobile Header */}
       <div className={`md:hidden fixed w-full z-50 border-b px-4 py-3 flex justify-between items-center ${styles.mobileHeader}`}>
         <div className="flex items-center gap-2">
@@ -434,8 +439,14 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
       </aside>
 
       {/* Main Content Area */}
-      <main className={`flex-1 overflow-y-auto h-full w-full pt-16 md:pt-0 relative ${styles.main}`}>
-        <div className={`h-full ${currentView === ViewState.LESSON || currentView === ViewState.BLENDER_LESSON || currentView === ViewState.GENERATED_LESSON_VIEW ? '' : 'max-w-7xl mx-auto'}`}>
+      <main className={`flex-1 min-w-0 overflow-y-auto h-full w-full pt-16 md:pt-0 relative overflow-x-hidden ${styles.main}`}>
+        <div
+          className={`min-h-full w-full ${
+            isFullBleedView
+              ? ''
+              : 'max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8'
+          }`}
+        >
           <div key={location.pathname} className="page-transition">
             {children}
           </div>

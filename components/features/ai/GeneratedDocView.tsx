@@ -204,7 +204,7 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
     return (
         <div className="min-h-screen bg-white text-slate-800 font-sans">
             {/* Header */}
-            <header className="fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-slate-100 z-50 flex items-center justify-between px-6">
+            <header className="fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-slate-100 z-50 flex items-center justify-between px-4 sm:px-6">
                 <div className="flex items-center gap-4">
                     <button
                         onClick={onBack}
@@ -219,7 +219,7 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
                 </div>
 
                 {/* View Mode Toggle */}
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex bg-slate-100 p-1 rounded-lg">
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex bg-slate-100 p-1 rounded-lg">
                     <button
                         onClick={() => setViewMode('doc')}
                         className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-bold transition-all ${effectiveViewMode === 'doc'
@@ -258,19 +258,48 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
                 </div>
             </header>
 
+            {/* Mobile View Mode Toggle */}
+            <div className="md:hidden sticky top-16 z-40 bg-white/90 backdrop-blur border-b border-slate-100 px-4 py-2 flex justify-center">
+                <div className="flex bg-slate-100 p-1 rounded-lg">
+                    <button
+                        onClick={() => setViewMode('doc')}
+                        className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-bold transition-all ${effectiveViewMode === 'doc'
+                            ? 'bg-white text-purple-600 shadow-sm'
+                            : 'text-slate-500 hover:text-slate-700'
+                            }`}
+                    >
+                        <FileText size={14} />
+                        {t.doc}
+                    </button>
+
+                    {hasQuiz && (
+                        <button
+                            onClick={() => setViewMode('quiz')}
+                            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-bold transition-all ${effectiveViewMode === 'quiz'
+                                ? 'bg-white text-purple-600 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700'
+                                }`}
+                        >
+                            <Brain size={14} />
+                            {t.quiz}
+                        </button>
+                    )}
+                </div>
+            </div>
+
             {effectiveViewMode === 'doc' && (
-                <main className="pt-24 pb-20 max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12">
+                <main className="pt-24 pb-20 max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12">
 
                     {/* Main Content */}
-                    <article className="lg:col-span-8 lg:col-start-2 xl:col-span-7 xl:col-start-3">
+                    <article className="lg:col-span-8 lg:col-start-2 xl:col-span-7 xl:col-start-3 min-w-0">
                         <header className="mb-12 text-center">
                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 text-purple-600 text-xs font-bold uppercase tracking-wider mb-6">
                                 <BookOpen size={14} /> Lesson
                             </div>
-                            <h1 className="text-3xl md:text-5xl font-bold text-slate-900 mb-6 leading-tight tracking-tight">
+                            <h1 className="text-3xl md:text-5xl font-bold text-slate-900 mb-6 leading-tight tracking-tight break-words">
                                 {getText(lesson.title, language)}
                             </h1>
-                            <p className="text-xl text-slate-500 leading-relaxed font-serif italic">
+                            <p className="text-xl text-slate-500 leading-relaxed font-serif italic break-words">
                                 {getText(lesson.subtitle, language)}
                             </p>
                         </header>
@@ -278,7 +307,7 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
                         <div className="space-y-16">
                             {lesson.sections.map((section) => (
                                 <section key={section.id} id={section.id} className="scroll-mt-24">
-                                    <h2 className="text-2xl font-bold text-slate-900 mb-8 flex items-center gap-3 group cursor-pointer" onClick={() => scrollToSection(section.id)}>
+                                    <h2 className="text-2xl font-bold text-slate-900 mb-8 flex items-center gap-3 group cursor-pointer break-words" onClick={() => scrollToSection(section.id)}>
                                         <span className="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center text-sm group-hover:bg-purple-100 group-hover:text-purple-600 transition-colors">#</span>
                                         {getText(section.title, language)}
                                     </h2>
@@ -292,8 +321,8 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
                         </div>
 
                         {/* Lesson Footer */}
-                        <div className="mt-20 pt-10 border-t border-slate-100 flex justify-between items-center">
-                            <div className="flex gap-2">
+                        <div className="mt-20 pt-10 border-t border-slate-100 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                            <div className="flex flex-wrap gap-2">
                                 {hasPrev && onPrevLesson && (
                                     <button onClick={handlePrevLesson} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-medium transition-colors px-4 py-2 rounded-lg hover:bg-slate-50">
                                         <ChevronLeft size={16} /> {t.prevLesson}
@@ -303,7 +332,7 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
                                     <ArrowLeft size={16} /> {t.backToCourse}
                                 </button>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-2">
                                 {hasQuiz ? (
                                     <button
                                         onClick={() => setViewMode('quiz')}
@@ -359,7 +388,7 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
 
             {/* Quiz View */}
             {effectiveViewMode === 'quiz' && lesson.quiz && (
-                <main className="pt-24 pb-20 max-w-3xl mx-auto px-6">
+                <main className="pt-24 pb-20 max-w-3xl mx-auto px-4 sm:px-6">
                     <div className="mb-8">
                         <button onClick={() => setViewMode('doc')} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 mb-4">
                             <ArrowLeft size={16} /> Back to Document

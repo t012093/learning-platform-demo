@@ -612,10 +612,122 @@ const ART_DEMO_DATA: any = {
               title: { en: 'Lascaux: The Shaman\'s Vision', jp: 'ラスコー：シャーマンの視覚' },
               content: [
                 { type: 'text', style: 'lead', text: { en: 'Cave paintings were not mere decorations; they were technology for survival and ritual.', jp: '洞窟壁画は単なる装飾ではなく、生存と儀式のための「技術」でした。' } },
+                { type: 'text', text: { en: 'In Lascaux and Chauvet, animals dominate the walls—bison, horses, deer—often drawn with motion, volume, and an uncanny vitality.', jp: 'ラスコーやショーヴェでは、バイソン・馬・鹿などの動物が壁面を支配します。動きや量感が巧みに表現され、生命力が宿っているように見えます。' } },
+                {
+                  type: 'list',
+                  style: 'key',
+                  items: [
+                    { en: 'Focus on animals rather than humans', jp: '人間よりも動物が中心' },
+                    { en: 'Motion lines and overlapping forms', jp: '動きの線や重なりの表現' },
+                    { en: 'Use of natural rock contours to create 3D volume', jp: '岩肌の凹凸を活かした立体感' }
+                  ]
+                },
                 { 
                   type: 'mermaid', 
                   chart: 'graph TD\n  Ritual[Ritual] --> Hunt[Successful Hunt]\n  Hunt --> Art[Cave Painting]\n  Art --> Ritual',
                   caption: { en: 'The feedback loop of prehistoric art', jp: '原始芸術のフィードバックループ' }
+                },
+                {
+                  type: 'callout',
+                  variant: 'info',
+                  title: { en: 'Not just “art”', jp: '単なる「アート」ではない' },
+                  text: { en: 'For hunter-gatherers, images were tools for memory, coordination, and belief. Art was a shared survival interface.', jp: '狩猟採集社会にとって、像は記憶・協調・信仰のための道具でした。アートは共同体の“生存インターフェース”だったのです。' }
+                }
+              ]
+            }
+            ,
+            {
+              id: 's2',
+              title: { en: 'Why Paint in the Dark?', jp: 'なぜ暗い洞窟に描くのか' },
+              content: [
+                { type: 'text', text: { en: 'Many paintings are deep inside caves, far from daily living spaces. This suggests a ritual or ceremonial function.', jp: '多くの壁画は生活空間から離れた洞窟の奥にあります。日常ではなく儀礼の場であった可能性が高いと考えられています。' } },
+                {
+                  type: 'table',
+                  headers: [
+                    { en: 'Hypothesis', jp: '仮説' },
+                    { en: 'What it explains', jp: '説明できる点' },
+                    { en: 'Limitations', jp: '限界' }
+                  ],
+                  rows: [
+                    [
+                      { en: 'Hunting magic', jp: '狩猟呪術' },
+                      { en: 'Animals and success rituals', jp: '動物表現と成功祈願' },
+                      { en: 'Not all animals were hunted', jp: '全てが狩猟対象ではない' }
+                    ],
+                    [
+                      { en: 'Shamanic vision', jp: 'シャーマンの幻視' },
+                      { en: 'Abstract signs and trance motifs', jp: '抽象記号や幻視的モチーフ' },
+                      { en: 'Hard to prove archaeologically', jp: '考古学的に検証が難しい' }
+                    ],
+                    [
+                      { en: 'Social memory', jp: '共同体の記憶' },
+                      { en: 'Shared myths and teaching', jp: '神話や教育の共有' },
+                      { en: 'Context lost over millennia', jp: '文脈が失われている' }
+                    ]
+                  ]
+                },
+                {
+                  type: 'list',
+                  items: [
+                    { en: 'Deep placement suggests intentional pilgrimage', jp: '奥深い配置は“巡礼”のような意図を示唆' },
+                    { en: 'Torchlight creates flicker → animated perception', jp: '松明の揺らぎがアニメーション的効果を生む' }
+                  ]
+                }
+              ]
+            },
+            {
+              id: 's3',
+              title: { en: 'Tools, Pigments, and Technique', jp: '道具・顔料・技法' },
+              content: [
+                { type: 'text', text: { en: 'Prehistoric artists used a surprisingly advanced toolkit: minerals, charcoal, binders, and airbrush-like blowing.', jp: '先史時代の作者は、鉱物・木炭・結合材・吹き付けなど、驚くほど高度なツールを使っていました。' } },
+                {
+                  type: 'table',
+                  headers: [
+                    { en: 'Material', jp: '素材' },
+                    { en: 'Color', jp: '色' },
+                    { en: 'Usage', jp: '用途' }
+                  ],
+                  rows: [
+                    [ { en: 'Charcoal', jp: '木炭' }, { en: 'Black', jp: '黒' }, { en: 'Outlines, shading', jp: '輪郭線・陰影' } ],
+                    [ { en: 'Red ochre', jp: '赤色黄土' }, { en: 'Red', jp: '赤' }, { en: 'Bodies, accents', jp: '体躯・強調' } ],
+                    [ { en: 'Manganese dioxide', jp: '二酸化マンガン' }, { en: 'Dark brown/black', jp: '濃茶/黒' }, { en: 'Depth and contrast', jp: '奥行き・コントラスト' } ]
+                  ]
+                },
+                {
+                  type: 'list',
+                  style: 'key',
+                  items: [
+                    { en: 'Finger painting and engraving', jp: '指描き・刻線' },
+                    { en: 'Blowing pigment through hollow bones', jp: '骨筒による吹き付け' },
+                    { en: 'Layering to imply motion', jp: '重ね描きによる動きの表現' }
+                  ]
+                },
+                {
+                  type: 'mermaid',
+                  chart: 'flowchart LR\n  Pigment[Grind Pigment] --> Mix[Mix with Binder]\n  Mix --> Apply[Apply / Blow]\n  Apply --> Ritual[Chant / Gesture]',
+                  caption: { en: 'A plausible cave painting workflow', jp: '洞窟壁画の想定プロセス' }
+                }
+              ]
+            },
+            {
+              id: 's4',
+              title: { en: 'Design Lessons for Today', jp: '現代へのデザイン示唆' },
+              content: [
+                { type: 'text', text: { en: 'Cave art teaches that communication is environmental, multisensory, and ritualized.', jp: '洞窟壁画は、コミュニケーションが環境・感覚・儀礼に根ざしていることを教えてくれます。' } },
+                {
+                  type: 'list',
+                  style: 'key',
+                  items: [
+                    { en: 'Environment shapes meaning (space is part of the message)', jp: '環境が意味を作る（空間もメッセージの一部）' },
+                    { en: 'Motion and light can “animate” static visuals', jp: '光と動きが静止画を“動的化”する' },
+                    { en: 'Shared rituals build trust and memory', jp: '共同体の儀礼が信頼と記憶を強化する' }
+                  ]
+                },
+                {
+                  type: 'callout',
+                  variant: 'tip',
+                  title: { en: 'Try this', jp: '試してみよう' },
+                  text: { en: 'Design a modern “cave wall” experience: a dark space, slow light, and a single evolving image that guides attention.', jp: '現代版の“洞窟壁画”体験を設計してみましょう。暗い空間・ゆっくりした光・変化する単一の像で注意を導く。' }
                 }
               ]
             }

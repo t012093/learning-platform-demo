@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useMemo, useState, useEffect, ReactNode } from 'react';
 
 export type Language = 'en' | 'jp';
+export type SelectedLanguage = 'en' | 'jp' | 'fr';
 
 interface LanguageContextType {
   language: Language;
-  setLanguage: (language: Language) => void;
+  selectedLanguage: SelectedLanguage;
+  setLanguage: (language: SelectedLanguage) => void;
   toggleLanguage: () => void;
 }
 
@@ -12,31 +14,47 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 const LANGUAGE_STORAGE_KEY = 'lumina:language';
 
-const getInitialLanguage = (): Language => {
+const getInitialLanguage = (): SelectedLanguage => {
   if (typeof window === 'undefined') return 'en';
   const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
-  return stored === 'jp' ? 'jp' : 'en';
+  if (stored === 'jp') return 'jp';
+  if (stored === 'fr') return 'fr';
+  return 'en';
 };
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>(getInitialLanguage);
+  const [selectedLanguage, setSelectedLanguage] = useState<SelectedLanguage>(getInitialLanguage);
+  const resolvedLanguage: Language = selectedLanguage === 'fr' ? 'en' : selectedLanguage;
 
-  const setLanguage = (next: Language) => {
-    setLanguageState(next);
+  const setLanguage = (next: SelectedLanguage) => {
+    setSelectedLanguage(next);
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(LANGUAGE_STORAGE_KEY, next);
     }
   };
 
-  const toggleLanguage = () => setLanguage(language === 'en' ? 'jp' : 'en');
+  const toggleLanguage = () =>
+    setLanguage(selectedLanguage === 'en' ? 'jp' : selectedLanguage === 'jp' ? 'fr' : 'en');
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
-      document.documentElement.lang = language === 'jp' ? 'ja' : 'en';
+      document.documentElement.lang = selectedLanguage === 'jp'
+        ? 'ja'
+        : selectedLanguage === 'fr'
+          ? 'fr'
+          : 'en';
     }
-  }, [language]);
+  }, [selectedLanguage]);
 
-  const value = useMemo(() => ({ language, setLanguage, toggleLanguage }), [language]);
+  const value = useMemo(
+    () => ({
+      language: resolvedLanguage,
+      selectedLanguage,
+      setLanguage,
+      toggleLanguage
+    }),
+    [resolvedLanguage, selectedLanguage]
+  );
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 };

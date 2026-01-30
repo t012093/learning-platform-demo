@@ -57,16 +57,22 @@ const GeneratedCourseView: React.FC<GeneratedCourseViewProps> = ({ course, onBac
 
     const handleStartClick = () => {
         console.log("Start Learning clicked");
-        onStartLesson(0, 0);
+        const firstChapter = course.chapters?.[0] as any;
+        const moduleIndex = firstChapter?._moduleIndex ?? 0;
+        const lessonIndex = firstChapter?._lessonIndex ?? 0;
+        onStartLesson(moduleIndex, lessonIndex);
     };
 
     const handleChapterClick = (chapterIndex: number) => {
         if (isNavigating) return;
+        const chapter: any = course.chapters[chapterIndex];
         console.log("Chapter clicked:", chapterIndex);
         setActiveChapter(chapterIndex);
         setIsNavigating(true);
         navTimerRef.current = window.setTimeout(() => {
-            onStartLesson(chapterIndex, 0);
+            const moduleIndex = chapter?._moduleIndex ?? chapterIndex;
+            const lessonIndex = chapter?._lessonIndex ?? 0;
+            onStartLesson(moduleIndex, lessonIndex);
         }, 180);
     };
 

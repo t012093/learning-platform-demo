@@ -41,12 +41,33 @@ const PYTHON_DEMO_DATA: any = {
           title: { en: 'Variables & Memory', jp: '変数とメモリ管理' }, 
           subtitle: { en: 'How Python handles data', jp: 'Pythonのデータ処理の仕組み' },
           estimated_min: 15,
+          quiz: {
+            id: 'm1-l1-quiz',
+            title: { en: 'Variables & Memory Check', jp: '変数とメモリ管理チェック' },
+            questions: [
+              {
+                id: 'q1',
+                text: { en: 'In Python, a variable is best described as…', jp: 'Pythonの変数は最も適切に言うと…' },
+                options: [
+                  { id: 'a', text: { en: 'A label pointing to an object', jp: 'オブジェクトを指すラベル' } },
+                  { id: 'b', text: { en: 'A box that stores data directly', jp: 'データを直接保存する箱' } },
+                  { id: 'c', text: { en: 'A copy of the object', jp: 'オブジェクトのコピー' } }
+                ],
+                correctAnswer: 'a',
+                explanation: {
+                  en: 'Python variables reference objects rather than storing values directly.',
+                  jp: 'Pythonの変数は値そのものではなく、オブジェクトへの参照です。'
+                }
+              }
+            ]
+          },
           sections: [
             {
               id: 's1',
               title: { en: 'Everything is an Object', jp: 'すべてはオブジェクト' },
               content: [
                 { type: 'text', style: 'lead', text: { en: 'In Python, variables are just labels.', jp: 'Pythonにおいて、変数は箱ではなく「ラベル」に過ぎません。' } },
+                { type: 'text', text: { en: 'Multiple names can point to the same object. Changing a mutable object affects every name that references it.', jp: '同じオブジェクトを複数の名前が参照できます。ミュータブルなオブジェクトは、どの参照から変更しても全てに影響します。' } },
                 { 
                   type: 'mermaid', 
                   chart: 'graph LR\n  A[Variable: x] -->|Reference| B(Object: 10)\n  C[Variable: y] -->|Reference| B\n  style B fill:#f9f,stroke:#333',
@@ -59,6 +80,7 @@ const PYTHON_DEMO_DATA: any = {
               title: { en: 'Reference vs Copy', jp: '参照とコピー' },
               content: [
                 { type: 'text', text: { en: 'Assigning a list copies the reference, not the data. Use copy() or slicing to duplicate.', jp: 'リストの代入は「参照」をコピーするだけで、データ自体は複製されません。copy() やスライスで複製します。' } },
+                { type: 'text', text: { en: 'Shallow copies only duplicate the outer list. Nested objects still share references.', jp: '浅いコピーは外側だけを複製します。ネスト内のオブジェクトは共有されたままです。' } },
                 {
                   type: 'code',
                   language: 'python',
@@ -77,10 +99,27 @@ const PYTHON_DEMO_DATA: any = {
               title: { en: 'Mutable vs Immutable', jp: 'ミュータブルとイミュータブル' },
               content: [
                 { type: 'text', text: { en: 'Lists and dicts are mutable; numbers and strings are immutable. Mutations change memory references differently.', jp: 'リストや辞書はミュータブル、数値や文字列はイミュータブルです。変更時の参照の動きが変わります。' } },
+                { type: 'table', headers: [
+                  { en: 'Type', jp: '型' },
+                  { en: 'Mutable?', jp: '可変か' },
+                  { en: 'Example', jp: '例' }
+                ],
+                  rows: [
+                    [ { en: 'List', jp: 'リスト' }, { en: 'Yes', jp: 'はい' }, { en: '[1, 2, 3]', jp: '[1, 2, 3]' } ],
+                    [ { en: 'Dict', jp: '辞書' }, { en: 'Yes', jp: 'はい' }, { en: '{\"a\": 1}', jp: '{\"a\": 1}' } ],
+                    [ { en: 'String', jp: '文字列' }, { en: 'No', jp: 'いいえ' }, { en: '\"hello\"', jp: '\"hello\"' } ],
+                    [ { en: 'Tuple', jp: 'タプル' }, { en: 'No', jp: 'いいえ' }, { en: '(1, 2)', jp: '(1, 2)' } ]
+                  ] },
                 {
                   type: 'code',
                   language: 'python',
                   code: 'x = 10\nx_id = id(x)\nx += 1\nprint(x_id == id(x))  # False\n\ny = [1, 2]\ny_id = id(y)\ny.append(3)\nprint(y_id == id(y))  # True'
+                },
+                {
+                  type: 'callout',
+                  variant: 'info',
+                  title: { en: 'Identity vs Equality', jp: '同一性と等価性' },
+                  text: { en: 'Use `is` for identity (same object), `==` for equality (same value).', jp: '`is` は同一オブジェクトかどうか、`==` は値が同じかどうかを判定します。' }
                 }
               ]
             },
@@ -89,11 +128,17 @@ const PYTHON_DEMO_DATA: any = {
               title: { en: 'Memory & Garbage Collection', jp: 'メモリとガーベジコレクション' },
               content: [
                 { type: 'text', text: { en: 'Python uses reference counting plus a cyclic garbage collector. Unused objects are reclaimed automatically.', jp: 'Pythonは参照カウントと循環GCを使い、不要なオブジェクトを自動回収します。' } },
+                { type: 'text', text: { en: 'Objects are freed when reference count drops to zero. Cycles are handled by a separate collector.', jp: '参照数が0になると解放され、循環参照は別のGCが検出します。' } },
                 {
                   type: 'callout',
                   variant: 'warning',
                   title: { en: 'Leaky References', jp: '参照の残り' },
                   text: { en: 'Global variables or long-lived caches can keep objects alive longer than expected.', jp: 'グローバル変数や長寿命キャッシュはオブジェクトを予想以上に保持します。' }
+                },
+                {
+                  type: 'mermaid',
+                  chart: 'graph LR\n  A[Object] --> B[Ref Count]\n  B --> C{Zero?}\n  C -- yes --> D[Free Memory]\n  C -- no --> A',
+                  caption: { en: 'Reference counting flow', jp: '参照カウントの流れ' }
                 }
               ]
             }
@@ -104,23 +149,155 @@ const PYTHON_DEMO_DATA: any = {
           title: { en: 'List Comprehensions', jp: 'リスト内包表記' }, 
           subtitle: { en: 'Pythonic data processing', jp: 'Pythonicなデータ処理' },
           estimated_min: 20,
+          quiz: {
+            id: 'm1-l2-quiz',
+            title: { en: 'List Comprehensions Check', jp: 'リスト内包表記チェック' },
+            questions: [
+              {
+                id: 'q1',
+                text: { en: 'Which comprehension correctly filters even numbers?', jp: '偶数だけを抽出する内包表記はどれ？' },
+                options: [
+                  { id: 'a', text: { en: '[x for x in data if x % 2 == 0]', jp: '[x for x in data if x % 2 == 0]' } },
+                  { id: 'b', text: { en: '[x if x % 2 == 0 for x in data]', jp: '[x if x % 2 == 0 for x in data]' } },
+                  { id: 'c', text: { en: '[if x % 2 == 0 for x in data]', jp: '[if x % 2 == 0 for x in data]' } }
+                ],
+                correctAnswer: 'a',
+                explanation: {
+                  en: 'The filter clause comes after the for-expression: [x for x in data if condition].',
+                  jp: 'フィルタ条件は for の後に書きます: [x for x in data if condition]。'
+                }
+              }
+            ]
+          },
           sections: [
             {
               id: 's1',
-              title: { en: 'Why Comprehensions?', jp: 'なぜ内包表記を使うのか' },
+              title: { en: 'The Definition', jp: '内包表記の定義' },
               content: [
-                { type: 'text', text: { en: 'List comprehensions are concise and often faster than loops.', jp: 'リスト内包表記は簡潔であり、通常のforループよりも高速に動作することが多いです。' } },
+                { type: 'text', style: 'lead', text: { en: 'List comprehensions are a compact way to map and filter data in a single expression.', jp: 'リスト内包表記は、データの変換（map）と抽出（filter）を1行で表現するPythonicな記法です。' } },
                 { 
                   type: 'code', 
                   language: 'python', 
-                  filename: 'loops_vs_comp.py',
-                  code: '# Traditional Loop\nsquares = []\nfor x in range(10):\n    squares.append(x**2)\n\n# List Comprehension\nsquares = [x**2 for x in range(10)]' 
+                  filename: 'syntax_comp.py',
+                  code: '# Basic structure\n# [expression for item in iterable if condition]\n\nsquares = [x**2 for x in range(5) if x % 2 == 0]\nprint(squares)  # [0, 4, 16]' 
+                },
+                {
+                  type: 'callout',
+                  variant: 'info',
+                  title: { en: 'Why it matters', jp: 'なぜ重要か' },
+                  text: { en: 'Readable transformations reduce bugs in data pipelines and feature engineering.', jp: '変換処理が短く読みやすいと、特徴量作成などのミスが減ります。' }
+                }
+              ]
+            },
+            {
+              id: 's2',
+              title: { en: 'Patterns & Variations', jp: '基本パターンと応用' },
+              content: [
+                { type: 'text', text: { en: 'Common patterns include mapping, filtering, and flattening.', jp: 'よく使うのは「変換」「フィルタ」「フラット化」の3パターンです。' } },
+                { type: 'text', text: { en: 'Think of them as mini building blocks: transform the data, keep what you need, then reshape if necessary.', jp: '「変換→抽出→形を整える」という小さなブロックの組み合わせとして捉えると整理しやすいです。' } },
+                {
+                  type: 'list',
+                  style: 'key',
+                  items: [
+                    { en: 'Mapping: [f(x) for x in data]', jp: '変換: [f(x) for x in data]' },
+                    { en: 'Filtering: [x for x in data if cond(x)]', jp: 'フィルタ: [x for x in data if cond(x)]' },
+                    { en: 'Flattening: [item for row in matrix for item in row]', jp: 'フラット化: [item for row in matrix for item in row]' }
+                  ]
+                },
+                {
+                  type: 'table',
+                  headers: [
+                    { en: 'Pattern', jp: 'パターン' },
+                    { en: 'When to use', jp: '使いどころ' },
+                    { en: 'Tip', jp: 'コツ' }
+                  ],
+                  rows: [
+                    [
+                      { en: 'Mapping', jp: '変換' },
+                      { en: 'Feature creation / normalization', jp: '特徴量作成・正規化' },
+                      { en: 'Keep functions short', jp: '関数は短く' }
+                    ],
+                    [
+                      { en: 'Filtering', jp: 'フィルタ' },
+                      { en: 'Remove noise / invalid rows', jp: 'ノイズ・無効行の除去' },
+                      { en: 'Prefer clear conditions', jp: '条件は明確に' }
+                    ],
+                    [
+                      { en: 'Flattening', jp: 'フラット化' },
+                      { en: 'Nested lists to a single list', jp: 'ネスト配列を1本化' },
+                      { en: 'Avoid too many levels', jp: '過度なネストを避ける' }
+                    ]
+                  ]
+                },
+                {
+                  type: 'mermaid',
+                  chart: 'graph LR\n  A[Iterable] --> B{Condition}\n  B -- yes --> C[Transform]\n  C --> D[Output list]\n  B -- no --> E[Skip]\n  E --> D',
+                  caption: { en: 'How a comprehension maps + filters', jp: '内包表記の「フィルタ→変換」フロー' }
+                },
+                {
+                  type: 'code',
+                  language: 'python',
+                  filename: 'patterns_comp.py',
+                  code: 'names = ["  Ada ", "Grace ", "Linus"]\nclean = [n.strip().lower() for n in names]\n\nmatrix = [[1, 2], [3, 4]]\nflat = [item for row in matrix for item in row]'
                 },
                 {
                   type: 'callout',
                   variant: 'tip',
-                  title: { en: 'Performance', jp: 'パフォーマンス' },
-                  text: { en: 'Comprehensions are optimized at the C level within the Python interpreter.', jp: '内包表記はPythonインタプリタ内部（C言語レベル）で最適化されています。' }
+                  title: { en: 'Order matters', jp: '順序が大事' },
+                  text: { en: 'Write it in the same order you would read it: for x in data, then if condition, then transform.', jp: '読みやすい順序にすると理解しやすいです（for → if → 変換）。' }
+                }
+              ]
+            },
+            {
+              id: 's3',
+              title: { en: 'Comprehensions vs Loops', jp: 'forループとの違い' },
+              content: [
+                { type: 'text', text: { en: 'Comprehensions are concise, but loops win when logic is complex.', jp: '内包表記は簡潔ですが、複雑なロジックならfor文の方が安全です。' } },
+                {
+                  type: 'table',
+                  headers: [
+                    { en: 'Aspect', jp: '観点' },
+                    { en: 'Loop', jp: 'for文' },
+                    { en: 'Comprehension', jp: '内包表記' }
+                  ],
+                  rows: [
+                    [ { en: 'Readability', jp: '可読性' }, { en: 'High for complex logic', jp: '複雑処理に強い' }, { en: 'High for simple transforms', jp: '単純変換で強い' } ],
+                    [ { en: 'Length', jp: '記述量' }, { en: 'Longer', jp: '長い' }, { en: 'Compact', jp: '短い' } ],
+                    [ { en: 'Debugging', jp: 'デバッグ' }, { en: 'Easy (step-by-step)', jp: '追いやすい' }, { en: 'Harder for nesting', jp: 'ネストで難しい' } ]
+                  ]
+                },
+                {
+                  type: 'callout',
+                  variant: 'warning',
+                  title: { en: 'Avoid Over-Nesting', jp: '過度なネストは避ける' },
+                  text: { en: 'If it takes more than one line to explain, switch to a loop.', jp: '1行で説明できない場合はfor文を検討しましょう。' }
+                }
+              ]
+            },
+            {
+              id: 's4',
+              title: { en: 'Practical Use Cases', jp: '実務での活用例' },
+              content: [
+                { type: 'text', text: { en: 'Use comprehensions in feature cleaning, labeling, and quick filtering.', jp: '特徴量の整形やラベリング、簡易フィルタに向いています。' } },
+                {
+                  type: 'list',
+                  items: [
+                    { en: 'Normalize text before vectorization', jp: 'ベクトル化前のテキスト正規化' },
+                    { en: 'Filter out missing values', jp: '欠損値の除外' },
+                    { en: 'Create binary labels', jp: '二値ラベルの作成' }
+                  ]
+                },
+                {
+                  type: 'code',
+                  language: 'python',
+                  filename: 'labels_comp.py',
+                  code: 'scores = [72, 88, 59, 95]\nlabels = [\"pass\" if s >= 70 else \"fail\" for s in scores]\nprint(labels)  # [\"pass\", \"pass\", \"fail\", \"pass\"]'
+                },
+                {
+                  type: 'callout',
+                  variant: 'tip',
+                  title: { en: 'When to Switch', jp: '切り替えタイミング' },
+                  text: { en: 'For large datasets, prefer NumPy/Pandas for speed and clarity.', jp: '大規模データではNumPy/Pandasの方が高速で明確です。' }
                 }
               ]
             }
@@ -134,13 +311,142 @@ const PYTHON_DEMO_DATA: any = {
           sections: [
             {
               id: 's1',
-              title: { en: 'Lambda Functions', jp: '無名関数（Lambda）' },
+              title: { en: 'Function as a Value', jp: '関数は値として扱える' },
               content: [
-                { type: 'text', text: { en: 'Lambdas are one-line functions used for short operations.', jp: 'Lambdaは、短い処理のために使われる1行だけの関数です。' } },
+                { type: 'text', style: 'lead', text: { en: 'In Python, functions are first-class objects: you can pass them, store them, and return them.', jp: 'Pythonの関数は第一級オブジェクトです。引数に渡したり、変数に代入したり、返り値として使えます。' } },
+                { type: 'text', text: { en: 'This is the foundation of functional style: you can build pipelines by combining small, reusable functions.', jp: 'この性質が関数型の基盤です。小さな関数を組み合わせて、再利用しやすい処理パイプラインを作れます。' } },
                 { 
                   type: 'code', 
                   language: 'python', 
-                  code: 'data = [{"val": 3}, {"val": 1}, {"val": 2}]\n# Sort by "val" key\ndata.sort(key=lambda x: x["val"])' 
+                  filename: 'first_class.py',
+                  code: 'def add_tax(x):\n    return x * 1.1\n\nops = [add_tax, abs]\nprint(ops[0](100))  # 110.0' 
+                },
+                {
+                  type: 'callout',
+                  variant: 'info',
+                  title: { en: 'Why it matters', jp: 'なぜ重要か' },
+                  text: { en: 'You can compose small functions into pipelines.', jp: '小さな関数をつなげてパイプラインを作れます。' }
+                }
+              ]
+            },
+            {
+              id: 's2',
+              title: { en: 'Lambda & Inline Functions', jp: 'ラムダとインライン関数' },
+              content: [
+                { type: 'text', text: { en: 'Use lambda for short, single-expression functions.', jp: 'ラムダは短い1行関数に向きます。' } },
+                { type: 'text', text: { en: 'A good rule: if you need a name, you probably need a def. Lambdas shine in sort keys and small transforms.', jp: '目安として、名前を付けたくなるならdefにしましょう。ラムダはソートキーや小さな変換で効果的です。' } },
+                { 
+                  type: 'code', 
+                  language: 'python', 
+                  filename: 'lambda_sort.py',
+                  code: 'data = [{\"val\": 3}, {\"val\": 1}, {\"val\": 2}]\n# Sort by \"val\" key\ndata.sort(key=lambda x: x[\"val\"])' 
+                },
+                {
+                  type: 'callout',
+                  variant: 'info',
+                  title: { en: 'Naming helps review', jp: '命名はレビューに効く' },
+                  text: { en: 'Named functions are easier to test and review than anonymous lambdas.', jp: '無名ラムダより、名前付き関数の方がテストやレビューが容易です。' }
+                },
+                {
+                  type: 'callout',
+                  variant: 'warning',
+                  title: { en: 'Keep it readable', jp: '読みやすさ優先' },
+                  text: { en: 'If the lambda needs explanation, use a named function.', jp: '説明が必要なら関数として定義した方が良いです。' }
+                }
+              ]
+            },
+            {
+              id: 's3',
+              title: { en: 'Map, Filter, Reduce', jp: 'map / filter / reduce' },
+              content: [
+                { type: 'text', text: { en: 'Functional helpers transform data without explicit loops.', jp: '関数型の補助関数で、明示的なループなしに変換できます。' } },
+                { type: 'text', text: { en: 'In practice, list comprehensions are often clearer than map/filter, but these helpers are useful in pipelines or when you already have a function.', jp: '実務では内包表記の方が読みやすいことも多いですが、既存関数を流し込むときはmap/filterが便利です。' } },
+                {
+                  type: 'code',
+                  language: 'python',
+                  filename: 'map_filter.py',
+                  code: 'nums = [1, 2, 3, 4]\n\nsquares = list(map(lambda x: x**2, nums))\nevens = list(filter(lambda x: x % 2 == 0, nums))'
+                },
+                {
+                  type: 'mermaid',
+                  chart: 'graph LR\n  A[Data] --> B[Map]\n  B --> C[Filter]\n  C --> D[Result]',
+                  caption: { en: 'Functional data flow', jp: '関数型のデータフロー' }
+                },
+                {
+                  type: 'table',
+                  headers: [
+                    { en: 'Helper', jp: '関数' },
+                    { en: 'Purpose', jp: '目的' },
+                    { en: 'Example', jp: '例' }
+                  ],
+                  rows: [
+                    [
+                      { en: 'map', jp: 'map' },
+                      { en: 'Transform each item', jp: '各要素を変換' },
+                      { en: 'map(f, data)', jp: 'map(f, data)' }
+                    ],
+                    [
+                      { en: 'filter', jp: 'filter' },
+                      { en: 'Keep items by condition', jp: '条件で抽出' },
+                      { en: 'filter(cond, data)', jp: 'filter(cond, data)' }
+                    ],
+                    [
+                      { en: 'reduce', jp: 'reduce' },
+                      { en: 'Aggregate into one value', jp: '集約して1つに' },
+                      { en: 'reduce(f, data)', jp: 'reduce(f, data)' }
+                    ]
+                  ]
+                },
+                {
+                  type: 'callout',
+                  variant: 'tip',
+                  title: { en: 'Where is reduce?', jp: 'reduceの場所' },
+                  text: { en: 'Use functools.reduce when you need it; otherwise prefer sum/min/max for clarity.', jp: 'reduceはfunctools.reduceで利用しますが、sum/min/maxの方が明快な場合が多いです。' }
+                }
+              ]
+            },
+            {
+              id: 's4',
+              title: { en: 'Practical Patterns', jp: '実務パターン' },
+              content: [
+                { type: 'text', text: { en: 'Compose small functions to keep feature pipelines clean.', jp: '小さな関数を合成して特徴量パイプラインを整理します。' } },
+                { type: 'text', text: { en: 'Aim for pure functions (no side effects) so you can test and reuse them safely.', jp: '副作用の少ない純粋関数を意識すると、テストや再利用が楽になります。' } },
+                {
+                  type: 'code',
+                  language: 'python',
+                  filename: 'pipeline_fn.py',
+                  code: 'def normalize(s):\n    return s.strip().lower()\n\ndef is_valid(s):\n    return len(s) > 2\n\nraw = [\"  AI \", \"ML\", \" data \"]\nclean = [normalize(s) for s in raw if is_valid(s)]'
+                },
+                {
+                  type: 'table',
+                  headers: [
+                    { en: 'Use case', jp: 'ユースケース' },
+                    { en: 'Pattern', jp: 'パターン' },
+                    { en: 'Why it works', jp: '効果' }
+                  ],
+                  rows: [
+                    [
+                      { en: 'Text cleanup', jp: 'テキスト整形' },
+                      { en: 'map(normalize, texts)', jp: 'map(normalize, texts)' },
+                      { en: 'Consistent features', jp: '特徴量の一貫性' }
+                    ],
+                    [
+                      { en: 'Quality filter', jp: '品質フィルタ' },
+                      { en: 'filter(is_valid, rows)', jp: 'filter(is_valid, rows)' },
+                      { en: 'Reduce noise', jp: 'ノイズ低減' }
+                    ],
+                    [
+                      { en: 'Labeling', jp: 'ラベル付け' },
+                      { en: '[label(x) for x in data]', jp: '[label(x) for x in data]' },
+                      { en: 'Fast dataset prep', jp: '高速な前処理' }
+                    ]
+                  ]
+                },
+                {
+                  type: 'callout',
+                  variant: 'tip',
+                  title: { en: 'When to switch', jp: '切り替えタイミング' },
+                  text: { en: 'For complex logic, use explicit loops and tests.', jp: '複雑なロジックはfor文＋テストの方が安全です。' }
                 }
               ]
             }
@@ -757,29 +1063,7 @@ const AI_AGENTS_DEMO_DATA: any = {
             }
           ]
         },
-        {
-          lesson_id: 'ag1-l2',
-          title: { en: 'Google Cloud Ecosystem', jp: 'Google Cloudのエコシステム' },
-          subtitle: { en: 'ADK and Agentspace', jp: 'ADKとAgentspace' },
-          estimated_min: 20,
-          sections: [
-             {
-               id: 's1',
-               title: { en: 'Two Paths to Build', jp: '2つの構築パス' },
-               content: [
-                 { type: 'text', text: { en: 'Google Cloud offers two primary ways to build agents: ADK for code-first and Agentspace for application-first development.', jp: 'Google Cloudでは、コード中心のADKと、アプリケーション中心のAgentspaceという、2つの主要な構築方法を提供しています。' } },
-                 {
-                   type: 'table',
-                   headers: [ {en: 'Feature', jp: '特徴'}, {en: 'ADK', jp: 'ADK (Code-first)'}, {en: 'Agentspace', jp: 'Agentspace (No-code)'} ],
-                   rows: [
-                     [ {en: 'Control', jp: '制御性'}, {en: 'High', jp: '高い'}, {en: 'Standard', jp: '標準的'} ],
-                     [ {en: 'Skill Level', jp: 'スキル'}, {en: 'Developer', jp: '開発者向け'}, {en: 'Business Users', jp: '非技術者向け'} ]
-                   ]
-                 }
-               ]
-             }
-          ]
-        }
+        
       ]
     },
     {
@@ -800,13 +1084,47 @@ const AI_AGENTS_DEMO_DATA: any = {
               content: [
                 { type: 'text', text: { en: 'Choosing the right model is about finding the optimal balance for your specific use case.', jp: '適切なモデルを選択することは、特定のユースケースに最適なバランスを見つけることです。' } },
                 { type: 'text', text: { en: 'Start with the simplest model that meets quality targets, then scale up only where the task truly needs it.', jp: 'まずは品質目標を満たす最小のモデルから始め、必要なタスクにだけ段階的に強いモデルを使いましょう。' } },
+                { type: 'text', text: { en: 'In practice, teams use a multi-vendor portfolio (Gemini, Claude, GPT) and pick by tier: speed, balance, or deep reasoning.', jp: '実務ではGemini / Claude / GPTの複数ベンダーを併用し、「高速」「バランス」「深い推論」の階層で使い分けます。' } },
                 {
                   type: 'list',
                   style: 'key',
                   items: [
-                    { en: 'Gemini 2.5 Flash-Lite: best for high-volume, low-latency tasks.', jp: 'Gemini 2.5 Flash-Lite: 高ボリューム、低レイテンシなタスクに最適。' },
-                    { en: 'Gemini 2.5 Flash: balanced performance for production apps.', jp: 'Gemini 2.5 Flash: プロダクション環境でのバランスの取れた性能。' },
-                    { en: 'Gemini 3 Pro: advanced reasoning and multi-step tasks.', jp: 'Gemini 3 Pro: 高度な推論とマルチステップなタスクに。' }
+                    { en: 'Fast/cheap tier: high volume, low latency, simple transforms.', jp: '高速・低コスト層: 高ボリューム、低レイテンシ、単純変換。' },
+                    { en: 'Balanced tier: default choice for product UX and medium reasoning.', jp: 'バランス層: UXと品質の標準選択、ミドル推論。' },
+                    { en: 'Deep reasoning tier: multi-step planning, tool orchestration, high-stakes tasks.', jp: '深い推論層: 多段計画、ツール連携、高リスク領域。' }
+                  ]
+                },
+                {
+                  type: 'table',
+                  headers: [
+                    { en: 'Tier', jp: '層' },
+                    { en: 'Gemini', jp: 'Gemini' },
+                    { en: 'Claude', jp: 'Claude' },
+                    { en: 'GPT', jp: 'GPT' },
+                    { en: 'Best for', jp: '適した用途' }
+                  ],
+                  rows: [
+                    [
+                      { en: 'Fast / Cheap', jp: '高速・低コスト' },
+                      { en: 'Gemini 2.5 Flash-Lite', jp: 'Gemini 2.5 Flash-Lite' },
+                      { en: 'Claude Haiku 4.5', jp: 'Claude Haiku 4.5' },
+                      { en: 'GPT‑5 nano', jp: 'GPT‑5 nano' },
+                      { en: 'High volume, low latency tasks', jp: '高ボリューム・低レイテンシ' }
+                    ],
+                    [
+                      { en: 'Balanced', jp: 'バランス' },
+                      { en: 'Gemini 3 Flash Preview', jp: 'Gemini 3 Flash Preview' },
+                      { en: 'Claude Sonnet 4.5', jp: 'Claude Sonnet 4.5' },
+                      { en: 'GPT‑5 mini', jp: 'GPT‑5 mini' },
+                      { en: 'Product UX and mixed tasks', jp: 'プロダクトUXと混合タスク' }
+                    ],
+                    [
+                      { en: 'Deep Reasoning', jp: '深い推論' },
+                      { en: 'Gemini 3 Pro Preview', jp: 'Gemini 3 Pro Preview' },
+                      { en: 'Claude Opus 4.5', jp: 'Claude Opus 4.5' },
+                      { en: 'GPT‑5.2', jp: 'GPT‑5.2' },
+                      { en: 'Multi-step and high-stakes work', jp: '多段推論・高リスク領域' }
+                    ]
                   ]
                 },
                 {
@@ -848,23 +1166,68 @@ const AI_AGENTS_DEMO_DATA: any = {
                     { en: 'Suggested Model', jp: '推奨モデル' }
                   ],
                   rows: [
-                    [ { en: 'High volume, simple tasks', jp: '高ボリューム・単純タスク' }, { en: 'Low latency, low cost', jp: '低レイテンシ・低コスト' }, { en: 'Flash-Lite', jp: 'Flash-Lite' } ],
-                    [ { en: 'Balanced UX and quality', jp: 'UXと品質のバランス' }, { en: 'Stable production performance', jp: '安定した本番性能' }, { en: 'Flash', jp: 'Flash' } ],
-                    [ { en: 'Complex reasoning', jp: '高度な推論' }, { en: 'Multi-step planning', jp: '多段の計画' }, { en: 'Pro', jp: 'Pro' } ],
-                    [ { en: 'High-stakes outputs', jp: '高リスク出力' }, { en: 'Extra validation needed', jp: '追加検証が必要' }, { en: 'Pro + verification', jp: 'Pro + 検証' } ]
+                    [ { en: 'High volume, simple tasks', jp: '高ボリューム・単純タスク' }, { en: 'Low latency, low cost', jp: '低レイテンシ・低コスト' }, { en: 'Fast tier', jp: '高速層' } ],
+                    [ { en: 'Balanced UX and quality', jp: 'UXと品質のバランス' }, { en: 'Stable production performance', jp: '安定した本番性能' }, { en: 'Balanced tier', jp: 'バランス層' } ],
+                    [ { en: 'Complex reasoning', jp: '高度な推論' }, { en: 'Multi-step planning', jp: '多段の計画' }, { en: 'Reasoning tier', jp: '推論層' } ],
+                    [ { en: 'High-stakes outputs', jp: '高リスク出力' }, { en: 'Extra validation needed', jp: '追加検証が必要' }, { en: 'Reasoning tier + verification', jp: '推論層 + 検証' } ]
                   ]
                 }
               ]
             },
             {
               id: 's4',
+              title: { en: 'Open-Source Model Options', jp: 'オープンソースモデルの選択肢' },
+              content: [
+                { type: 'text', text: { en: 'Open-source models are strongest when you need data residency, customization, or predictable per-token cost at scale.', jp: 'オープンソースモデルは「データ主権」「カスタマイズ」「大規模時のコスト予測性」が必要な場合に強みを発揮します。' } },
+                {
+                  type: 'table',
+                  headers: [
+                    { en: 'Family', jp: 'ファミリー' },
+                    { en: 'Strengths', jp: '強み' },
+                    { en: 'Tradeoffs', jp: 'トレードオフ' },
+                    { en: 'Deployment', jp: '運用形態' }
+                  ],
+                  rows: [
+                    [
+                      { en: 'Llama', jp: 'Llama' },
+                      { en: 'Broad ecosystem, strong general reasoning', jp: '幅広いエコシステム、汎用推論に強い' },
+                      { en: 'Requires infra + safety tuning', jp: 'インフラ/安全性調整が必要' },
+                      { en: 'Self-host, VPC, managed OSS service', jp: '自前ホスト / VPC / OSSマネージド' }
+                    ],
+                    [
+                      { en: 'Mistral / Mixtral', jp: 'Mistral / Mixtral' },
+                      { en: 'Fast, strong coding / tool-use', jp: '高速、コード・ツール利用に強い' },
+                      { en: 'Model selection and routing adds complexity', jp: 'モデル選定とルーティングが複雑' },
+                      { en: 'Self-host, optimized inference stacks', jp: '自前ホスト / 推論最適化' }
+                    ],
+                    [
+                      { en: 'Qwen', jp: 'Qwen' },
+                      { en: 'Strong multilingual coverage', jp: '多言語対応が強い' },
+                      { en: 'Benchmark parity varies by task', jp: 'タスクで性能のばらつき' },
+                      { en: 'Self-host, regional cloud options', jp: '自前ホスト / 地域クラウド' }
+                    ]
+                  ]
+                },
+                {
+                  type: 'list',
+                  style: 'key',
+                  items: [
+                    { en: 'Use OSS when data cannot leave your environment.', jp: 'データを外部に出せない場合はOSSが有効。' },
+                    { en: 'Fine-tune for domain language, but keep a fallback to a stronger API model.', jp: 'ドメイン特化は微調整、ただし高性能APIへのフォールバックも残す。' },
+                    { en: 'Budget for infra, monitoring, and safety reviews.', jp: 'インフラ・監視・安全性レビューのコストも見積もる。' }
+                  ]
+                }
+              ]
+            },
+            {
+              id: 's5',
               title: { en: 'Routing & Fallback Strategy', jp: 'ルーティングとフォールバック' },
               content: [
                 { type: 'text', text: { en: 'Use a lightweight model first, then escalate only when confidence or quality is low.', jp: '軽量モデルで開始し、確信度や品質が不足する場合のみ上位モデルへ昇格します。' } },
                 {
                   type: 'code',
                   language: 'pseudo',
-                  code: 'result = flash_lite(task)\nif confidence_low(result) or requires_reasoning(task):\n  result = flash(task)\nif high_risk(task) or multi_step(task):\n  result = pro(task)\nreturn result'
+                  code: 'result = fast_model(task)  # e.g., Flash‑Lite / Haiku / GPT‑4o mini\nif confidence_low(result) or requires_reasoning(task):\n  result = balanced_model(task)  # e.g., Flash / Sonnet / GPT‑4o\nif high_risk(task) or multi_step(task):\n  result = reasoning_model(task)  # e.g., Pro / Opus / advanced GPT\nreturn result'
                 },
                 {
                   type: 'callout',
@@ -875,7 +1238,7 @@ const AI_AGENTS_DEMO_DATA: any = {
               ]
             },
             {
-              id: 's5',
+              id: 's6',
               title: { en: 'Evaluation & Monitoring', jp: '評価とモニタリング' },
               content: [
                 { type: 'text', text: { en: 'Selection is not a one-time choice. Monitor and iterate with real usage data.', jp: 'モデル選定は一度きりではありません。実運用データで継続的に改善します。' } },

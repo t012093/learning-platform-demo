@@ -6,13 +6,16 @@ import { useLanguage } from '../../../../context/LanguageContext';
 
 interface PersonalityAssessmentProps {
   onComplete: (scores: Big5Profile) => void;
+  languageOverride?: 'en' | 'jp' | 'fr';
 }
 
-const PersonalityAssessment: React.FC<PersonalityAssessmentProps> = ({ onComplete }) => {
+const PersonalityAssessment: React.FC<PersonalityAssessmentProps> = ({ onComplete, languageOverride }) => {
   const { language } = useLanguage();
+  const effectiveLang = (language as 'en' | 'jp' | 'fr');
+  const resolvedLang = languageOverride || (effectiveLang === 'jp' ? 'jp' : effectiveLang === 'fr' ? 'fr' : 'en');
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
-  const getText = (text: LocalizedText) => text?.[language] || text?.jp || '';
+  const getText = (text: LocalizedText) => text?.[resolvedLang] || text?.en || text?.jp || '';
 
   const t = {
     en: {
@@ -28,9 +31,16 @@ const PersonalityAssessment: React.FC<PersonalityAssessmentProps> = ({ onComplet
       negative: '否定寄り',
       positive: '肯定寄り',
       back: '戻る'
+    },
+    fr: {
+      query: 'QUESTION',
+      analyzing: 'Analyse en cours...',
+      negative: 'Réponse négative',
+      positive: 'Réponse positive',
+      back: 'RETOUR'
     }
   } as const;
-  const labels = t[language];
+  const labels = t[resolvedLang === 'fr' ? 'fr' : resolvedLang];
 
   const handleAnswer = (value: number) => {
     const newAnswers = { ...answers, [BIG_FIVE_QUESTIONS[currentIdx].id]: value };

@@ -4,7 +4,6 @@ import {
   Brain,
   Compass,
   Flame,
-  Gem,
   HeartPulse,
   Sparkles,
   Target,
@@ -158,6 +157,22 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           tone: 'amber'
         }
       ],
+      aiCoachTitle: 'AI Coach',
+      aiCoachSubtitle: 'Personalized guidance based on your focus, energy, and streak.',
+      aiCoachMeta: 'Signals from the last 7 days',
+      aiCoachCards: [
+        { title: 'Best focus window', body: 'Schedule a 20-minute deep focus block around 20:30.', tag: 'Recommended' },
+        { title: 'Low-energy fallback', body: 'If energy dips, switch to review + quiz for 10 minutes.', tag: 'Light' },
+        { title: 'Streak protection', body: 'Keep the 3-day streak with a micro-task today.', tag: 'Streak' }
+      ],
+      aiScheduleTitle: 'Smart Schedule',
+      aiScheduleSubtitle: 'Auto-adjusts when your energy drops.',
+      aiScheduleSlots: [
+        { time: 'Tue 20:30', label: 'Focus sprint (20m)' },
+        { time: 'Thu 07:30', label: 'Review + quiz (10m)' },
+        { time: 'Sat 11:00', label: 'Build session (45m)' }
+      ],
+      aiScheduleCta: 'Open planner',
       gamificationTitle: 'Level Up',
       gamificationSubtitle: 'Complete one quest to gain +40 XP.',
       gamificationMeta: 'Next reward at 500 XP',
@@ -253,6 +268,22 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           tone: 'amber'
         }
       ],
+      aiCoachTitle: 'AIコーチ',
+      aiCoachSubtitle: '集中・体力・継続データから最適な提案。',
+      aiCoachMeta: '直近7日間のシグナル',
+      aiCoachCards: [
+        { title: '最適な集中時間', body: '20:30 前後に20分の集中ブロックを提案。', tag: 'おすすめ' },
+        { title: '低エネルギー時', body: '疲れている日はレビュー＋クイズ10分に切替。', tag: '軽量' },
+        { title: '継続ボーナス維持', body: '3日連続を守るためにミニタスクを提案。', tag: 'ストリーク' }
+      ],
+      aiScheduleTitle: 'スマートスケジュール',
+      aiScheduleSubtitle: '体調が落ちたら自動で軽量タスクに切り替え。',
+      aiScheduleSlots: [
+        { time: '火 20:30', label: '集中スプリント (20分)' },
+        { time: '木 07:30', label: 'レビュー＋クイズ (10分)' },
+        { time: '土 11:00', label: 'ビルドセッション (45分)' }
+      ],
+      aiScheduleCta: 'プランナーを開く',
       gamificationTitle: 'レベルアップ',
       gamificationSubtitle: 'クエスト達成で +40 XP',
       gamificationMeta: '次の報酬まで 500 XP',
@@ -316,36 +347,6 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       bar: 'bg-amber-500'
     }
   } as const;
-  const xpProgress = Math.min(100, Math.round((t.gamificationXpValue / t.gamificationXpGoal) * 100));
-  const xpProgressStyle = { ['--progress' as any]: `${xpProgress}%` } as React.CSSProperties;
-  const badgeTiles = [
-    {
-      icon: Flame,
-      accent: 'from-orange-400 via-amber-400 to-yellow-300',
-      glow: 'shadow-[0_18px_30px_rgba(251,146,60,0.35)]'
-    },
-    {
-      icon: Sparkles,
-      accent: 'from-sky-400 via-cyan-400 to-indigo-400',
-      glow: 'shadow-[0_18px_30px_rgba(56,189,248,0.35)]'
-    },
-    {
-      icon: Gem,
-      accent: 'from-fuchsia-400 via-pink-400 to-rose-400',
-      glow: 'shadow-[0_18px_30px_rgba(236,72,153,0.35)]'
-    }
-  ];
-  const badgePopupData = t.gamificationBadges.map((badge, index) => {
-    const style = badgeTiles[index % badgeTiles.length];
-    return {
-      title: t.badgePopupTitle,
-      subtitle: badge,
-      body: t.badgePopupBodies[index] || '',
-      reward: t.badgePopupRewards[index] || undefined,
-      icon: style.icon,
-      accent: style.accent
-    };
-  });
 
   const triggerLevelUp = () => {
     setLevelNotice(false);
@@ -660,49 +661,55 @@ const MissionControlDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       <section className="rounded-3xl border border-slate-100 bg-white/90 backdrop-blur p-8 shadow-sm dashboard-fade" style={{ animationDelay: '380ms' }}>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t.gamificationTitle}</p>
-            <h3 className="text-2xl font-semibold text-slate-900 mt-2">
-              {t.gamificationLevelLabel} {t.gamificationLevelValue}
-            </h3>
-            <p className="text-sm text-slate-500 mt-2">{t.gamificationMeta}</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{t.aiCoachTitle}</p>
+            <h3 className="text-2xl font-semibold text-slate-900 mt-2">{t.aiCoachSubtitle}</h3>
+            <p className="text-sm text-slate-500 mt-2">{t.aiCoachMeta}</p>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {t.gamificationBadges.map((badge, index) => {
-              const style = badgeTiles[index % badgeTiles.length];
-              return (
-                <BadgeTile
-                  key={badge}
-                  label={badge}
-                  icon={style.icon}
-                  accent={style.accent}
-                  glow={style.glow}
-                  style={{ animationDelay: `${index * 80 + 120}ms` }}
-                  onClick={() => triggerAchievementPopup(badgePopupData[index])}
-                />
-              );
-            })}
+          <div className="h-12 w-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <Brain size={22} />
           </div>
         </div>
         <div className="grid md:grid-cols-[1.1fr,0.9fr] gap-6 mt-6">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5">
-            <div className="flex items-center justify-between text-sm text-slate-600">
-              <span>{t.gamificationXpLabel}</span>
-              <span className="font-semibold text-slate-800">
-                {t.gamificationXpValue} / {t.gamificationXpGoal}
-              </span>
-            </div>
-            <div className="mt-3 h-3 w-full rounded-full bg-slate-100">
-              <div className="h-3 rounded-full bg-indigo-500 dashboard-progress" style={xpProgressStyle} />
-            </div>
-            <p className="text-xs text-slate-500 mt-2">{t.gamificationSubtitle}</p>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3">
+            {t.aiCoachCards.map((card) => (
+              <div key={card.title} className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="h-9 w-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <Sparkles size={16} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-sm font-semibold text-slate-800">{card.title}</div>
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full">
+                        {card.tag}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">{card.body}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="rounded-2xl bg-slate-900 text-white p-5 flex flex-col justify-between">
+          <div className="rounded-2xl bg-slate-900 text-white p-5 flex flex-col gap-4">
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
               <Zap size={14} />
-              {t.gamificationQuestTitle}
+              {t.aiScheduleTitle}
             </div>
-            <div className="text-lg font-semibold">{t.gamificationQuestBody}</div>
-            <div className="text-sm text-emerald-300 font-semibold">{t.gamificationQuestReward}</div>
+            <p className="text-sm text-slate-300">{t.aiScheduleSubtitle}</p>
+            <div className="space-y-2">
+              {t.aiScheduleSlots.map((slot) => (
+                <div key={`${slot.time}-${slot.label}`} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 flex items-center justify-between gap-3">
+                  <div className="text-sm font-semibold text-white">{slot.time}</div>
+                  <div className="text-xs text-slate-300">{slot.label}</div>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="mt-1 inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2 text-slate-900 text-sm font-semibold shadow-lg shadow-white/20 hover:bg-indigo-50 transition"
+            >
+              {t.aiScheduleCta} <ArrowUpRight size={16} />
+            </button>
           </div>
         </div>
       </section>
@@ -852,37 +859,5 @@ const ActionCard = ({
     </button>
   );
 };
-
-const BadgeTile = ({
-  label,
-  icon: Icon,
-  accent,
-  glow,
-  style,
-  onClick
-}: {
-  label: string;
-  icon: any;
-  accent: string;
-  glow: string;
-  style?: React.CSSProperties;
-  onClick?: () => void;
-}) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className="rounded-2xl border border-white/80 bg-white p-3 text-center shadow-sm dashboard-pop transition hover:-translate-y-0.5 hover:shadow-md"
-    style={style}
-  >
-    <div className="relative mx-auto w-12 h-12">
-      <div className={`absolute inset-0 rounded-[18px] bg-gradient-to-br ${accent} ${glow}`} />
-      <div className="absolute inset-[2px] rounded-[16px] bg-slate-950/20 border border-white/60" />
-      <div className="relative z-10 w-full h-full flex items-center justify-center text-white">
-        <Icon className="w-6 h-6 drop-shadow-[0_6px_12px_rgba(15,23,42,0.25)]" />
-      </div>
-    </div>
-    <div className="mt-3 text-[11px] font-semibold text-slate-700">{label}</div>
-  </button>
-);
 
 export default MissionControlDashboard;

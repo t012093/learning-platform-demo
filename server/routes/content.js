@@ -51,15 +51,15 @@ router.get('/curricula', async (req, res) => {
         const result = await pool.query(
             `select id, title, description, current_version_id, created_at, category, thumbnail, color
              from curricula
-             where user_id = $1
+             where user_id = CAST($1 AS uuid)
              order by created_at desc
              limit $2 offset $3`,
             [PHASE1_USER_ID, limit, offset]
         );
         res.json({ ok: true, curricula: result.rows });
     } catch (error) {
-        console.error('List Error:', error);
-        res.status(500).json({ error: 'Failed to load curricula' });
+        console.error('[Content API] List Error:', error.message, error.stack);
+        res.status(500).json({ error: 'Failed to load curricula', detail: error.message });
     }
 });
 
@@ -69,21 +69,11 @@ router.get('/curricula/:id', async (req, res) => {
     if (!pool) return res.status(503).json({ error: 'DB not configured' });
 
     try {
-        const result = await pool.query(
-            'SELECT content FROM curricula WHERE id = $1', // Legacy fallback? 
-            // Wait, v2 uses curriculum_versions mostly.
-            // But let's check what the old server.js did.
-            // It did: `select id, title...` then `select content_json from curriculum_versions`
-            // Replicating standard logic:
-            [req.params.id]
-        );
-        
-        // Better logic: Join
         const detailRes = await pool.query(`
             SELECT c.*, v.content_json, v.status
             FROM curricula c
             LEFT JOIN curriculum_versions v ON c.current_version_id = v.id
-            WHERE c.id = $1
+            WHERE c.id = CAST($1 AS uuid)
         `, [req.params.id]);
 
         if (detailRes.rowCount === 0) return res.status(404).json({ error: 'Not found' });
@@ -91,13 +81,6 @@ router.get('/curricula/:id', async (req, res) => {
         const row = detailRes.rows[0];
         const finalContent = row.content_json || row.content;
         
-        // Debug log for content structure
-        if (finalContent) {
-            const keys = Object.keys(finalContent);
-            const moduleCount = finalContent.modules ? finalContent.modules.length : 0;
-            console.log(`[Content API] Fetched Course ${req.params.id}: Keys=[${keys.join(', ')}], Modules=${moduleCount}, Template=${finalContent.ui_template_id}`);
-        }
-
         res.json({
             ok: true,
             course: {
@@ -106,8 +89,8 @@ router.get('/curricula/:id', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Detail Error:', error);
-        res.status(500).json({ error: 'Failed to load curriculum' });
+        console.error('[Content API] Detail Error:', error.message);
+        res.status(500).json({ error: 'Failed to load curriculum', detail: error.message });
     }
 });
 
@@ -121,25 +104,21 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         await ensurePhase1User(pool);
         const type = req.file.mimetype.includes('pdf') ? 'pdf' : 
                      req.file.mimetype.includes('audio') ? 'audio' : 'txt';
-        // Store relative path for portability
         const storagePath = `public/uploads/${req.file.filename}`;
         const absolutePath = path.join(PROJECT_ROOT, storagePath);
 
         const result = await pool.query(
             `insert into materials (user_id, type, title, storage_path, status)
-             values ($1, $2, $3, $4, 'uploaded') returning id, status`,
+             values (CAST($1 AS uuid), $2, $3, $4, 'uploaded') returning id, status`,
             [PHASE1_USER_ID, type, req.file.originalname, storagePath]
         );
         const materialId = result.rows[0].id;
 
-        // Trigger synchronous ingestion for immediate analysis availability
-        console.log(`Starting immediate ingestion for material ${materialId}...`);
         try {
             await ingestMaterial(materialId, absolutePath, req.file.mimetype, PHASE1_USER_ID);
             res.json({ ok: true, material_id: materialId, status: 'ready' });
         } catch (ingestErr) {
-            console.error('Immediate Ingestion failed, but file was uploaded:', ingestErr);
-            // Fallback: still return success but status is 'uploaded'
+            console.error('Immediate Ingestion failed:', ingestErr);
             res.json({ ok: true, material_id: materialId, status: 'uploaded' });
         }
     } catch (error) {
@@ -160,7 +139,7 @@ router.post('/rag/index', async (req, res) => {
         await ensurePhase1User(pool);
         const result = await pool.query(
             `insert into jobs (user_id, type, status, payload)
-             values ($1, 'ingest', 'queued', $2)
+             values (CAST($1 AS uuid), 'ingest', 'queued', $2)
              returning id, status`,
             [PHASE1_USER_ID, JSON.stringify({ material_id })]
         );
@@ -178,7 +157,7 @@ router.get('/jobs/:id', async (req, res) => {
 
     try {
         const result = await pool.query(
-            'select status, progress, error from jobs where id = $1',
+            'select status, progress, error from jobs where id = CAST($1 AS uuid)',
             [req.params.id]
         );
         if (result.rowCount === 0) return res.status(404).json({ error: 'Job not found' });

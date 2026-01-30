@@ -47,6 +47,8 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
     const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({});
     const [quizSubmitted, setQuizSubmitted] = useState(false);
     const observer = useRef<IntersectionObserver | null>(null);
+    const hasQuiz = Boolean(lesson.quiz && lesson.quiz.questions && lesson.quiz.questions.length > 0);
+    const effectiveViewMode = viewMode === 'quiz' && !hasQuiz ? 'doc' : viewMode;
 
     // Debug: Log lesson data
     console.log('[GeneratedDocView] Rendering with lesson:', {
@@ -124,9 +126,21 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
         mermaid.initialize(mermaidConfig);
     }, []);
 
+    useEffect(() => {
+        setViewMode('doc');
+        setQuizAnswers({});
+        setQuizSubmitted(false);
+    }, [lesson.lesson_id]);
+
+    useEffect(() => {
+        if (!hasQuiz && viewMode === 'quiz') {
+            setViewMode('doc');
+        }
+    }, [hasQuiz, viewMode]);
+
     // Scroll Spy Logic
     useEffect(() => {
-        if (viewMode !== 'doc') return;
+        if (effectiveViewMode !== 'doc') return;
 
         observer.current = new IntersectionObserver((entries) => {
             entries.forEach((entry) => {
@@ -142,7 +156,7 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
         });
 
         return () => observer.current?.disconnect();
-    }, [lesson, viewMode]);
+    }, [lesson, effectiveViewMode]);
 
     const scrollToSection = (id: string) => {
         const el = document.getElementById(id);
@@ -164,10 +178,10 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
     };
 
     useEffect(() => {
-        if (viewMode === 'doc') {
+        if (effectiveViewMode === 'doc') {
             mermaid.contentLoaded();
         }
-    }, [lesson, viewMode]);
+    }, [lesson, effectiveViewMode]);
 
     const handleQuizAnswer = (questionId: string, optionId: string) => {
         if (quizSubmitted) return;
@@ -208,7 +222,7 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex bg-slate-100 p-1 rounded-lg">
                     <button
                         onClick={() => setViewMode('doc')}
-                        className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-bold transition-all ${viewMode === 'doc'
+                        className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-bold transition-all ${effectiveViewMode === 'doc'
                             ? 'bg-white text-purple-600 shadow-sm'
                             : 'text-slate-500 hover:text-slate-700'
                             }`}
@@ -217,10 +231,10 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
                         {t.doc}
                     </button>
 
-                    {lesson.quiz && (
+                    {hasQuiz && (
                         <button
                             onClick={() => setViewMode('quiz')}
-                            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-bold transition-all ${viewMode === 'quiz'
+                            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-bold transition-all ${effectiveViewMode === 'quiz'
                                 ? 'bg-white text-purple-600 shadow-sm'
                                 : 'text-slate-500 hover:text-slate-700'
                                 }`}
@@ -244,7 +258,7 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
                 </div>
             </header>
 
-            {viewMode === 'doc' && (
+            {effectiveViewMode === 'doc' && (
                 <main className="pt-24 pb-20 max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12">
 
                     {/* Main Content */}
@@ -290,7 +304,7 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
                                 </button>
                             </div>
                             <div className="flex gap-2">
-                                {lesson.quiz ? (
+                                {hasQuiz ? (
                                     <button
                                         onClick={() => setViewMode('quiz')}
                                         className="bg-slate-900 text-white px-6 py-3 rounded-full font-bold hover:bg-slate-800 transition-all flex items-center gap-2"
@@ -344,7 +358,7 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
             )}
 
             {/* Quiz View */}
-            {viewMode === 'quiz' && lesson.quiz && (
+            {effectiveViewMode === 'quiz' && lesson.quiz && (
                 <main className="pt-24 pb-20 max-w-3xl mx-auto px-6">
                     <div className="mb-8">
                         <button onClick={() => setViewMode('doc')} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 mb-4">

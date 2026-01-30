@@ -24,7 +24,7 @@ enum Step {
 
 const USE_DEMO_ASSESSMENT = true;
 
-const DEMO_AI_ADVICE_BY_LANG: Record<'en' | 'jp', AIAdvice> = {
+const DEMO_AI_ADVICE_BY_LANG: Record<'en' | 'jp' | 'fr', AIAdvice> = {
   en: {
     strengths: [
       { title: 'Adaptability', description: 'Switches learning approaches as the situation changes.' },
@@ -59,6 +59,42 @@ const DEMO_AI_ADVICE_BY_LANG: Record<'en' | 'jp', AIAdvice> = {
     hiddenTalent: {
       title: 'Quiet consistency',
       description: 'Steady effort compounds into big results.'
+    }
+  },
+  fr: {
+    strengths: [
+      { title: "Adaptabilité", description: "Change d’approche selon la situation." },
+      { title: "Exécution équilibrée", description: "Concilie profondeur et rapidité." },
+      { title: "Élan collaboratif", description: "Avance avec l’équipe tout en gardant l’alignement." }
+    ],
+    growthTips: [
+      { title: "Rendre les progrès visibles", description: "Livrez un petit résultat chaque semaine et notez vos apprentissages." },
+      { title: "Protéger le temps de focus", description: "Réservez un créneau fixe de 30 minutes chaque jour." },
+      { title: "Définir le périmètre", description: "Choisissez un thème et explorez-le en profondeur sur une courte période." }
+    ],
+    learningStrategy: {
+      title: "Expérimentation en cycles courts",
+      approach: "Tester petit, réfléchir vite, itérer",
+      steps: [
+        { label: "Step 1", action: "Résoudre un mini‑exercice en 15 minutes" },
+        { label: "Step 2", action: "Écrire un bilan en 3 lignes" },
+        { label: "Step 3", action: "Améliorer un point et réessayer demain" }
+      ]
+    },
+    careerCompatibility: "Développement produit, support à l’apprentissage, création en équipe",
+    relationshipAnalysis: {
+      style: "Un moteur calme qui s’adapte et garde l’alignement.",
+      idealPartner: "Bonne synergie avec des profils décisionnels rapides.",
+      advice: "Clarifiez les rôles pour maximiser vos forces."
+    },
+    businessPartnership: {
+      role: "Coordinateur·rice de projet : alignement et suivi solides.",
+      bestSync: "Très efficace avec un·e builder spécialiste.",
+      warning: "Trop d’optimisation peut ralentir les décisions."
+    },
+    hiddenTalent: {
+      title: "Constance discrète",
+      description: "Les efforts réguliers se transforment en grands résultats."
     }
   },
   jp: {
@@ -104,6 +140,7 @@ const PersonalAssessmentView: React.FC<PersonalAssessmentViewProps> = ({ onNavig
   const [profile, setProfile] = useState<AssessmentProfile | null>(null);
   const { setProfile: setGlobalProfile } = useTheme();
   const { language } = useLanguage();
+  const [assessmentLanguage, setAssessmentLanguage] = useState<'en' | 'jp' | 'fr'>(language === 'jp' ? 'jp' : 'en');
 
   const t = {
     en: {
@@ -125,9 +162,37 @@ const PersonalAssessmentView: React.FC<PersonalAssessmentViewProps> = ({ onNavig
       assessmentSubtitle: 'Deep Neural Insight Pattern Analysis in Progress',
       analyzingTitle: '分析プロトコル実行中...',
       analyzingSubtitle: 'Constructing Personalized Learning Neural Network'
+    },
+    fr: {
+      overviewTitle: 'Programme de diagnostic d’apprentissage IA',
+      overviewBody: 'Visualisez votre potentiel et construisez un parcours adapté à votre façon d’apprendre.',
+      overviewCta: 'Lancer l’analyse',
+      poweredBy: 'Powered by Gemini 2.5 Flash • Big Five Matrix',
+      assessmentTitle: 'AI Identity Scan',
+      assessmentSubtitle: 'Deep Neural Insight Pattern Analysis in Progress',
+      analyzingTitle: 'Analyse en cours...',
+      analyzingSubtitle: 'Construction du réseau d’apprentissage personnalisé'
     }
   } as const;
-  const labels = t[language];
+  const labels = t[assessmentLanguage];
+
+  const LanguageToggle = () => (
+    <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest">
+      {(['en', 'jp', 'fr'] as const).map((lang) => (
+        <button
+          key={lang}
+          type="button"
+          onClick={() => setAssessmentLanguage(lang)}
+          className={`px-2 py-1 rounded-full transition-all ${assessmentLanguage === lang
+            ? 'bg-slate-900 text-white'
+            : 'text-slate-500 hover:text-slate-700 bg-slate-100'}`}
+          aria-pressed={assessmentLanguage === lang}
+        >
+          {lang.toUpperCase()}
+        </button>
+      ))}
+    </div>
+  );
 
   // Demo: always start from assessment
   useEffect(() => {
@@ -143,10 +208,10 @@ const PersonalAssessmentView: React.FC<PersonalAssessmentViewProps> = ({ onNavig
 
     if (USE_DEMO_ASSESSMENT) {
       await new Promise(resolve => setTimeout(resolve, 1400));
-      const demoAdvice = DEMO_AI_ADVICE_BY_LANG[language] || DEMO_AI_ADVICE_BY_LANG.jp;
+      const demoAdvice = DEMO_AI_ADVICE_BY_LANG[assessmentLanguage] || DEMO_AI_ADVICE_BY_LANG.jp;
       const demoProfile: AssessmentProfile = {
         scores: finalScores,
-        personalityType: 'バランサー',
+        personalityType: 'character/openness',
         learningStyle: demoAdvice.learningStrategy.title,
         motivation: demoAdvice.learningStrategy.approach,
         completedAt: new Date().toISOString(),
@@ -183,7 +248,7 @@ const PersonalAssessmentView: React.FC<PersonalAssessmentViewProps> = ({ onNavig
       // エラー時も最低限のプロファイルを作成して結果画面を表示（無限ロード回避）
       const fallbackProfile: AssessmentProfile = {
         scores: finalScores,
-        personalityType: 'バランサー',
+        personalityType: 'character/openness',
         learningStyle: '標準学習モード',
         motivation: '安定した成長',
         completedAt: new Date().toISOString(),
@@ -203,6 +268,9 @@ const PersonalAssessmentView: React.FC<PersonalAssessmentViewProps> = ({ onNavig
     return (
       <div className="min-h-[80vh] flex items-center justify-center px-4">
         <div className="max-w-xl w-full bg-white/95 rounded-[2.5rem] p-10 text-center shadow-2xl border border-white/40">
+          <div className="flex justify-end mb-4">
+            <LanguageToggle />
+          </div>
           <div className="w-24 h-24 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-3xl mx-auto mb-10 flex items-center justify-center text-4xl text-white shadow-xl">
              <Sparkles className="w-12 h-12" />
           </div>
@@ -229,12 +297,15 @@ const PersonalAssessmentView: React.FC<PersonalAssessmentViewProps> = ({ onNavig
     return (
       <div className="min-h-screen pt-12 px-4">
         <div className="text-center mb-12">
+          <div className="flex justify-end mb-6">
+            <LanguageToggle />
+          </div>
           <h1 className="text-4xl font-black text-slate-900 mb-4 tracking-tighter uppercase">{labels.assessmentTitle}</h1>
           <p className="text-slate-500 max-w-lg mx-auto font-bold text-xs uppercase tracking-widest opacity-60">
             {labels.assessmentSubtitle}
           </p>
         </div>
-        <PersonalityAssessment onComplete={handleAssessmentComplete} />
+        <PersonalityAssessment onComplete={handleAssessmentComplete} languageOverride={assessmentLanguage} />
       </div>
     );
   }
@@ -272,13 +343,13 @@ const PersonalAssessmentView: React.FC<PersonalAssessmentViewProps> = ({ onNavig
   }
 
   if (step === Step.INTRO && profile) {
-    return <IntroSequence profile={profile} onFinish={() => setStep(Step.RESULTS)} />;
+    return <IntroSequence profile={profile} onFinish={() => setStep(Step.RESULTS)} languageOverride={assessmentLanguage} />;
   }
 
   if (step === Step.RESULTS && profile) {
     return (
       <div className="pt-8">
-        <ComprehensiveResults profile={profile} onRestart={handleRestart} />
+        <ComprehensiveResults profile={profile} onRestart={handleRestart} languageOverride={assessmentLanguage} />
       </div>
     );
   }

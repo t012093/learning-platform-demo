@@ -105,6 +105,10 @@ export enum ViewState {
   AI_CHARACTERS = 'AI_CHARACTERS', // AI Character Introduction
   AI_CHARACTER_DETAIL = 'AI_CHARACTER_DETAIL', // Individual Character Profile
   PROFILE = 'PROFILE',
+  PROFILE_DIAGNOSIS = 'PROFILE_DIAGNOSIS',
+  PROFILE_HISTORY = 'PROFILE_HISTORY',
+  PROFILE_BADGES = 'PROFILE_BADGES',
+  PROFILE_GENERATED = 'PROFILE_GENERATED',
   LESSON = 'LESSON',
   BLENDER = 'BLENDER', // Overview
   BLENDER_PATH = 'BLENDER_PATH', // Detailed Project Path
@@ -181,7 +185,7 @@ export interface Big5Profile {
   neuroticism: number;     // 0-100: Sensitive, Nervous (vs. Resilient, Confident)
 }
 
-export type PersonalityType = '冒険家' | '戦略家' | 'サポーター' | '思想家' | '職人' | 'バランサー';
+export type PersonalityType = '冒険家' | '戦略家' | 'サポーター' | '思想家' | '職人' | 'バランサー' | 'character/openness';
 
 export interface AIAdvice {
   strengths: { title: string; description: string }[];
@@ -321,6 +325,7 @@ export type CourseTemplate = 'focus_slide' | 'workshop_split' | 'dialogue_chat' 
 export type LocalizedText = {
   en: string;
   jp: string;
+  fr?: string;
 };
 
 export type LocalizedDocBlock =

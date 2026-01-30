@@ -26,6 +26,10 @@ import CoursePathView from './components/features/dashboard/CoursePathView'; // 
 import LearningHub from './components/features/dashboard/LearningHub';
 import ProfilePassport from './components/features/dashboard/ProfilePassport';
 import MyContent from './components/features/dashboard/MyContent';
+import ProfileDiagnosisView from './components/features/dashboard/profile/ProfileDiagnosisView';
+import ProfileHistoryView from './components/features/dashboard/profile/ProfileHistoryView';
+import ProfileBadgesView from './components/features/dashboard/profile/ProfileBadgesView';
+import ProfileGeneratedView from './components/features/dashboard/profile/ProfileGeneratedView';
 
 // Common Floating Components
 import { FloatingChatbot } from './components/common/FloatingChatbot';
@@ -155,6 +159,10 @@ const AppContent: React.FC = () => {
     if (path.startsWith('/generated-course')) return ViewState.GENERATED_COURSE_PATH;
     if (path.startsWith('/generated-lesson')) return ViewState.GENERATED_LESSON_VIEW;
     if (path.startsWith('/my-content')) return ViewState.MY_CONTENT;
+    if (path.startsWith('/profile/diagnosis')) return ViewState.PROFILE_DIAGNOSIS;
+    if (path.startsWith('/profile/history')) return ViewState.PROFILE_HISTORY;
+    if (path.startsWith('/profile/badges')) return ViewState.PROFILE_BADGES;
+    if (path.startsWith('/profile/generated')) return ViewState.PROFILE_GENERATED;
     if (path.startsWith('/profile')) return ViewState.PROFILE;
     if (path.startsWith('/assessment')) return ViewState.AI_DIAGNOSIS;
     if (path.startsWith('/course-generator')) return ViewState.COURSE_GENERATOR;
@@ -176,6 +184,10 @@ const AppContent: React.FC = () => {
       case ViewState.COURSES: navigate('/courses'); break;
       case ViewState.MY_CONTENT: navigate('/my-content'); break;
       case ViewState.PROFILE: navigate('/profile'); break;
+      case ViewState.PROFILE_DIAGNOSIS: navigate('/profile/diagnosis'); break;
+      case ViewState.PROFILE_HISTORY: navigate('/profile/history'); break;
+      case ViewState.PROFILE_BADGES: navigate('/profile/badges'); break;
+      case ViewState.PROFILE_GENERATED: navigate('/profile/generated'); break;
       case ViewState.LIBRARY: navigate('/library'); break;
 
       case ViewState.LESSON:
@@ -293,6 +305,10 @@ const AppContent: React.FC = () => {
               {/* Assessment & Profile */}
               <Route path="/assessment" element={<PersonalAssessmentView onNavigate={handleNavigate} />} />
               <Route path="/profile" element={<ProfilePassport onNavigate={handleNavigate} />} />
+              <Route path="/profile/diagnosis" element={<ProfileDiagnosisView onNavigate={handleNavigate} />} />
+              <Route path="/profile/history" element={<ProfileHistoryView onNavigate={handleNavigate} />} />
+              <Route path="/profile/badges" element={<ProfileBadgesView />} />
+              <Route path="/profile/generated" element={<ProfileGeneratedView onNavigate={handleNavigate} />} />
               <Route path="/library" element={<Library />} />
               <Route path="/characters" element={<AICharacterIntroView onNavigate={handleNavigate} onSelectCharacter={(id) => navigate(`/character/${id}`)} />} />
               <Route path="/character/:characterId" element={<AICharacterDetailViewWrapper onNavigate={handleNavigate} />} />

@@ -305,6 +305,7 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
     );
   };
 
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center p-6 pt-12">
       <div className="max-w-4xl w-full flex flex-col h-[85vh]">
@@ -422,100 +423,100 @@ const CourseGeneratorView: React.FC<CourseGeneratorViewProps> = ({ onBack, onCou
                                     </div>
                                   )}
                                 <ReactMarkdown
-                                  components={{
-                                    h1: ({ children }) => {
-                                      const heading = getPlainText(children).trim();
-                                      if (!heading) return null;
-                                      if (/^(ロードマップ|Roadmap|カリキュラム|Curriculum|Module|モジュール)$/i.test(heading)) return null;
-                                      return (
-                                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-widest mb-3">
+                                    components={{
+                                      h1: ({ children }) => {
+                                        const heading = getPlainText(children).trim();
+                                        if (!heading) return null;
+                                        if (/^(ロードマップ|Roadmap|カリキュラム|Curriculum|Module|モジュール)$/i.test(heading)) return null;
+                                        return (
+                                          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-widest mb-3">
+                                            {children}
+                                          </div>
+                                        );
+                                      },
+                                      h2: ({ children }) => {
+                                        const heading = getPlainText(children).trim();
+                                        if (!heading) return null;
+                                        if (/^(ロードマップ|Roadmap|カリキュラム|Curriculum|Module|モジュール)$/i.test(heading)) return null;
+                                        return (
+                                          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-widest mb-3">
+                                            {children}
+                                          </div>
+                                        );
+                                      },
+                                      h3: ({ children }) => {
+                                        const heading = getPlainText(children).trim();
+                                        if (!heading) return null;
+                                        if (/^(ロードマップ|Roadmap|カリキュラム|Curriculum|Module|モジュール)$/i.test(heading)) return null;
+                                        return (
+                                          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-widest mb-3">
+                                            {children}
+                                          </div>
+                                        );
+                                      },
+                                      p: ({ children }) => (
+                                        <p className="text-sm text-slate-700 leading-relaxed mb-2 last:mb-0">
                                           {children}
-                                        </div>
-                                      );
-                                    },
-                                    h2: ({ children }) => {
-                                      const heading = getPlainText(children).trim();
-                                      if (!heading) return null;
-                                      if (/^(ロードマップ|Roadmap|カリキュラム|Curriculum|Module|モジュール)$/i.test(heading)) return null;
-                                      return (
-                                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-widest mb-3">
-                                          {children}
-                                        </div>
-                                      );
-                                    },
-                                    h3: ({ children }) => {
-                                      const heading = getPlainText(children).trim();
-                                      if (!heading) return null;
-                                      if (/^(ロードマップ|Roadmap|カリキュラム|Curriculum|Module|モジュール)$/i.test(heading)) return null;
-                                      return (
-                                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-widest mb-3">
-                                          {children}
-                                        </div>
-                                      );
-                                    },
-                                    p: ({ children }) => (
-                                      <p className="text-sm text-slate-700 leading-relaxed mb-2 last:mb-0">
-                                        {children}
-                                      </p>
-                                    ),
-                                    strong: ({ children }) => {
-                                      const moduleHeader = (isRoadmapMessage || isCurriculumMessage) ? renderModuleHeaderIfNeeded(children) : null;
-                                      if (moduleHeader) return moduleHeader;
-                                      return (
-                                        <strong className="inline-flex items-center gap-1 text-slate-900 font-semibold">
-                                          <span className="text-indigo-500">【</span>
-                                          <span>{children}</span>
-                                          <span className="text-indigo-500">】</span>
-                                        </strong>
-                                      );
-                                    },
-                                    em: ({ children }) => (
-                                      <em className="text-slate-600 italic">{children}</em>
-                                    ),
-                                    ul: ({ children }) =>
-                                      isRoadmapMessage
-                                        ? renderRoadmapList(children, nextRoadmapStep) || (
-                                            <div className="mt-3 space-y-2">{children}</div>
-                                          )
-                                        : isCurriculumMessage
-                                          ? renderCurriculumList(children) || (
+                                        </p>
+                                      ),
+                                      strong: ({ children }) => {
+                                        const moduleHeader = (isRoadmapMessage || isCurriculumMessage) ? renderModuleHeaderIfNeeded(children) : null;
+                                        if (moduleHeader) return moduleHeader;
+                                        return (
+                                          <strong className="inline-flex items-center gap-1 text-slate-900 font-semibold">
+                                            <span className="text-indigo-500">【</span>
+                                            <span>{children}</span>
+                                            <span className="text-indigo-500">】</span>
+                                          </strong>
+                                        );
+                                      },
+                                      em: ({ children }) => (
+                                        <em className="text-slate-600 italic">{children}</em>
+                                      ),
+                                      ul: ({ children }) =>
+                                        isRoadmapMessage
+                                          ? renderRoadmapList(children, nextRoadmapStep) || (
                                               <div className="mt-3 space-y-2">{children}</div>
                                             )
-                                          : renderCardList(children) || (
-                                            <div className="mt-3 space-y-2">{children}</div>
-                                          ),
-                                    ol: ({ children }) =>
-                                      isRoadmapMessage
-                                        ? renderRoadmapList(children, nextRoadmapStep) || (
-                                            <div className="mt-3 space-y-2">{children}</div>
-                                          )
-                                        : isCurriculumMessage
-                                          ? renderCurriculumList(children) || (
+                                          : isCurriculumMessage
+                                            ? renderCurriculumList(children) || (
+                                                <div className="mt-3 space-y-2">{children}</div>
+                                              )
+                                            : renderCardList(children) || (
+                                                <div className="mt-3 space-y-2">{children}</div>
+                                              ),
+                                      ol: ({ children }) =>
+                                        isRoadmapMessage
+                                          ? renderRoadmapList(children, nextRoadmapStep) || (
                                               <div className="mt-3 space-y-2">{children}</div>
                                             )
-                                          : renderCardList(children) || (
-                                            <div className="mt-3 space-y-2">{children}</div>
-                                          ),
-                                    hr: () => (
-                                      <div className="my-4 h-px w-full bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
-                                    ),
-                                    code: ({ inline, children }) => (
-                                      <code
-                                        className={`rounded px-1.5 py-0.5 text-xs font-semibold ${
-                                          inline ? 'bg-slate-100 text-slate-700' : 'bg-slate-900 text-slate-100'
-                                        }`}
-                                      >
-                                        {children}
-                                      </code>
-                                    ),
-                                    blockquote: ({ children }) => (
-                                      <div className="mt-3 border-l-4 border-indigo-200 bg-indigo-50/50 text-slate-700 px-3 py-2 rounded-r-xl">
-                                        {children}
-                                      </div>
-                                    )
-                                  }}
-                                >
-                                  {msg.text}
+                                          : isCurriculumMessage
+                                            ? renderCurriculumList(children) || (
+                                                <div className="mt-3 space-y-2">{children}</div>
+                                              )
+                                            : renderCardList(children) || (
+                                                <div className="mt-3 space-y-2">{children}</div>
+                                              ),
+                                      hr: () => (
+                                        <div className="my-4 h-px w-full bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
+                                      ),
+                                      code: ({ inline, children }) => (
+                                        <code
+                                          className={`rounded px-1.5 py-0.5 text-xs font-semibold ${
+                                            inline ? 'bg-slate-100 text-slate-700' : 'bg-slate-900 text-slate-100'
+                                          }`}
+                                        >
+                                          {children}
+                                        </code>
+                                      ),
+                                      blockquote: ({ children }) => (
+                                        <div className="mt-3 border-l-4 border-indigo-200 bg-indigo-50/50 text-slate-700 px-3 py-2 rounded-r-xl">
+                                          {children}
+                                        </div>
+                                      )
+                                    }}
+                                  >
+                                    {msg.text}
                                 </ReactMarkdown>
                                 </>
                               )}

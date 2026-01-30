@@ -23,7 +23,8 @@ import {
   FileText,
   Users,
   CheckCircle2,
-  Image
+  Image,
+  Trophy
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -48,7 +49,7 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
   const [expandedMenu, setExpandedMenu] = useState<string | null>('lab');
   const location = useLocation();
   const { theme, setTheme } = useTheme();
-  const { language, setLanguage } = useLanguage();
+  const { language, selectedLanguage, setLanguage } = useLanguage();
 
   useEffect(() => {
     const view = currentView.toString();
@@ -118,6 +119,11 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
       aiCharacters: 'AI Characters',
       account: 'Account',
       profile: 'Profile',
+      profileOverview: 'Student Card',
+      profileDiagnosis: 'AI Diagnosis',
+      profileHistory: 'History',
+      profileBadges: 'Badges',
+      profileGenerated: 'Generated',
       myContent: 'My Content',
       logOut: 'Log Out',
       language: 'Language'
@@ -139,6 +145,11 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
       aiCharacters: 'AIキャラクター',
       account: 'アカウント',
       profile: 'プロフィール',
+      profileOverview: '学生証',
+      profileDiagnosis: 'AI診断',
+      profileHistory: '履歴',
+      profileBadges: 'バッジ',
+      profileGenerated: '生成物',
       myContent: 'マイコンテンツ',
       logOut: 'ログアウト',
       language: '言語'
@@ -180,7 +191,11 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
       label: t.account,
       icon: User,
       children: [
-        { view: ViewState.PROFILE, label: t.profile, icon: User },
+        { view: ViewState.PROFILE, label: t.profileOverview, icon: User },
+        { view: ViewState.PROFILE_DIAGNOSIS, label: t.profileDiagnosis, icon: Brain },
+        { view: ViewState.PROFILE_HISTORY, label: t.profileHistory, icon: Activity },
+        { view: ViewState.PROFILE_BADGES, label: t.profileBadges, icon: Trophy },
+        { view: ViewState.PROFILE_GENERATED, label: t.profileGenerated, icon: Sparkles },
         { view: ViewState.MY_CONTENT, label: t.myContent, icon: LibraryIcon }
       ]
     },
@@ -365,24 +380,35 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
                 <button
                   type="button"
                   onClick={() => setLanguage('en')}
-                  className={`px-2 py-1 rounded-full text-[10px] font-bold transition-all ${language === 'en'
+                  className={`px-2 py-1 rounded-full text-[10px] font-bold transition-all ${selectedLanguage === 'en'
                     ? (theme === 'default' ? 'bg-slate-900 text-white' : 'bg-white/10 text-white')
                     : (theme === 'default' ? 'text-slate-500 hover:text-slate-700' : 'text-slate-400 hover:text-white')
                   }`}
-                  aria-pressed={language === 'en'}
+                  aria-pressed={selectedLanguage === 'en'}
                 >
                   EN
                 </button>
                 <button
                   type="button"
                   onClick={() => setLanguage('jp')}
-                  className={`px-2 py-1 rounded-full text-[10px] font-bold transition-all ${language === 'jp'
+                  className={`px-2 py-1 rounded-full text-[10px] font-bold transition-all ${selectedLanguage === 'jp'
                     ? (theme === 'default' ? 'bg-slate-900 text-white' : 'bg-white/10 text-white')
                     : (theme === 'default' ? 'text-slate-500 hover:text-slate-700' : 'text-slate-400 hover:text-white')
                   }`}
-                  aria-pressed={language === 'jp'}
+                  aria-pressed={selectedLanguage === 'jp'}
                 >
                   JP
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLanguage('fr')}
+                  className={`px-2 py-1 rounded-full text-[10px] font-bold transition-all ${selectedLanguage === 'fr'
+                    ? (theme === 'default' ? 'bg-slate-900 text-white' : 'bg-white/10 text-white')
+                    : (theme === 'default' ? 'text-slate-500 hover:text-slate-700' : 'text-slate-400 hover:text-white')
+                  }`}
+                  aria-pressed={selectedLanguage === 'fr'}
+                >
+                  FR
                 </button>
               </div>
             </div>

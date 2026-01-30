@@ -83,7 +83,7 @@ router.post('/chat', async (req, res) => {
         let session = null;
         if (sessionId) {
             const result = await pool.query(
-                'select * from ai_sessions where id = $1 and user_id = $2',
+                'select * from ai_sessions where id = CAST($1 AS uuid) and user_id = CAST($2 AS uuid)',
                 [sessionId, PHASE1_USER_ID]
             );
             session = result.rows[0] || null;
@@ -92,18 +92,18 @@ router.post('/chat', async (req, res) => {
         // Initialize Session
         if (!session) {
             const currRes = await pool.query(
-                'insert into curricula (user_id, title, description) values ($1, $2, $3) returning id',
+                'insert into curricula (user_id, title, description) values (CAST($1 AS uuid), $2, $3) returning id',
                 [PHASE1_USER_ID, 'New Curriculum', '']
             );
             const currId = currRes.rows[0].id;
             const verRes = await pool.query(
-                'insert into curriculum_versions (curriculum_id, version, requirements, content_json) values ($1, 1, $2, $3) returning id',
+                'insert into curriculum_versions (curriculum_id, version, requirements, content_json) values (CAST($1 AS uuid), 1, $2, $3) returning id',
                 [currId, '{}', '{}']
             );
             const verId = verRes.rows[0].id;
             
             // Link current version
-            await pool.query('update curricula set current_version_id = $1 where id = $2', [verId, currId]);
+            await pool.query('update curricula set current_version_id = CAST($1 AS uuid) where id = CAST($2 AS uuid)', [verId, currId]);
             
             const initialState = {
                 user_id: PHASE1_USER_ID,
@@ -117,7 +117,7 @@ router.post('/chat', async (req, res) => {
             };
 
             const sessRes = await pool.query(
-                'insert into ai_sessions (user_id, curriculum_id, state_json, pending_approval, last_message_at) values ($1, $2, $3, $4, now()) returning *',
+                'insert into ai_sessions (user_id, curriculum_id, state_json, pending_approval, last_message_at) values (CAST($1 AS uuid), CAST($2 AS uuid), $3, $4, now()) returning *',
                 [PHASE1_USER_ID, currId, JSON.stringify(initialState), 'none']
             );
             session = sessRes.rows[0];
@@ -153,15 +153,14 @@ router.post('/chat', async (req, res) => {
 
         console.log(`   [AI Route] Graph Finished. Next Pending: ${nextPending}`);
         const displayMsg = getDisplayMessage(outputState, nextPending);
-        console.log(`   [AI Route] Display Message: ${displayMsg ? displayMsg.substring(0, 50) + "..." : "None"}`);
-
+        
         // Update DB
         await pool.query(
-            'update ai_sessions set state_json = $1, pending_approval = $2, state_version = state_version + 1, last_message_at = now() where id = $3',
+            'update ai_sessions set state_json = $1, pending_approval = $2, state_version = state_version + 1, last_message_at = now() where id = CAST($3 AS uuid)',
             [JSON.stringify(outputState), nextPending, session.id]
         );
 
-        // Sync logic (simplified for clarity)
+        // Sync logic
         if (outputState.curriculum_version_id) {
             const updates = [];
             const values = [];
@@ -170,10 +169,9 @@ router.post('/chat', async (req, res) => {
                 updates.push(`requirements = $${idx++}`);
                 values.push(JSON.stringify(outputState.requirements.approved));
                 
-                // Sync title/description to parent curricula table
                 const reqs = outputState.requirements.approved;
                 await pool.query(
-                    'update curricula set title = $1, description = $2 where id = $3',
+                    'update curricula set title = $1, description = $2 where id = CAST($3 AS uuid)',
                     [reqs.summary || 'New Curriculum', reqs.goal || '', outputState.curriculum_id]
                 );
             }
@@ -183,30 +181,27 @@ router.post('/chat', async (req, res) => {
             }
             if (outputState.curriculum?.approved) {
                 updates.push(`content_json = $${idx++}`);
-                // Ensure ui_template_id is present
                 const finalJson = {
                     ...outputState.curriculum.approved,
                     ui_template_id: outputState.curriculum.approved.ui_template_id || 'vibe_coding'
                 };
                 values.push(JSON.stringify(finalJson));
                 
-                // Calculate total lessons
                 const modules = finalJson.modules || [];
                 const lessonCount = modules.reduce((sum, m) => sum + (m.lessons?.length || 0), 0);
 
-                // Link current version to parent and update total lessons
                 await pool.query(
-                    'update curricula set current_version_id = $1, total_lessons = $2 where id = $3',
+                    'update curricula set current_version_id = CAST($1 AS uuid), total_lessons = $2 where id = CAST($3 AS uuid)',
                     [outputState.curriculum_version_id, lessonCount, outputState.curriculum_id]
                 );
             }
             if (updates.length > 0) {
                 values.push(outputState.curriculum_version_id);
-                await pool.query(`update curriculum_versions set ${updates.join(', ')}, updated_at = now() where id = $${idx}`, values);
+                await pool.query(`update curriculum_versions set ${updates.join(', ')}, updated_at = now() where id = CAST($${idx} AS uuid)`, values);
             }
         }
 
-        const responsePayload = {
+        res.json({
             session_id: session.id,
             curriculum_id: outputState.curriculum_id || session.curriculum_id,
             curriculum_version_id: outputState.curriculum_version_id,
@@ -218,10 +213,7 @@ router.post('/chat', async (req, res) => {
                 roadmap: outputState.roadmap || {},
                 curriculum: outputState.curriculum || {}
             }
-        };
-        
-        // console.log("Response Payload:", JSON.stringify(responsePayload, null, 2)); 
-        res.json(responsePayload);
+        });
 
     } catch (error) {
         console.error('Chat Error:', error);
@@ -240,7 +232,7 @@ router.post('/curricula/:id/decision', async (req, res) => {
         await ensurePhase1User(pool);
         
         const result = await pool.query(
-            'select * from ai_sessions where id = $1 and user_id = $2',
+            'select * from ai_sessions where id = CAST($1 AS uuid) and user_id = CAST($2 AS uuid)',
             [session_id, PHASE1_USER_ID]
         );
         if (!result.rowCount) return res.status(404).json({ error: 'Session not found' });
@@ -258,11 +250,10 @@ router.post('/curricula/:id/decision', async (req, res) => {
         const status = (stage === 'curriculum' && decision === 'approved') ? 'closed' : session.status;
 
         await pool.query(
-            'update ai_sessions set state_json = $1, pending_approval = $2, state_version = state_version + 1, status = $3, last_message_at = now() where id = $4',
+            'update ai_sessions set state_json = $1, pending_approval = $2, state_version = state_version + 1, status = $3, last_message_at = now() where id = CAST($4 AS uuid)',
             [JSON.stringify(outputState), nextPending, status, session.id]
         );
 
-        // Sync logic to update curriculum_versions
         if (outputState.curriculum_version_id) {
             const updates = [];
             const values = [];
@@ -271,10 +262,9 @@ router.post('/curricula/:id/decision', async (req, res) => {
                 updates.push(`requirements = $${idx++}`);
                 values.push(JSON.stringify(outputState.requirements.approved));
                 
-                // Sync title/description to parent curricula table
                 const reqs = outputState.requirements.approved;
                 await pool.query(
-                    'update curricula set title = $1, description = $2 where id = $3',
+                    'update curricula set title = $1, description = $2 where id = CAST($3 AS uuid)',
                     [reqs.summary || 'New Curriculum', reqs.goal || '', outputState.curriculum_id]
                 );
             }
@@ -284,38 +274,33 @@ router.post('/curricula/:id/decision', async (req, res) => {
             }
             if (outputState.curriculum?.approved) {
                 updates.push(`content_json = $${idx++}`);
-                // Ensure ui_template_id is present
                 const finalJson = {
                     ...outputState.curriculum.approved,
                     ui_template_id: outputState.curriculum.approved.ui_template_id || 'vibe_coding'
                 };
                 values.push(JSON.stringify(finalJson));
                 
-                // Calculate total lessons
                 const modules = finalJson.modules || [];
                 const lessonCount = modules.reduce((sum, m) => sum + (m.lessons?.length || 0), 0);
 
-                // Link current version to parent and update total lessons
                 await pool.query(
-                    'update curricula set current_version_id = $1, total_lessons = $2 where id = $3',
+                    'update curricula set current_version_id = CAST($1 AS uuid), total_lessons = $2 where id = CAST($3 AS uuid)',
                     [outputState.curriculum_version_id, lessonCount, outputState.curriculum_id]
                 );
             }
             if (updates.length > 0) {
                 values.push(outputState.curriculum_version_id);
-                await pool.query(`update curriculum_versions set ${updates.join(', ')}, updated_at = now() where id = $${idx}`, values);
+                await pool.query(`update curriculum_versions set ${updates.join(', ')}, updated_at = now() where id = CAST($${idx} AS uuid)`, values);
             }
         }
         
         const displayMsg = getDisplayMessage(outputState, nextPending);
-        console.log(`   [AI Decision] Graph Finished. Next Pending: ${nextPending}`);
-        console.log(`   [AI Decision] Display Message: ${displayMsg ? displayMsg.substring(0, 50) + "..." : "None"}`);
 
         res.json({
             ok: true,
             status: status === 'closed' ? 'approved' : 'draft',
             pending_approval: nextPending,
-            message: displayMsg, // Ensure message is passed back in decision response too if needed by UI
+            message: displayMsg,
             state_summary: {
                 requirements: outputState.requirements || {},
                 roadmap: outputState.roadmap || {},

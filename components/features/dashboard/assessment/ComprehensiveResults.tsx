@@ -9,31 +9,32 @@ import { useLanguage } from '../../../../context/LanguageContext';
 interface ComprehensiveResultsProps {
   profile: AssessmentProfile;
   onRestart: () => void;
+  languageOverride?: 'en' | 'jp' | 'fr';
 }
 
 // 特性に応じたリッチなメタデータ定義
-const getTraitBadge = (category: string, score: number, language: 'en' | 'jp') => {
+const getTraitBadge = (category: string, score: number, language: 'en' | 'jp' | 'fr') => {
   const isHigh = score > 50;
   const configs: Record<string, any> = {
     openness: {
-      high: { label: { en: 'Visionary', jp: 'ビジョナリー' }, sub: { en: 'Imagination pioneer', jp: '想像力の開拓者' }, icon: <Eye className="w-full h-full" />, colors: ['#f59e0b', '#ef4444'], colorClass: 'from-amber-500 to-red-500' },
-      low: { label: { en: 'Pragmatist', jp: 'プラグマティスト' }, sub: { en: 'Grounded practitioner', jp: '現実的な実践者' }, icon: <Compass className="w-full h-full" />, colors: ['#94a3b8', '#475569'], colorClass: 'from-slate-400 to-slate-600' }
+      high: { label: { en: 'Visionary', jp: 'ビジョナリー', fr: 'Visionnaire' }, sub: { en: 'Imagination pioneer', jp: '想像力の開拓者', fr: 'Pionnier de l’imagination' }, icon: <Eye className="w-full h-full" />, colors: ['#f59e0b', '#ef4444'], colorClass: 'from-amber-500 to-red-500' },
+      low: { label: { en: 'Pragmatist', jp: 'プラグマティスト', fr: 'Pragmatique' }, sub: { en: 'Grounded practitioner', jp: '現実的な実践者', fr: 'Praticien réaliste' }, icon: <Compass className="w-full h-full" />, colors: ['#94a3b8', '#475569'], colorClass: 'from-slate-400 to-slate-600' }
     },
     conscientiousness: {
-      high: { label: { en: 'Master Finisher', jp: 'パーフェクトマスター' }, sub: { en: 'Completion-driven pro', jp: '完遂のプロフェッショナル' }, icon: <CheckCircle2 className="w-full h-full" />, colors: ['#3b82f6', '#4f46e5'], colorClass: 'from-blue-500 to-indigo-600' },
-      low: { label: { en: 'Free Spirit', jp: 'フリースピリット' }, sub: { en: 'Flexible improviser', jp: '柔軟な即興家' }, icon: <Wind className="w-full h-full" />, colors: ['#38bdf8', '#0ea5e9'], colorClass: 'from-sky-400 to-sky-600' }
+      high: { label: { en: 'Master Finisher', jp: 'パーフェクトマスター', fr: 'Finisseur' }, sub: { en: 'Completion-driven pro', jp: '完遂のプロフェッショナル', fr: 'Pro de l’exécution' }, icon: <CheckCircle2 className="w-full h-full" />, colors: ['#3b82f6', '#4f46e5'], colorClass: 'from-blue-500 to-indigo-600' },
+      low: { label: { en: 'Free Spirit', jp: 'フリースピリット', fr: 'Esprit libre' }, sub: { en: 'Flexible improviser', jp: '柔軟な即興家', fr: 'Improvisateur flexible' }, icon: <Wind className="w-full h-full" />, colors: ['#38bdf8', '#0ea5e9'], colorClass: 'from-sky-400 to-sky-600' }
     },
     extraversion: {
-      high: { label: { en: 'Social Star', jp: 'ソーシャル・スター' }, sub: { en: 'Source of energy', jp: 'エネルギーの源泉' }, icon: <Zap className="w-full h-full" />, colors: ['#fbbf24', '#f59e0b'], colorClass: 'from-yellow-400 to-amber-500' },
-      low: { label: { en: 'Deep Observer', jp: 'ディープ・オブザーバー' }, sub: { en: 'Reflective explorer', jp: '内省的観察者' }, icon: <Moon className="w-full h-full" />, colors: ['#312e81', '#1e1b4b'], colorClass: 'from-indigo-900 to-slate-900' }
+      high: { label: { en: 'Social Star', jp: 'ソーシャル・スター', fr: 'Star sociale' }, sub: { en: 'Source of energy', jp: 'エネルギーの源泉', fr: 'Source d’énergie' }, icon: <Zap className="w-full h-full" />, colors: ['#fbbf24', '#f59e0b'], colorClass: 'from-yellow-400 to-amber-500' },
+      low: { label: { en: 'Deep Observer', jp: 'ディープ・オブザーバー', fr: 'Observateur profond' }, sub: { en: 'Reflective explorer', jp: '内省的観察者', fr: 'Explorateur introspectif' }, icon: <Moon className="w-full h-full" />, colors: ['#312e81', '#1e1b4b'], colorClass: 'from-indigo-900 to-slate-900' }
     },
     agreeableness: {
-      high: { label: { en: 'Empathy Guardian', jp: '共感の守護者' }, sub: { en: 'Harmony maker', jp: '調和をもたらす者' }, icon: <HeartHandshake className="w-full h-full" />, colors: ['#f472b6', '#e11d48'], colorClass: 'from-pink-400 to-rose-600' },
-      low: { label: { en: 'Logical Director', jp: 'ロジカル・ディレクター' }, sub: { en: 'Rational decision-maker', jp: '合理的な意思決定者' }, icon: <Scale className="w-full h-full" />, colors: ['#10b981', '#059669'], colorClass: 'from-emerald-500 to-emerald-700' }
+      high: { label: { en: 'Empathy Guardian', jp: '共感の守護者', fr: 'Gardien empathique' }, sub: { en: 'Harmony maker', jp: '調和をもたらす者', fr: 'Créateur d’harmonie' }, icon: <HeartHandshake className="w-full h-full" />, colors: ['#f472b6', '#e11d48'], colorClass: 'from-pink-400 to-rose-600' },
+      low: { label: { en: 'Logical Director', jp: 'ロジカル・ディレクター', fr: 'Directeur logique' }, sub: { en: 'Rational decision-maker', jp: '合理的な意思決定者', fr: 'Décideur rationnel' }, icon: <Scale className="w-full h-full" />, colors: ['#10b981', '#059669'], colorClass: 'from-emerald-500 to-emerald-700' }
     },
     neuroticism: {
-      high: { label: { en: 'Sensitive Guard', jp: 'センシティブ・ガード' }, sub: { en: 'Notices subtle shifts', jp: '微細な変化を捉える感性' }, icon: <ShieldCheck className="w-full h-full" />, colors: ['#a855f7', '#6366f1'], colorClass: 'from-purple-500 to-indigo-500' },
-      low: { label: { en: 'Iron Mind', jp: 'アイアン・マインド' }, sub: { en: 'Steady resilience', jp: '揺るぎない精神力' }, icon: <Gem className="w-full h-full" />, colors: ['#22d3ee', '#0ea5e9'], colorClass: 'from-cyan-400 to-blue-500' }
+      high: { label: { en: 'Sensitive Guard', jp: 'センシティブ・ガード', fr: 'Gardien sensible' }, sub: { en: 'Notices subtle shifts', jp: '微細な変化を捉える感性', fr: 'Capte les variations subtiles' }, icon: <ShieldCheck className="w-full h-full" />, colors: ['#a855f7', '#6366f1'], colorClass: 'from-purple-500 to-indigo-500' },
+      low: { label: { en: 'Iron Mind', jp: 'アイアン・マインド', fr: 'Esprit d’acier' }, sub: { en: 'Steady resilience', jp: '揺るぎない精神力', fr: 'Résilience stable' }, icon: <Gem className="w-full h-full" />, colors: ['#22d3ee', '#0ea5e9'], colorClass: 'from-cyan-400 to-blue-500' }
     }
   };
 
@@ -41,12 +42,12 @@ const getTraitBadge = (category: string, score: number, language: 'en' | 'jp') =
   const badge = isHigh ? trait.high : trait.low;
   return {
     ...badge,
-    label: badge.label[language],
-    sub: badge.sub[language]
+    label: badge.label[language] || badge.label.en,
+    sub: badge.sub[language] || badge.sub.en
   };
 };
 
-const TraitBadgeCard: React.FC<{ category: string; score: number; language: 'en' | 'jp' }> = ({ category, score, language }) => {
+const TraitBadgeCard: React.FC<{ category: string; score: number; language: 'en' | 'jp' | 'fr' }> = ({ category, score, language }) => {
   const badge = getTraitBadge(category, score, language);
 
   return (
@@ -137,8 +138,9 @@ const SectionHeader: React.FC<{ title: string; subtitle: string; icon: React.Rea
   </div>
 );
 
-const ComprehensiveResults: React.FC<ComprehensiveResultsProps> = ({ profile, onRestart }) => {
+const ComprehensiveResults: React.FC<ComprehensiveResultsProps> = ({ profile, onRestart, languageOverride }) => {
   const { language } = useLanguage();
+  const resolvedLang = languageOverride || (language as 'en' | 'jp' | 'fr');
   const advice = profile.aiAdvice;
   const t = {
     en: {
@@ -210,9 +212,44 @@ const ComprehensiveResults: React.FC<ComprehensiveResultsProps> = ({ profile, on
       defaultSync: 'High Synergy Type',
       defaultWarning: 'Risk/Warning',
       dimensionLabel: 'Dimension Log'
+    },
+    fr: {
+      profileProtocol: 'Profile Protocol V2.4',
+      coreArchetypeTitle: 'Archétype central',
+      coreArchetypeSubtitle: 'Structure cognitive',
+      relationalTitle: 'Synchronisation relationnelle',
+      relationalSubtitle: 'Logique interpersonnelle',
+      relationshipMode: 'Mode relationnel',
+      signatureStyle: 'Style signature',
+      optimalPartner: 'Partenaire optimal',
+      relationalGuidance: 'Conseils relationnels IA',
+      systemIdentityTitle: 'Identité système',
+      systemIdentitySubtitle: 'Capacité professionnelle',
+      professionalRole: 'Rôle professionnel',
+      latentEssence: 'Essence latente',
+      insightsTitle: 'Lab d’insights',
+      insightsSubtitle: 'Diagnostics IA approfondis',
+      coreCapabilities: 'Capacités clés',
+      strategicGrowth: 'Croissance stratégique',
+      baselineTitle: 'Calibration de base',
+      baselineSubtitle: 'Journal détaillé Big Five',
+      saveReport: 'Enregistrer le rapport',
+      restart: 'Refaire le diagnostic',
+      analysisPending: 'Analyse en cours...',
+      calculating: 'Calcul de la synergie...',
+      scanningRisks: 'Analyse des risques...',
+      generating: 'Génération des insights...',
+      discovering: 'Découverte...',
+      unlocking: 'Révélation du potentiel...',
+      processingGrowth: 'Traitement des axes de progression...',
+      updateStory: 'Mettez à jour votre histoire ici.',
+      defaultRole: 'Rôle professionnel',
+      defaultSync: 'Synergie élevée',
+      defaultWarning: 'Risque / Alerte',
+      dimensionLabel: 'Dimension Log'
     }
   } as const;
-  const labels = t[language];
+  const labels = t[resolvedLang === 'fr' ? 'fr' : resolvedLang];
 
   // Helper to render long "Title: Desc" strings beautifully
   const renderDescriptiveItem = (text: string | undefined, defaultTitle: string) => {
@@ -229,6 +266,7 @@ const ComprehensiveResults: React.FC<ComprehensiveResultsProps> = ({ profile, on
   const warningInfo = renderDescriptiveItem(advice?.businessPartnership?.warning, labels.defaultWarning);
 
   const typeConfigs: Record<string, { icon: React.ReactNode; bg: string; description: { en: string; jp: string }; display: { en: string; jp: string } }> = {
+    'character/openness': { icon: <Eye className="w-full h-full" />, bg: 'from-amber-400 to-orange-500', display: { en: 'character/openness', jp: 'character/openness' }, description: { en: 'High openness: curious, imaginative, and experimental.', jp: '開放性が高く、好奇心と想像力で新しい学びに向かうタイプ。' } },
     '冒険家': { icon: <Wind className="w-full h-full" />, bg: 'from-orange-400 to-red-500', display: { en: 'Explorer', jp: '冒険家' }, description: { en: 'Opens new paths with bold ideas and action.', jp: '自由な発想と行動力で、未踏の領域を切り拓く開探者。' } },
     '戦略家': { icon: <Swords className="w-full h-full" />, bg: 'from-blue-500 to-indigo-600', display: { en: 'Strategist', jp: '戦略家' }, description: { en: 'Solves complex problems with logic and long-term vision.', jp: '論理的な分析と長期的な視点で、複雑な課題を解き明かす軍師。' } },
     'サポーター': { icon: <HeartHandshake className="w-full h-full" />, bg: 'from-pink-400 to-rose-500', display: { en: 'Supporter', jp: 'サポーター' }, description: { en: 'Strengthens teams through empathy and harmony.', jp: '高い共感性と調和の精神で、チームの絆を強固にする調整役。' } },
@@ -238,8 +276,8 @@ const ComprehensiveResults: React.FC<ComprehensiveResultsProps> = ({ profile, on
   };
 
   const config = typeConfigs[profile.personalityType] || { icon: <Zap className="w-full h-full" />, bg: 'from-indigo-500 to-purple-600', display: { en: 'Unique', jp: 'ユニーク' }, description: { en: 'A unique balance of traits.', jp: '独自のバランスを持つユニークな特性。' } };
-  const displayName = config.display[language] || profile.personalityType;
-  const description = config.description[language] || config.description.jp;
+  const displayName = config.display[resolvedLang] || config.display.jp;
+  const description = config.description[resolvedLang] || config.description.jp;
 
   return (
     <div className="max-w-6xl xl:max-w-7xl mx-auto space-y-16 sm:space-y-24 lg:space-y-32 pb-24 sm:pb-32 px-4 sm:px-6 lg:px-8">
@@ -265,11 +303,11 @@ const ComprehensiveResults: React.FC<ComprehensiveResultsProps> = ({ profile, on
       <section>
         <SectionHeader title={labels.coreArchetypeTitle} subtitle={labels.coreArchetypeSubtitle} icon={<BarChart3 className="w-full h-full" />} />
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
-          <TraitBadgeCard category="openness" score={profile.scores.openness} language={language} />
-          <TraitBadgeCard category="conscientiousness" score={profile.scores.conscientiousness} language={language} />
-          <TraitBadgeCard category="extraversion" score={profile.scores.extraversion} language={language} />
-          <TraitBadgeCard category="agreeableness" score={profile.scores.agreeableness} language={language} />
-          <TraitBadgeCard category="neuroticism" score={profile.scores.neuroticism} language={language} />
+          <TraitBadgeCard category="openness" score={profile.scores.openness} language={resolvedLang} />
+          <TraitBadgeCard category="conscientiousness" score={profile.scores.conscientiousness} language={resolvedLang} />
+          <TraitBadgeCard category="extraversion" score={profile.scores.extraversion} language={resolvedLang} />
+          <TraitBadgeCard category="agreeableness" score={profile.scores.agreeableness} language={resolvedLang} />
+          <TraitBadgeCard category="neuroticism" score={profile.scores.neuroticism} language={resolvedLang} />
         </div>
       </section>
 
@@ -396,7 +434,7 @@ const ComprehensiveResults: React.FC<ComprehensiveResultsProps> = ({ profile, on
       <section className="text-center pt-16 sm:pt-20">
         <div className="max-w-3xl mx-auto space-y-10 sm:space-y-16">
           <h2 className="text-3xl sm:text-4xl md:text-6xl font-black text-slate-900 leading-tight tracking-tighter">
-            {language === 'jp' ? (
+            {resolvedLang === 'jp' ? (
               <>
                 あなたの物語を、<br />
                 ここからアップデートする。

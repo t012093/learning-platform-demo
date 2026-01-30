@@ -7,7 +7,7 @@ interface LandingViewProps {
 }
 
 const LandingView: React.FC<LandingViewProps> = ({ onLoginClick }) => {
-    const { language, setLanguage } = useLanguage();
+    const { language, selectedLanguage, setLanguage } = useLanguage();
     const copy = {
         en: {
             signIn: 'Sign In',
@@ -67,18 +67,26 @@ const LandingView: React.FC<LandingViewProps> = ({ onLoginClick }) => {
                             <button
                                 type="button"
                                 onClick={() => setLanguage('en')}
-                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-all ${language === 'en' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
-                                aria-pressed={language === 'en'}
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-all ${selectedLanguage === 'en' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
+                                aria-pressed={selectedLanguage === 'en'}
                             >
                                 EN
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setLanguage('jp')}
-                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-all ${language === 'jp' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
-                                aria-pressed={language === 'jp'}
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-all ${selectedLanguage === 'jp' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
+                                aria-pressed={selectedLanguage === 'jp'}
                             >
                                 JP
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setLanguage('fr')}
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-all ${selectedLanguage === 'fr' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
+                                aria-pressed={selectedLanguage === 'fr'}
+                            >
+                                FR
                             </button>
                         </div>
                         <button

@@ -22,9 +22,9 @@ const markdownComponents = {
 };
 
 const SYSTEM_PROMPTS = {
-    en: `You are Lumina Concierge, a helpful AI tutor for Unity, Code, and Design.
+    en: `You are Rise Path Concierge, a helpful AI tutor for Unity, Code, and Design.
     Keep answers concise and encouraging. Use analogies for beginners.`,
-    jp: `あなたはLumina Conciergeです。Unity、コード、デザインの学習をサポートするAIチューターです。
+    jp: `あなたはRise Path Conciergeです。Unity、コード、デザインの学習をサポートするAIチューターです。
     回答は簡潔に、励ますようなトーンで。初心者には例え話を多用してください。`
 } as const;
 
@@ -40,13 +40,13 @@ export const FloatingChatbot: React.FC = () => {
 
     const copy = {
         en: {
-            title: 'Lumina AI',
+            title: 'Rise Path AI',
             placeholder: 'Ask about Unity or Code...',
             welcome: "Hi! I'm here to help. Click a term in the text or ask me anything!",
             errorMessage: "Connection error. Please try again."
         },
         jp: {
-            title: 'Lumina AI',
+            title: 'Rise Path AI',
             placeholder: 'Unityやコードについて質問...',
             welcome: "こんにちは！学習のサポートをします。わからない用語があれば聞いてくださいね。",
             errorMessage: "接続エラーが発生しました。"
@@ -82,8 +82,8 @@ export const FloatingChatbot: React.FC = () => {
             
             handleSend(finalMessage);
         };
-        window.addEventListener('open-lumina-chat', handleExternalTrigger);
-        return () => window.removeEventListener('open-lumina-chat', handleExternalTrigger);
+        window.addEventListener('open-rise-path-chat', handleExternalTrigger);
+        return () => window.removeEventListener('open-rise-path-chat', handleExternalTrigger);
     }, [language]); // Re-bind if language changes
 
     const handleSend = async (text: string) => {

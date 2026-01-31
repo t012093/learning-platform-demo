@@ -116,7 +116,7 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
       learningHub: 'Learning Hub',
       aiDiagnosis: 'AI Learning Diagnosis',
       courseGenerator: 'AI Course Generator',
-      luminaLab: 'Design Samples',
+      risePathLab: 'Design Samples',
       checklist: 'Checklist Page',
       checklistGenerator: 'Checklist Generator',
       concept: 'Concept Page',
@@ -142,7 +142,7 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
       learningHub: '学習コンテンツ',
       aiDiagnosis: 'AI学習診断',
       courseGenerator: 'AIカリキュラム生成',
-      luminaLab: 'デザインサンプル',
+      risePathLab: 'デザインサンプル',
       checklist: 'チェックリストページ',
       checklistGenerator: 'チェックリスト生成',
       concept: 'コンセプトページ',
@@ -175,7 +175,7 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
     { view: ViewState.COURSE_GENERATOR, label: t.courseGenerator, icon: MapIcon },
     {
       id: 'lab',
-      label: t.luminaLab,
+      label: t.risePathLab,
       icon: Sparkles,
       children: [
         { view: ViewState.DEMO_CHECKLIST, label: t.checklist, icon: CheckCircle2 },
@@ -251,7 +251,7 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
       <div className={`md:hidden fixed w-full z-50 border-b px-4 py-3 flex justify-between items-center ${styles.mobileHeader}`}>
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">L</div>
-          <span className={`font-bold tracking-tight ${theme === 'default' ? 'text-slate-700' : 'text-white'} `}>Lumina</span>
+          <span className={`font-bold tracking-tight ${theme === 'default' ? 'text-slate-700' : 'text-white'} `}>Rise Path</span>
         </div>
         <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-slate-600">
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -282,7 +282,7 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, children }) =>
         <div className={`p-4 hidden md:flex items-center ${isCollapsed ? 'justify-center' : 'justify-start'} gap-3 h-16`}>
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shadow-md text-base shrink-0 transition-all">L</div>
           <div className={`flex flex-col overflow-hidden transition-all duration-300 ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
-            <span className={`text-lg font-bold tracking-tight whitespace-nowrap ${theme === 'default' ? 'text-slate-700' : 'text-white'}`}>Lumina</span>
+            <span className={`text-lg font-bold tracking-tight whitespace-nowrap ${theme === 'default' ? 'text-slate-700' : 'text-white'}`}>Rise Path</span>
           </div>
         </div>
 

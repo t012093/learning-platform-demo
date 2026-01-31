@@ -26,7 +26,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onLoginClick }) => {
                 artTitle: 'Art & History',
                 artDescription: 'Explore the intersection of traditional art history and modern generative AI tools.'
             },
-            footer: '© 2024 Lumina Platform. All rights reserved.'
+            footer: '© 2024 Rise Path Platform. All rights reserved.'
         },
         jp: {
             signIn: 'サインイン',
@@ -45,7 +45,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onLoginClick }) => {
                 artTitle: 'アートと歴史',
                 artDescription: '伝統的な美術史と最新の生成AIツールの交差点を探ります。'
             },
-            footer: '© 2024 Lumina Platform. All rights reserved.'
+            footer: '© 2024 Rise Path Platform. All rights reserved.'
         }
     } as const;
     const t = copy[language];
@@ -60,7 +60,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onLoginClick }) => {
                         <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-2 rounded-lg">
                             <Sparkles className="w-5 h-5 text-white" />
                         </div>
-                        <span className="text-xl font-bold tracking-tight">Lumina</span>
+                        <span className="text-xl font-bold tracking-tight">Rise Path</span>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-1 rounded-full bg-white/10 border border-white/10 p-1">

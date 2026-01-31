@@ -40,7 +40,7 @@ interface SlideDeckBlock {
 // ★ Gemini 2.5 TTS の Multi-speaker 機能を活用
 interface DialogueBlock {
   type: 'dialogue';
-  characters: ['Lumina', 'User' | 'Guest'];
+  characters: ['Rise Path', 'User' | 'Guest'];
   script: {
     speaker: string;
     text: string;
@@ -126,9 +126,9 @@ const LessonView = ({ chapter }) => {
 **ユーザー**: 誠実性が低く（飽きっぽい）、開放性が高い（好奇心旺盛）タイプ。
 
 1. **Dialogue (Ice Break)**
-   - Lumina: 「さあ、今日から3Dの世界へ飛び込むわよ！準備はいい？」
+   - Rise Path: 「さあ、今日から3Dの世界へ飛び込むわよ！準備はいい？」
    - User役: 「難しそうだけど...」
-   - Lumina: 「大丈夫、最初は粘土遊びと同じ。まずは画面を触ってみましょ！」
+   - Rise Path: 「大丈夫、最初は粘土遊びと同じ。まずは画面を触ってみましょ！」
    - *（音声再生でラジオ感覚で聞かせる）*
 
 2. **Checklist (Setup - Quick Win)**

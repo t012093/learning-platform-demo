@@ -1,7 +1,7 @@
 # インタラクティブ用語辞典 & AIチューター連携 アーキテクチャ
 
 ## 1. 概要
-学習コンテンツ（ドキュメント）内の専門用語をユーザーがクリックした際、簡易的な定義を表示（Tooltip/Popover）し、さらに深い理解が必要な場合はワンクリックで右下のAIチャットボット（Lumina）を起動して対話学習を開始できる仕組みを構築する。
+学習コンテンツ（ドキュメント）内の専門用語をユーザーがクリックした際、簡易的な定義を表示（Tooltip/Popover）し、さらに深い理解が必要な場合はワンクリックで右下のAIチャットボット（Rise Path）を起動して対話学習を開始できる仕組みを構築する。
 
 ## 2. システム構成図 (Mermaid)
 
@@ -16,7 +16,7 @@ graph TD
     Popover --> |Show Definition| User
     
     Popover --> |Click 'Ask AI'| ChatBridge[Chat Context Bridge]
-    ChatBridge --> |Open & Send Context| Chatbot[Lumina Chatbot]
+    ChatBridge --> |Open & Send Context| Chatbot[Rise Path Chatbot]
     
     Chatbot --> |Interactive Dialogue| User
 ```
@@ -71,7 +71,7 @@ export const TERMS: GlossaryTerm[] = [
 *   **内容**:
     *   用語名
     *   1行解説（Definition）
-    *   **アクションボタン**: 「AI先生に詳しく聞く (Ask Lumina)」
+    *   **アクションボタン**: 「AI先生に詳しく聞く (Ask Rise Path)」
 
 ### ステップ3: AIとの対話 (Deep Dive)
 *   「AI先生に詳しく聞く」をクリックすると、画面右下のチャットボットウィンドウが自動で開く（既に開いている場合はフォーカス）。
@@ -94,7 +94,7 @@ export const TERMS: GlossaryTerm[] = [
 2.  クリック時の表示制御。
 
 ### Phase 3: チャットボット連携
-1.  `LuminaConcierge` コンテキストに `openAndAsk(termId: string)` メソッドを追加。
+1.  `Rise PathConcierge` コンテキストに `openAndAsk(termId: string)` メソッドを追加。
 2.  Popoverのボタンと連携。
 3.  チャットボット側のプロンプトエンジニアリング（解説モードの実装）。
 

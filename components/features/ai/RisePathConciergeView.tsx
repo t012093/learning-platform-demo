@@ -7,13 +7,13 @@ import { createChatSession, sendMessageStream } from '../../../services/geminiSe
 import { Chat } from "@google/genai";
 import { useLanguage } from '../../../context/LanguageContext';
 
-interface LuminaConciergeViewProps {
+interface RisePathConciergeViewProps {
     onNavigate: (view: ViewState) => void;
 }
 
 
 const SYSTEM_PROMPTS = {
-    en: `You are Lumina Concierge, the central AI guide for this learning platform.
+    en: `You are Rise Path Concierge, the central AI guide for this learning platform.
 
 **Your primary goal**: Run the "Big Five + personal learning diagnosis", match the user with the best AI partner (Spark, Focus, Vibe, Echo, or Luna), and propose a learning path.
 
@@ -42,7 +42,7 @@ const SYSTEM_PROMPTS = {
 - Don't overwhelm the user.
 - Be warm, professional, and insightful.
 - Use Markdown to emphasize important terms.`,
-    jp: `あなたはLumina Conciergeです。この学習プラットフォームの中心となるAIガイドです。
+    jp: `あなたはRise Path Conciergeです。この学習プラットフォームの中心となるAIガイドです。
 
 ** あなたの主な目標 **: 「ビッグファイブ＋個人的学習診断」を実施し、ユーザーに最適なAIパートナー（Spark、Focus、Vibe、Echo、Lunaのいずれか）をマッチングし、学習パスを提案することです。
 
@@ -147,7 +147,7 @@ const DIAGNOSIS_FLOW_BY_LANG = {
     ]
 } as const;
 
-const LuminaConciergeView: React.FC<LuminaConciergeViewProps> = ({ onNavigate }) => {
+const RisePathConciergeView: React.FC<RisePathConciergeViewProps> = ({ onNavigate }) => {
     const { language } = useLanguage();
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -157,7 +157,7 @@ const LuminaConciergeView: React.FC<LuminaConciergeViewProps> = ({ onNavigate })
         en: {
             welcomeChat: 'Hi! I’m your AI tutor. Ask me anything about programming, English, or how to use this platform.',
             suggestions: ['How do I use this app?', 'Tell me about React Hooks.'],
-            emptyTitle: 'Lumina Concierge',
+            emptyTitle: 'Rise Path Concierge',
             emptyBodyLine1: 'Your personal guide to finding the best learning path.',
             emptyBodyLine2: 'How would you like to begin today?',
             diagnosisTitle: 'AI Learning Diagnosis',
@@ -178,7 +178,7 @@ const LuminaConciergeView: React.FC<LuminaConciergeViewProps> = ({ onNavigate })
         jp: {
             welcomeChat: 'こんにちは！AIチューターです。プログラミングや英語、このプラットフォームの使い方について何でも聞いてください。',
             suggestions: ['このアプリの使い方は？', 'React Hooksについて教えて'],
-            emptyTitle: 'Lumina Concierge',
+            emptyTitle: 'Rise Path Concierge',
             emptyBodyLine1: 'あなたに最適な学習パスを見つけるパーソナルガイド。',
             emptyBodyLine2: '今日はどのように学習を始めますか？',
             diagnosisTitle: 'AI学習診断',
@@ -213,8 +213,8 @@ const LuminaConciergeView: React.FC<LuminaConciergeViewProps> = ({ onNavigate })
             handleSend(finalMessage);
         };
 
-        window.addEventListener('open-lumina-chat', handleExternalTrigger);
-        return () => window.removeEventListener('open-lumina-chat', handleExternalTrigger);
+        window.addEventListener('open-rise-path-chat', handleExternalTrigger);
+        return () => window.removeEventListener('open-rise-path-chat', handleExternalTrigger);
     }, [chatSession.current, language]); // Re-bind if session or language changes
 
     useEffect(() => {
@@ -467,7 +467,7 @@ const LuminaConciergeView: React.FC<LuminaConciergeViewProps> = ({ onNavigate })
                             <Brain size={20} />
                         </div>
                         <div>
-                            <h2 className="font-bold text-slate-800">Lumina Concierge</h2>
+                            <h2 className="font-bold text-slate-800">Rise Path Concierge</h2>
                             <p className="text-xs text-slate-500">{t.headerSubtitle}</p>
                         </div>
                     </div>
@@ -477,4 +477,4 @@ const LuminaConciergeView: React.FC<LuminaConciergeViewProps> = ({ onNavigate })
     );
 };
 
-export default LuminaConciergeView;
+export default RisePathConciergeView;

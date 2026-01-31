@@ -52,9 +52,9 @@ const GeneratedLessonView: React.FC<GeneratedLessonViewProps> = ({ course, onBac
             keyConceptFallback: 'Core concept',
             actionStep: 'Action Step',
             actionFallback: 'Open the editor and try what you learned.',
-            tutorTitle: 'Lumina AI Tutor',
+            tutorTitle: 'Rise Path AI Tutor',
             contextLabel: 'Context',
-            notesLabel: "Lumina's Notes:",
+            notesLabel: "Rise Path's Notes:",
             pointsLabel: 'Key points:',
             askPlaceholder: 'Ask a question...'
         },
@@ -86,9 +86,9 @@ const GeneratedLessonView: React.FC<GeneratedLessonViewProps> = ({ course, onBac
             keyConceptFallback: '基本概念',
             actionStep: 'アクション・ステップ',
             actionFallback: 'エディタを開いて、学んだことを試してみましょう。',
-            tutorTitle: 'Lumina AI チューター',
+            tutorTitle: 'Rise Path AI チューター',
             contextLabel: 'コンテキスト',
-            notesLabel: 'Luminaのメモ:',
+            notesLabel: 'Rise Pathのメモ:',
             pointsLabel: 'ここでのポイント:',
             askPlaceholder: '質問する...'
         }

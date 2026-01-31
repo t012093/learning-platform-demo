@@ -142,7 +142,7 @@ app.get('/api/learning-portals', async (req, res) => {
 jobWorker.start();
 
 app.listen(PORT, () => {
-    console.log(`Lumina Server running on http://localhost:${PORT}`);
+    console.log(`Rise Path Server running on http://localhost:${PORT}`);
     console.log(`- V2 AI Routes: /api/v2/ai`);
     console.log(`- V2 Content Routes: /api/v2`);
 });

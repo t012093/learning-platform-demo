@@ -12,7 +12,7 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-const LANGUAGE_STORAGE_KEY = 'lumina:language';
+const LANGUAGE_STORAGE_KEY = 'risepath:language';
 
 const getInitialLanguage = (): SelectedLanguage => {
   if (typeof window === 'undefined') return 'en';

@@ -118,7 +118,7 @@ const lessonSchema = {
 
 ```javascript
 systemInstruction: `
-You are an expert educational content developer for 'Lumina Learning Platform'.
+You are an expert educational content developer for 'Rise Path Learning Platform'.
 Generate RICH, EDUCATIONAL content in DocChapter format.
 
 ## OUTPUT STRUCTURE

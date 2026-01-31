@@ -102,7 +102,7 @@ const ArtMuseumView: React.FC<ArtMuseumViewProps> = ({ onNavigate, language, set
                <div className="w-10 h-10 border border-stone-600 rounded-full flex items-center justify-center">
                   <span className="font-serif text-xl italic">L</span>
                </div>
-               <span className="font-serif text-xl tracking-wide">Lumina <span className="italic text-stone-500">Atelier</span></span>
+               <span className="font-serif text-xl tracking-wide">Rise Path <span className="italic text-stone-500">Atelier</span></span>
             </div>
             <div className="flex items-center gap-6 text-sm text-stone-400 font-medium tracking-wide">
                <div className="hidden md:flex gap-6">
@@ -271,7 +271,7 @@ const ArtMuseumView: React.FC<ArtMuseumViewProps> = ({ onNavigate, language, set
          {/* Footer */}
          <footer className="py-12 text-center text-stone-600 text-sm">
             <div className="w-8 h-8 border border-stone-800 rounded-full flex items-center justify-center mx-auto mb-4 text-stone-500 font-serif italic">L</div>
-            <p>&copy; 2024 Lumina Atelier. {t.footer}</p>
+            <p>&copy; 2024 Rise Path Atelier. {t.footer}</p>
          </footer>
       </div>
    );

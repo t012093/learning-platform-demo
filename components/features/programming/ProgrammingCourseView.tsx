@@ -147,7 +147,7 @@ const ProgrammingCourseView: React.FC<ProgrammingCourseViewProps> = ({ onBack })
             <ArrowLeft size={20} />
           </button>
           <div className="flex items-center gap-2">
-            <span className="text-slate-500 font-mono text-sm">lumina/courses/</span>
+            <span className="text-slate-500 font-mono text-sm">rise-path/courses/</span>
             <span className="text-cyan-400 font-bold text-sm">react-mastery</span>
             <span className="px-2 py-0.5 rounded-full bg-slate-800 text-xs text-slate-400 border border-slate-700">{t.publicLabel}</span>
           </div>

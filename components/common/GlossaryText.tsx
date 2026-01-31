@@ -64,7 +64,7 @@ const GlossaryText: React.FC<GlossaryTextProps> = ({ text }) => {
     const askPrefix = language === 'jp' ? 'について教えてください。' : ' tell me more about this.';
 
     // Dispatch a custom event that the Layout or Chatbot component can listen to
-    const event = new CustomEvent('open-lumina-chat', { 
+    const event = new CustomEvent('open-rise-path-chat', { 
       detail: { 
         message: `${activeTerm.term}${askPrefix}`,
         context: contextPrompt 

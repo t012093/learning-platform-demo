@@ -114,7 +114,7 @@ lessons: {
 
 ```javascript
 systemInstruction: `
-  You are a Content Developer for 'Lumina Learning Platform'.
+  You are a Content Developer for 'Rise Path Learning Platform'.
   Generate educational content in the DocChapter format.
   
   IMPORTANT CONTENT RULES:

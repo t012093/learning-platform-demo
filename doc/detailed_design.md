@@ -1,4 +1,4 @@
-# Detailed Design - Lumina Learning Platform
+# Detailed Design - Rise Path Learning Platform
 
 ## 1. System Architecture
 

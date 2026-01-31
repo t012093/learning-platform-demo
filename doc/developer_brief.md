@@ -1,7 +1,7 @@
-# Lumina Developer Brief
+# Rise Path Developer Brief
 
 ## Project snapshot
-Lumina is an immersive learning platform that blends curated curricula with AI generated, personality aware courses. This repo contains a React/Vite SPA and a Node/Express API that orchestrates multi agent Gemini workflows with structured JSON output and optional RAG grounding.
+Rise Path is an immersive learning platform that blends curated curricula with AI generated, personality aware courses. This repo contains a React/Vite SPA and a Node/Express API that orchestrates multi agent Gemini workflows with structured JSON output and optional RAG grounding.
 
 ## Architecture at a glance
 - Frontend: React 19 + Vite + TypeScript
@@ -66,7 +66,7 @@ Lumina is an immersive learning platform that blends curated curricula with AI g
 Create `.env.local`:
 ```
 GEMINI_API_KEY=your_key
-DATABASE_URL_PHASE1=postgres://user:pass@localhost:5432/lumina_db
+DATABASE_URL_PHASE1=postgres://user:pass@localhost:5432/rise-path_db
 PHASE1_USER_ID=00000000-0000-0000-0000-000000000001
 ```
 

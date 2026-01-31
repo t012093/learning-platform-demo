@@ -1,4 +1,4 @@
-# Lumina Investor Brief
+# Rise Path Investor Brief
 
 ## One-liner
 パーソナライズ学習と没入体験（Vibe）を融合した、次世代AI学習プラットフォーム。

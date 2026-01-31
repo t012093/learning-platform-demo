@@ -98,7 +98,7 @@ const ProfilePassport: React.FC<ProfilePassportProps> = ({ onNavigate }) => {
         xp: 4580,
         streak: 5,
         joined: "2024.11.01",
-        email: "alex.smith@lumina.edu",
+        email: "alex.smith@rise-path.edu",
         avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=400"
     };
 
@@ -151,7 +151,7 @@ const ProfilePassport: React.FC<ProfilePassportProps> = ({ onNavigate }) => {
                                     <div className="flex items-center gap-3">
                                         <div className="w-9 h-9 bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-slate-900/20">L</div>
                                         <div>
-                                            <span className="block font-bold tracking-tight text-slate-800 text-sm leading-none">Lumina Campus</span>
+                                            <span className="block font-bold tracking-tight text-slate-800 text-sm leading-none">Rise Path Campus</span>
                                             <span className="text-[10px] text-slate-500 font-mono">ID CARD</span>
                                         </div>
                                     </div>
@@ -302,7 +302,7 @@ const ProfilePassport: React.FC<ProfilePassportProps> = ({ onNavigate }) => {
             {/* Helper Text */}
             <div className="mt-8 text-center opacity-60">
                 <p className="text-xs text-slate-400 max-w-xs mx-auto">
-                    This digital ID grants you access to all Lumina facilities including the Vibe Coding cockpit and the Art Atelier.
+                    This digital ID grants you access to all Rise Path facilities including the Vibe Coding cockpit and the Art Atelier.
                 </p>
             </div>
 

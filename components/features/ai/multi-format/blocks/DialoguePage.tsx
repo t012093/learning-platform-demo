@@ -12,11 +12,11 @@ const DialoguePage: React.FC<DialoguePageProps> = ({ block }) => {
   const copy = {
     en: {
       title: 'Interactive Scoping',
-      subtitle: 'Q&A Session with Lumina'
+      subtitle: 'Q&A Session with Rise Path'
     },
     jp: {
       title: 'インタラクティブ・スコーピング',
-      subtitle: 'LuminaとのQ&Aセッション'
+      subtitle: 'Rise PathとのQ&Aセッション'
     }
   } as const;
   const t = copy[language];

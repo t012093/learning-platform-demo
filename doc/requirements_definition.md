@@ -1,7 +1,7 @@
-# Requirements Definition - Lumina Learning Platform
+# Requirements Definition - Rise Path Learning Platform
 
 ## 1. Project Overview
-**Project Name:** Lumina Learning Platform
+**Project Name:** Rise Path Learning Platform
 **Goal:** To provide a comprehensive, multi-disciplinary learning experience combining high-quality "Gold Standard" static curriculums with a dynamic, AI-powered "Pro" layer for personalized exploration. The platform democratizes access to education in Art, Technology, and Languages using cutting-edge Generative AI.
 
 ## 2. Target Audience

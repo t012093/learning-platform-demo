@@ -1,4 +1,4 @@
-# Architecture Diagram - Lumina Learning Platform
+# Architecture Diagram - Rise Path Learning Platform
 
 ## Personalized AI Learning Architecture
 

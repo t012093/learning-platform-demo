@@ -3,7 +3,7 @@ import { LessonRubric, AnalysisResult, GeneratedCourse, GeneratedChapter, Big5Pr
 import { retrieveBlenderContext } from './blenderRagService';
 import { retrieveBlenderImages } from './blenderImageRagService';
 
-const GEMINI_STORAGE_KEY = 'lumina.gemini_api_key';
+const GEMINI_STORAGE_KEY = 'rise-path.gemini_api_key';
 
 export type GeminiApiKeySource = 'env' | 'local' | 'none';
 
@@ -144,7 +144,7 @@ const truncateText = (text: string, maxLen: number = 200): string => {
 // --- Chat & Analysis ---
 
 export const createChatSession = (systemInstruction?: string, modelType: 'standard' | 'pro' = 'standard'): Chat => {
-  const defaultInstruction = `You are Lumina, a professional AI tutor. Your goal is to provide insightful guidance.`;
+  const defaultInstruction = `You are Rise Path, a professional AI tutor. Your goal is to provide insightful guidance.`;
   const modelName = modelType === 'pro' ? 'gemini-3.0-pro' : 'gemini-2.5-flash';
   const ai = getAiClient();
   return ai.chats.create({
@@ -160,7 +160,7 @@ export const createChatSession = (systemInstruction?: string, modelType: 'standa
  */
 export const createScopingChat = (profile: Big5Profile | null): Chat => {
   const instruction = `
-    あなたは「Lumina 学習コンシェルジュ」です。
+    あなたは「Rise Path 学習コンシェルジュ」です。
     ユーザーが何を学びたいかをヒアリングし、最高のパーソナライズカリキュラムを作るための準備をします。
 
     【ヒアリングの目的】
@@ -333,7 +333,7 @@ const generatePedagogicalStrategy = (
     intent: string = ''
 ): PedagogicalStrategy => {
   let strategy = "教育スタイルガイド:\n";
-  let persona = "AI Tutor Lumina.";
+  let persona = "AI Tutor Rise Path.";
   let reasoning = "Optimized for user profile.";
   let template: PedagogicalStrategy['template'] = 'focus_slide';
 
@@ -497,7 +497,7 @@ const generateChapterDetails = async (idx: number, ch: GeneratedChapter, topic: 
         }
 
         if (type === 'dialogue') {
-            const dialogueLines = lines.filter(l => l.startsWith('AI:') || l.startsWith('User:') || l.startsWith('Lumina:')).map(l => {
+            const dialogueLines = lines.filter(l => l.startsWith('AI:') || l.startsWith('User:') || l.startsWith('Rise Path:')).map(l => {
                 const speaker = l.startsWith('User:') ? 'User' : 'AI';
                 const text = l.substring(l.indexOf(':') + 1).trim();
                 return { speaker, text } as any; 
@@ -625,7 +625,7 @@ export const generateCourse = async (
     createdAt: new Date(),
     modelUsed: modelType,
     targetProfile: targetProfile,
-    teacherPersona: { name: "Lumina", role: "AI Tutor", tone: strategy.persona, greeting: "こんにちは！" },
+    teacherPersona: { name: "Rise Path", role: "AI Tutor", tone: strategy.persona, greeting: "こんにちは！" },
     personalizationReasoning: strategy.reasoning,
     preferredTemplate: strategy.template
   };

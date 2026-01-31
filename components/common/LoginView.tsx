@@ -26,7 +26,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             quickLoginFailed: 'Quick Login failed. Please try again.',
             forgotPassword: 'Forgot Password?',
             createAccount: 'Create Account',
-            footer: '© 2024 Lumina Platform. Powered by Adachi AI.'
+            footer: '© 2024 Rise Path Platform. Powered by Adachi AI.'
         },
         jp: {
             subtitle: '学習の旅にサインイン',
@@ -39,7 +39,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             quickLoginFailed: 'クイックログインに失敗しました。もう一度お試しください。',
             forgotPassword: 'パスワードを忘れた？',
             createAccount: 'アカウント作成',
-            footer: '© 2024 Lumina Platform. Powered by Adachi AI.'
+            footer: '© 2024 Rise Path Platform. Powered by Adachi AI.'
         }
     } as const;
     const t = copy[language];
@@ -106,7 +106,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30 mb-6">
                         <Sparkles className="text-white w-8 h-8" />
                     </div>
-                    <h1 className="text-4xl font-bold text-white tracking-tight mb-2">Lumina</h1>
+                    <h1 className="text-4xl font-bold text-white tracking-tight mb-2">Rise Path</h1>
                     <p className="text-slate-400 text-sm">{t.subtitle}</p>
                 </div>
 
@@ -176,14 +176,14 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                         type="button"
                         disabled={isLoading}
                         onClick={async () => {
-                            setEmail("demo@lumina.ai");
+                            setEmail("demo@rise-path.ai");
                             setPassword("password");
                             setIsLoading(true);
 
                             try {
                                 // Simulate mock login delay
                                 await new Promise(resolve => setTimeout(resolve, 500));
-                                const result = await adachiService.login("demo@lumina.ai", "password");
+                                const result = await adachiService.login("demo@rise-path.ai", "password");
                                 console.log("Quick Login Success:", result);
                                 setTimeout(() => onLoginSuccess(result.user), 500);
                             } catch (err) {

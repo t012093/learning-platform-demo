@@ -1,13 +1,13 @@
 <div align="center">
-<img width="1200" height="400" alt="Lumina Banner" src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=1200" style="border-radius: 20px;" />
+<img width="1200" height="400" alt="Rise Path Banner" src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=1200" style="border-radius: 20px;" />
 
-# Lumina Learning Platform
+# Rise Path Learning Platform
 ### The Next-Gen Immersive Learning Experience
 </div>
 
 <br/>
 
-**Lumina** is a modern, experimental learning platform designed to revolutionize how we learn engineering, creativity, and languages. Unlike traditional LMS, Lumina focuses on **"Vibe"**—the feeling of flow, immersion, and narrative-driven education.
+**Rise Path** is a modern, experimental learning platform designed to revolutionize how we learn engineering, creativity, and languages. Unlike traditional LMS, Rise Path focuses on **"Vibe"**—the feeling of flow, immersion, and narrative-driven education.
 
 ## 🌟 Key Features
 
@@ -20,7 +20,7 @@ Experience learning tailored just for you.
 
 ### 2. **Immersive Audio Experience (In Progress)** 🎧
 - **Gemini Native TTS**: High-quality, context-aware narration using Gemini 2.5/2.0 Native Audio capabilities (replacing legacy Python gTTS).
-- **Character-Driven**: Voices that match the persona of the AI tutor (Lumina).
+- **Character-Driven**: Voices that match the persona of the AI tutor (Rise Path).
 
 ### 3. **Diverse Learning Paths** 🗺️
 - **Vibe Coding Path**: Narrative-driven coding (Prompt Engineering, Git) set in a sci-fi universe.
@@ -153,5 +153,5 @@ If you need the full AI generation flow with backend + database, you’ll need:
 ---
 
 <div align="center">
-  <sub>Built with ❤️ by the Lumina Team</sub>
+  <sub>Built with ❤️ by the Rise Path Team</sub>
 </div>

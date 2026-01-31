@@ -82,7 +82,7 @@ async function reviewerNode(state) {
 
     const genAI = getGenAI();
     const prompt = `
-        You are an Expert Curriculum Reviewer for the Lumina Learning Platform.
+        You are an Expert Curriculum Reviewer for the Rise Path Learning Platform.
         Your job is to strictly validate the generated curriculum against Quality Standards.
 
         【Reference Analysis】
@@ -324,7 +324,7 @@ async function interviewerNode(state) {
         contents: [{
             role: "user", parts: [{
                 text: `
-            あなたはLuminaコンシェルジュです。資料の分析結果を踏まえ、
+            あなたはRise Pathコンシェルジュです。資料の分析結果を踏まえ、
             ユーザーに最適なカリキュラムを提案するためのステップ（目標の深掘り等）を進めてください。
             
             【資料の分析結果】

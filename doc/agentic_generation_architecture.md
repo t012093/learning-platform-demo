@@ -1,7 +1,7 @@
 # Multi-Stage Agentic Generation Architecture
 
 ## Overview
-This document outlines the architecture for the "Lumina Agentic Generation Pipeline". Instead of a single monolithic prompt, we utilize a multi-stage, role-based approach to generate high-quality, personalized curriculums and personality insights. This ensures stability (avoiding token limits) and depth (better personalization).
+This document outlines the architecture for the "Rise Path Agentic Generation Pipeline". Instead of a single monolithic prompt, we utilize a multi-stage, role-based approach to generate high-quality, personalized curriculums and personality insights. This ensures stability (avoiding token limits) and depth (better personalization).
 
 ## Core Philosophy
 **"Divide and Conquer"**

@@ -1,4 +1,4 @@
-# Lumina Investor Brief (EN)
+# Rise Path Investor Brief (EN)
 
 ## One-liner
 An immersive, personalized learning platform that blends curated curricula with AI-generated courses.

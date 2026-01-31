@@ -49,7 +49,7 @@ const SonicLabView: React.FC<SonicLabViewProps> = ({ onNavigate }) => {
       featuredDescription: 'Understanding oscillators, filters, and envelopes. Build your first synthesizer patch from scratch.',
       openSynth: 'Open Synthesizer',
       enterLab: 'Enter Lab',
-      footer: 'Lumina Audio Engine v2.0 • 48kHz / 24bit',
+      footer: 'Rise Path Audio Engine v2.0 • 48kHz / 24bit',
       modules: [
         { title: 'Rhythm Construction', subtitle: 'BPM, Time Signatures, and Drum Patterns.' },
         { title: 'Physics of Audio', subtitle: 'Frequency, Amplitude, and Phase relationships.' },
@@ -66,7 +66,7 @@ const SonicLabView: React.FC<SonicLabViewProps> = ({ onNavigate }) => {
       featuredDescription: 'オシレーター、フィルター、エンベロープを理解し、初めてのシンセパッチを作ります。',
       openSynth: 'シンセを開く',
       enterLab: 'ラボへ',
-      footer: 'Lumina Audio Engine v2.0 • 48kHz / 24bit',
+      footer: 'Rise Path Audio Engine v2.0 • 48kHz / 24bit',
       modules: [
         { title: 'リズム構築', subtitle: 'BPM、拍子、ドラムパターン。' },
         { title: '音の物理', subtitle: '周波数、振幅、位相の関係。' },

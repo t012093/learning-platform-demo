@@ -36,7 +36,7 @@ import { FloatingChatbot } from './components/common/FloatingChatbot';
 
 // AI Features
 import CourseGeneratorView from './components/features/ai/CourseGeneratorView';
-import LuminaConciergeView from './components/features/ai/LuminaConciergeView';
+import RisePathConciergeView from './components/features/ai/RisePathConciergeView';
 import BlenderChecklistGeneratorView from './components/features/ai/BlenderChecklistGeneratorView';
 import PersonalAssessmentView from './components/features/dashboard/assessment/PersonalAssessmentView';
 import AICharacterIntroView from './components/features/ai/AICharacterIntroView';

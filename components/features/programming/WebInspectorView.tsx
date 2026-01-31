@@ -218,7 +218,7 @@ const WebInspectorView: React.FC<WebInspectorViewProps> = ({ onBack, onNavigate 
                  <div className="w-3 h-3 rounded-full bg-green-400"></div>
               </div>
               <div className="bg-white border border-slate-200 rounded-md px-3 py-1 flex-1 text-xs text-slate-500 font-mono text-center">
-                 localhost:3000/lumina-landing
+                 localhost:3000/rise-path-landing
               </div>
            </div>
 
@@ -253,7 +253,7 @@ const WebInspectorView: React.FC<WebInspectorViewProps> = ({ onBack, onNavigate 
                     h1.headline
                   </div>
                 )}
-                Lumina Web
+                Rise Path Web
               </div>
 
               <div className="text-slate-500 text-lg mb-8 max-w-md text-center">

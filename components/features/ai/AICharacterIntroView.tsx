@@ -139,7 +139,7 @@ const AICharacterIntroView: React.FC<AICharacterIntroViewProps> = ({ onBack, onN
     const copy = {
         en: {
             title: 'AI Partners',
-            subtitle: 'Lumina’s dedicated AI mentors. Each supports your growth in their own style.',
+            subtitle: 'Rise Path’s dedicated AI mentors. Each supports your growth in their own style.',
             strengthsLabel: 'Strengths',
             chatWith: (name: string) => `Chat with ${name}`,
             comingSoon: 'Coming Soon',
@@ -147,7 +147,7 @@ const AICharacterIntroView: React.FC<AICharacterIntroViewProps> = ({ onBack, onN
         },
         jp: {
             title: 'AIパートナー',
-            subtitle: 'Lumina専属のAIメンターたち。あなたの成長をそれぞれのスタイルで支えます。',
+            subtitle: 'Rise Path専属のAIメンターたち。あなたの成長をそれぞれのスタイルで支えます。',
             strengthsLabel: '得意分野',
             chatWith: (name: string) => `${name}とチャットする`,
             comingSoon: '準備中',

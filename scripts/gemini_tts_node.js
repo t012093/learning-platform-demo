@@ -10,7 +10,7 @@ export const generateAudioContent = async (speechScript, modelName = "gemini-2.5
 
   // 5-Element Prompt for expressive narration
   const prompt = `
-# AUDIO PROFILE: Lumina
+# AUDIO PROFILE: Rise Path
 ## Professional AI Tutor / Friendly Guide
 
 ## THE SCENE: Private Study Room

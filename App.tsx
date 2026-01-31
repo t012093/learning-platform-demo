@@ -8,8 +8,8 @@ import { fetchGeneratedCourseById, saveGeneratedCourse } from './services/curric
 // Common Components
 import Layout from './components/common/Layout';
 import ErrorBoundary from './components/common/ErrorBoundary';
-import LoginView from './components/common/LoginView';
-import LandingView from './components/common/LandingView';
+import LoginView from './components/common/ExperienceLoginView';
+import LandingView from './components/common/ExperienceLandingView';
 import LoginModal from './components/common/LoginModal';
 import LessonView from './components/common/LessonView';
 import Library from './components/common/Library';

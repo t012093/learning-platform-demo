@@ -1,6 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import fs from 'fs/promises';
+import crypto from 'crypto';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { ingestMaterial } from '../ragService.js';
@@ -23,11 +24,18 @@ const DEFAULT_COURSE_CARD = {
 
 // --- Upload Setup ---
 const uploadDir = path.join(PROJECT_ROOT, 'public/uploads');
+const generatedDir = path.join(PROJECT_ROOT, 'public/generated');
+const imageCache = new Map();
 (async () => {
     try {
         await fs.access(uploadDir);
     } catch {
         await fs.mkdir(uploadDir, { recursive: true });
+    }
+    try {
+        await fs.access(generatedDir);
+    } catch {
+        await fs.mkdir(generatedDir, { recursive: true });
     }
 })();
 
@@ -136,13 +144,47 @@ router.post('/image', async (req, res) => {
     if (!prompt) return res.status(400).json({ error: 'prompt required' });
 
     try {
+        const aspectRatio = req.body?.aspect_ratio || '16:9';
+        const imageSize = req.body?.image_size || '1K';
+        const cacheKey = crypto
+            .createHash('sha256')
+            .update(`${prompt}|${aspectRatio}|${imageSize}`)
+            .digest('hex');
+        if (imageCache.has(cacheKey)) {
+            const cached = imageCache.get(cacheKey);
+            return res.json({ ok: true, url: cached.url, mimeType: cached.mimeType, text: '', cached: true });
+        }
+
+        await fs.mkdir(generatedDir, { recursive: true });
+        const cachedFiles = await fs.readdir(generatedDir).catch(() => []);
+        const cachedFile = cachedFiles.find((file) => file.startsWith(`img_${cacheKey}.`));
+        if (cachedFile) {
+            const ext = cachedFile.split('.').pop();
+            const mimeType = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'webp' ? 'image/webp' : 'image/png';
+            const url = `/generated/${cachedFile}`;
+            imageCache.set(cacheKey, { url, mimeType });
+            console.log(`[Content API] Image cache hit: ${url}`);
+            return res.json({ ok: true, url, mimeType, text: '', cached: true });
+        }
+
         const result = await generateImageWithGemini({
             prompt,
-            aspectRatio: req.body?.aspect_ratio || '16:9',
-            imageSize: req.body?.image_size || '1K'
+            aspectRatio,
+            imageSize
         });
         console.log(`[Content API] Image generated: mime=${result.mimeType || 'image/png'} text=${(result.text || '').slice(0, 60)}`);
-        res.json({ ok: true, image: result.data, mimeType: result.mimeType, text: result.text });
+        const mimeType = result.mimeType || 'image/png';
+        const ext = mimeType === 'image/jpeg' ? 'jpg' : mimeType === 'image/webp' ? 'webp' : 'png';
+        const fileName = `img_${cacheKey}.${ext}`;
+        const outputPath = path.join(generatedDir, fileName);
+        try {
+            await fs.writeFile(outputPath, Buffer.from(result.data, 'base64'));
+        } catch (writeErr) {
+            console.warn('[Content API] Failed to write cached image:', writeErr.message);
+        }
+        const url = `/generated/${fileName}`;
+        imageCache.set(cacheKey, { url, mimeType });
+        res.json({ ok: true, image: result.data, mimeType, text: result.text, url });
     } catch (error) {
         console.error('[Content API] Image Error:', error.message);
         res.status(500).json({ error: 'Image generation failed', detail: error.message });

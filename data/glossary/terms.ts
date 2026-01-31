@@ -256,6 +256,68 @@ export const GLOSSARY_TERMS: GlossaryTerm[] = [
     category: 'concept'
   },
 
+  // --- List Comprehensions ---
+  {
+    id: 'list-comprehension',
+    term: 'List comprehension',
+    synonyms: ['list comprehension', 'list comprehensions', '内包表記', 'リスト内包表記'],
+    definitions: {
+      en: 'A compact Python syntax to map and filter data in one line.',
+      jp: '1行でデータの変換と抽出を行うPythonの記法。'
+    },
+    category: 'code'
+  },
+  {
+    id: 'mapping',
+    term: 'Mapping',
+    synonyms: ['mapping', 'map', '変換'],
+    definitions: {
+      en: 'Transform each item into a new value (e.g., f(x) for x in data).',
+      jp: '各要素を別の値に変換する処理。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'filtering',
+    term: 'Filtering',
+    synonyms: ['filtering', 'filter', 'フィルタ', 'フィルタリング', '抽出'],
+    definitions: {
+      en: 'Keep only items that satisfy a condition.',
+      jp: '条件を満たす要素だけを残す処理。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'flattening',
+    term: 'Flattening',
+    synonyms: ['flattening', 'flatten', 'フラット化'],
+    definitions: {
+      en: 'Convert nested lists into a single list.',
+      jp: 'ネストしたリストを1つのリストにまとめる処理。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'iterable',
+    term: 'Iterable',
+    synonyms: ['iterable', 'イテラブル'],
+    definitions: {
+      en: 'An object you can loop over (e.g., list, tuple, range).',
+      jp: '繰り返し処理できるオブジェクト（リスト、タプル、range など）。'
+    },
+    category: 'concept'
+  },
+  {
+    id: 'loop',
+    term: 'Loop',
+    synonyms: ['loop', 'for loop', 'for文', 'ループ'],
+    definitions: {
+      en: 'A control structure that repeats an operation for each item.',
+      jp: '各要素に対して処理を繰り返す制御構造。'
+    },
+    category: 'concept'
+  },
+
   // --- AI Agents ---
   {
     id: 'ai-agent',

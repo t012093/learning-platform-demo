@@ -70,8 +70,7 @@ const PYTHON_DEMO_DATA: any = {
                 { type: 'text', text: { en: 'Multiple names can point to the same object. Changing a mutable object affects every name that references it.', jp: '同じオブジェクトを複数の名前が参照できます。ミュータブルなオブジェクトは、どの参照から変更しても全てに影響します。' } },
                 {
                   type: 'image',
-                  prompt: 'Isometric high-contrast vector diagram of a Python memory model: elegant name tags pointing to object blocks with glowing arrows, subtle grid, indigo and teal highlights on a deep slate gradient background, clean geometry, cinematic lighting, no text, no letters, no watermark',
-                  src: 'https://image.pollinations.ai/prompt/Isometric%20high-contrast%20vector%20diagram%20of%20a%20Python%20memory%20model%3A%20elegant%20name%20tags%20pointing%20to%20object%20blocks%20with%20glowing%20arrows%2C%20subtle%20grid%2C%20indigo%20and%20teal%20highlights%20on%20a%20deep%20slate%20gradient%20background%2C%20clean%20geometry%2C%20cinematic%20lighting%2C%20no%20text%2C%20no%20letters%2C%20no%20watermark?nologo=true',
+                  src: '/generated/img_8763e2974593dbdaedc07878e816c2d9223defb6fa8950b08896a4a8452d2c09.jpg',
                   alt: 'Minimalist vector illustration of Python memory model',
                   caption: { en: 'Names reference objects (conceptual view)', jp: '名前がオブジェクトを参照する概念図' }
                 },
@@ -90,8 +89,7 @@ const PYTHON_DEMO_DATA: any = {
                 { type: 'text', text: { en: 'Shallow copies only duplicate the outer list. Nested objects still share references.', jp: '浅いコピーは外側だけを複製します。ネスト内のオブジェクトは共有されたままです。' } },
                 {
                   type: 'image',
-                  prompt: 'Split-screen diagram: left shows two labels pointing to the same list object, right shows a copied list object, minimalist vector style with clean arrows, blue and mint accents on a muted slate background, strong contrast, no text',
-                  src: 'https://image.pollinations.ai/prompt/Split-screen%20diagram%3A%20left%20shows%20two%20labels%20pointing%20to%20the%20same%20list%20object%2C%20right%20shows%20a%20copied%20list%20object%2C%20minimalist%20vector%20style%20with%20clean%20arrows%2C%20blue%20and%20mint%20accents%20on%20a%20muted%20slate%20background%2C%20strong%20contrast%2C%20no%20text?nologo=true',
+                  src: '/generated/img_93bf95d33939a7632378568a956a2f08a5406168633eba0029fe2dcb8d7d646c.jpg',
                   alt: 'Split screen reference vs copy diagram',
                   caption: { en: 'Reference vs copy at a glance', jp: '参照とコピーの違い（概観）' }
                 },
@@ -115,8 +113,7 @@ const PYTHON_DEMO_DATA: any = {
                 { type: 'text', text: { en: 'Lists and dicts are mutable; numbers and strings are immutable. Mutations change memory references differently.', jp: 'リストや辞書はミュータブル、数値や文字列はイミュータブルです。変更時の参照の動きが変わります。' } },
                 {
                   type: 'image',
-                  prompt: 'Conceptual diagram of mutable vs immutable: a flexible list object morphing next to a locked string object, minimalist vector illustration, indigo and teal accents on a soft charcoal gradient background, high contrast, no text',
-                  src: 'https://image.pollinations.ai/prompt/Conceptual%20diagram%20of%20mutable%20vs%20immutable%3A%20a%20flexible%20list%20object%20morphing%20next%20to%20a%20locked%20string%20object%2C%20minimalist%20vector%20illustration%2C%20indigo%20and%20teal%20accents%20on%20a%20soft%20charcoal%20gradient%20background%2C%20high%20contrast%2C%20no%20text?nologo=true',
+                  src: '/generated/img_027bb996b50939fe8d0e2b1c7e1944855180cb230f432880641c1de794bf3c09.jpg',
                   alt: 'Mutable vs immutable conceptual diagram',
                   caption: { en: 'Mutable objects can change; immutable stay fixed', jp: '可変は変化し、不変は固定される' }
                 },
@@ -152,8 +149,7 @@ const PYTHON_DEMO_DATA: any = {
                 { type: 'text', text: { en: 'Objects are freed when reference count drops to zero. Cycles are handled by a separate collector.', jp: '参照数が0になると解放され、循環参照は別のGCが検出します。' } },
                 {
                   type: 'image',
-                  prompt: 'Abstract memory garbage collection flow: objects fading as references drop to zero, recycle motif, soft blue-to-slate gradient background, clean technical illustration, crisp glow accents, no text',
-                  src: 'https://image.pollinations.ai/prompt/Abstract%20memory%20garbage%20collection%20flow%3A%20objects%20fading%20as%20references%20drop%20to%20zero%2C%20recycle%20motif%2C%20soft%20blue-to-slate%20gradient%20background%2C%20clean%20technical%20illustration%2C%20crisp%20glow%20accents%2C%20no%20text?nologo=true',
+                  src: '/generated/img_caf8d453d6e770e63fb0c88e4a885ab1637e2beda4ecef875bca721a5dc879cd.jpg',
                   alt: 'Abstract garbage collection flow diagram',
                   caption: { en: 'Garbage collection reclaims unused objects', jp: '不要なオブジェクトは回収される' }
                 },
@@ -203,6 +199,12 @@ const PYTHON_DEMO_DATA: any = {
               title: { en: 'The Definition', jp: '内包表記の定義' },
               content: [
                 { type: 'text', style: 'lead', text: { en: 'List comprehensions are a compact way to map and filter data in a single expression.', jp: 'リスト内包表記は、データの変換（map）と抽出（filter）を1行で表現するPythonicな記法です。' } },
+                {
+                  type: 'image',
+                  src: '/generated/img_77010735b991059774b31f8cda59e857d874cbe20c74abb0f6dda883282d7b86.jpg',
+                  alt: 'List comprehension flow diagram',
+                  caption: { en: 'From data → filter → transform → list', jp: 'データ → フィルタ → 変換 → リスト' }
+                },
                 { 
                   type: 'code', 
                   language: 'python', 
@@ -223,6 +225,12 @@ const PYTHON_DEMO_DATA: any = {
               content: [
                 { type: 'text', text: { en: 'Common patterns include mapping, filtering, and flattening.', jp: 'よく使うのは「変換」「フィルタ」「フラット化」の3パターンです。' } },
                 { type: 'text', text: { en: 'Think of them as mini building blocks: transform the data, keep what you need, then reshape if necessary.', jp: '「変換→抽出→形を整える」という小さなブロックの組み合わせとして捉えると整理しやすいです。' } },
+                {
+                  type: 'image',
+                  src: '/generated/img_1116a6b2662a89c42de6e7a9c94ee6e81e8bcefab2adeb49891a76bff00dc28f.jpg',
+                  alt: 'Mapping filtering flattening panels',
+                  caption: { en: 'Mapping, filtering, flattening as three building blocks', jp: '変換・フィルタ・フラット化の3ブロック' }
+                },
                 {
                   type: 'list',
                   style: 'key',
@@ -281,6 +289,12 @@ const PYTHON_DEMO_DATA: any = {
               title: { en: 'Comprehensions vs Loops', jp: 'forループとの違い' },
               content: [
                 { type: 'text', text: { en: 'Comprehensions are concise, but loops win when logic is complex.', jp: '内包表記は簡潔ですが、複雑なロジックならfor文の方が安全です。' } },
+                {
+                  type: 'image',
+                  src: '/generated/img_f5e06f96c32a546e0ce2d4da0df75e3f573373bddf113675ebfbe9c2214daf3f.jpg',
+                  alt: 'Comparison of loop vs comprehension',
+                  caption: { en: 'Loops for complex logic, comprehensions for clarity', jp: '複雑ならfor、簡潔なら内包表記' }
+                },
                 {
                   type: 'table',
                   headers: [
@@ -1787,6 +1801,9 @@ export const generateImagePreview = async (
     throw new Error(err.error || 'Image generation failed.');
   }
   const data = await response.json();
+  if (data?.url) {
+    return { url: data.url, text: data.text || '' };
+  }
   if (!data?.image) throw new Error('Image generation failed.');
   const mime = data.mimeType || 'image/png';
   return { url: `data:${mime};base64,${data.image}`, text: data.text || '' };

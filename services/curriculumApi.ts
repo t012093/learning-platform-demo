@@ -22,6 +22,88 @@ type CurriculumDetailResponse = {
 const DEMO_CURRICULUM_ID = 'demo-curr-001';
 const DEMO_SESSION_ID = 'demo-sess-001';
 
+const createLesson = (
+  lessonId: string,
+  title: { en: string; jp: string },
+  subtitle: { en: string; jp: string },
+  focus?: { en: string; jp: string }
+) => ({
+  lesson_id: lessonId,
+  title,
+  subtitle,
+  estimated_min: 15,
+  sections: [
+    {
+      id: `${lessonId}-s1`,
+      title: { en: 'Focus', jp: 'フォーカス' },
+      content: [
+        {
+          type: 'text',
+          style: 'lead',
+          text: {
+            en: `${subtitle.en} with practical examples and clear steps.`,
+            jp: `${subtitle.jp}を具体例と手順で整理します。`
+          }
+        },
+        {
+          type: 'text',
+          text: {
+            en: 'Connect the concept to real situations and produce a small output.',
+            jp: '概念を現実のシーンに結びつけ、小さなアウトプットを作成します。'
+          }
+        },
+        {
+          type: 'list',
+          style: 'key',
+          items: [
+            {
+              en: `Concept: ${(focus || title).en}`,
+              jp: `概念: ${(focus || title).jp}`
+            },
+            {
+              en: `Practice: apply ${(focus || title).en} in a mini task`,
+              jp: `${(focus || title).jp}をミニ課題で適用`
+            },
+            {
+              en: 'Output: summarize the key takeaway',
+              jp: 'アウトプット: 要点をまとめる'
+            }
+          ]
+        }
+      ]
+    }
+  ]
+});
+
+const createModule = (
+  moduleId: string,
+  title: { en: string; jp: string },
+  objective: { en: string; jp: string },
+  lessons: any[]
+) => ({
+  module_id: moduleId,
+  title,
+  objective,
+  estimated_hours: 2,
+  lessons
+});
+
+const createDemoCourse = (
+  id: string,
+  title: { en: string; jp: string },
+  description: { en: string; jp: string },
+  modules: any[],
+  duration = '8 hours'
+) => ({
+  id,
+  title,
+  description,
+  modules,
+  ui_template_id: 'doc_chapter',
+  duration,
+  modelUsed: 'pro'
+});
+
 const PYTHON_DEMO_DATA: any = {
   id: DEMO_CURRICULUM_ID,
   title: { en: 'Python for AI Development', jp: 'AI開発のためのPython入門' },
@@ -1489,6 +1571,638 @@ const AI_AGENTS_DEMO_DATA: any = {
   modelUsed: 'pro'
 };
 
+const ENGLISH_DEMO_DATA: any = createDemoCourse(
+  'demo-english-001',
+  { en: 'Fluent Launch: Global English', jp: 'Fluent Launch：世界で通じる英語' },
+  {
+    en: 'Build practical English for travel, work, and everyday communication.',
+    jp: '旅・仕事・日常で使える実践英語を段階的に身につけます。'
+  },
+  [
+    createModule(
+      'en-m1',
+      { en: 'Fluency Foundations', jp: '流暢さの土台' },
+      { en: 'Build sound and grammar basics.', jp: '発音と文法の基礎を固める。' },
+      [
+        createLesson(
+          'en-m1-l1',
+          { en: 'Sound & Rhythm', jp: '音とリズム' },
+          { en: 'Pronunciation and stress', jp: '発音と強勢の基本' }
+        ),
+        createLesson(
+          'en-m1-l2',
+          { en: 'Core Grammar Patterns', jp: '基本文型' },
+          { en: 'Sentence building basics', jp: '文を組み立てる基礎' }
+        )
+      ]
+    ),
+    createModule(
+      'en-m2',
+      { en: 'Vocabulary Engine', jp: '語彙のエンジン' },
+      { en: 'Expand expressive range.', jp: '表現の幅を広げる。' },
+      [
+        createLesson(
+          'en-m2-l1',
+          { en: 'High-Frequency Words', jp: '頻出語彙' },
+          { en: 'Everyday vocabulary', jp: '日常語彙の強化' }
+        ),
+        createLesson(
+          'en-m2-l2',
+          { en: 'Phrasal Verbs & Collocations', jp: '句動詞とコロケーション' },
+          { en: 'Natural expressions', jp: '自然な言い回し' }
+        )
+      ]
+    ),
+    createModule(
+      'en-m3',
+      { en: 'Real-world Communication', jp: '実践コミュニケーション' },
+      { en: 'Use English in real contexts.', jp: '現実の場面で使う。' },
+      [
+        createLesson(
+          'en-m3-l1',
+          { en: 'Work & Email', jp: '仕事とメール' },
+          { en: 'Professional communication', jp: 'ビジネスの伝え方' }
+        ),
+        createLesson(
+          'en-m3-l2',
+          { en: 'Travel & Small Talk', jp: '旅と雑談' },
+          { en: 'Everyday conversation', jp: '日常会話の運用' }
+        )
+      ]
+    ),
+    createModule(
+      'en-m4',
+      { en: 'Confidence & Output', jp: '自信とアウトプット' },
+      { en: 'Practice speaking and writing.', jp: '話す・書く力を磨く。' },
+      [
+        createLesson(
+          'en-m4-l1',
+          { en: 'Speaking Drills', jp: 'スピーキング練習' },
+          { en: 'Fluency practice', jp: '流暢さのトレーニング' }
+        ),
+        createLesson(
+          'en-m4-l2',
+          { en: 'Writing Feedback Loop', jp: 'ライティングの改善サイクル' },
+          { en: 'Clear writing and review', jp: '明確な文章と見直し' }
+        )
+      ]
+    )
+  ]
+);
+
+const MATH_DEMO_DATA: any = createDemoCourse(
+  'demo-math-001',
+  { en: 'Math Forge: Thinking in Structures', jp: 'Math Forge：構造で考える数学' },
+  {
+    en: 'Train mathematical thinking through patterns, functions, and data.',
+    jp: 'パターン・関数・データを通じて数学的思考を鍛えます。'
+  },
+  [
+    createModule(
+      'math-m1',
+      { en: 'Patterns & Logic', jp: 'パターンと論理' },
+      { en: 'See structure and prove it.', jp: '構造を見抜き、論理で示す。' },
+      [
+        createLesson(
+          'math-m1-l1',
+          { en: 'Numbers as Patterns', jp: '数のパターン' },
+          { en: 'Recognize structures', jp: '構造の発見' }
+        ),
+        createLesson(
+          'math-m1-l2',
+          { en: 'Proof Mindset', jp: '証明の考え方' },
+          { en: 'Reasoning steps', jp: '論理の積み上げ' }
+        )
+      ]
+    ),
+    createModule(
+      'math-m2',
+      { en: 'Functions & Change', jp: '関数と変化' },
+      { en: 'Model input-output relationships.', jp: '入出力の関係を捉える。' },
+      [
+        createLesson(
+          'math-m2-l1',
+          { en: 'Functions in Context', jp: '文脈としての関数' },
+          { en: 'Inputs and outputs', jp: '入力と出力' }
+        ),
+        createLesson(
+          'math-m2-l2',
+          { en: 'Rates & Graphs', jp: '変化率とグラフ' },
+          { en: 'Visualizing change', jp: '変化の可視化' }
+        )
+      ]
+    ),
+    createModule(
+      'math-m3',
+      { en: 'Space & Shape', jp: '空間と形' },
+      { en: 'Think geometrically.', jp: '幾何的に捉える。' },
+      [
+        createLesson(
+          'math-m3-l1',
+          { en: 'Geometry Intuition', jp: '幾何の直感' },
+          { en: 'Shapes and symmetry', jp: '形と対称性' }
+        ),
+        createLesson(
+          'math-m3-l2',
+          { en: 'Vectors & Matrices', jp: 'ベクトルと行列' },
+          { en: 'Space transformations', jp: '空間の変換' }
+        )
+      ]
+    ),
+    createModule(
+      'math-m4',
+      { en: 'Uncertainty & Data', jp: '不確実性とデータ' },
+      { en: 'Reason with chance and statistics.', jp: '確率と統計で判断する。' },
+      [
+        createLesson(
+          'math-m4-l1',
+          { en: 'Probability Stories', jp: '確率の物語' },
+          { en: 'Chance reasoning', jp: '確率的思考' }
+        ),
+        createLesson(
+          'math-m4-l2',
+          { en: 'Statistics for Decisions', jp: '意思決定の統計' },
+          { en: 'Summaries and inference', jp: '要約と推測' }
+        )
+      ]
+    )
+  ]
+);
+
+const FRENCH_DEMO_DATA: any = createDemoCourse(
+  'demo-french-001',
+  { en: 'Paris Pulse: Everyday French', jp: 'Paris Pulse：日常フランス語' },
+  {
+    en: 'Learn practical French for travel, culture, and daily conversation.',
+    jp: '旅・文化・日常会話で使えるフランス語を学びます。'
+  },
+  [
+    createModule(
+      'fr-m1',
+      { en: 'Bonjour Basics', jp: 'ボンジュール基礎' },
+      { en: 'Start with sounds and greetings.', jp: '発音と挨拶から始める。' },
+      [
+        createLesson(
+          'fr-m1-l1',
+          { en: 'Sound & Accent', jp: '音とアクセント' },
+          { en: 'French pronunciation', jp: 'フランス語の発音' }
+        ),
+        createLesson(
+          'fr-m1-l2',
+          { en: 'Everyday Phrases', jp: '日常フレーズ' },
+          { en: 'Greetings and survival', jp: '挨拶とサバイバル表現' }
+        )
+      ]
+    ),
+    createModule(
+      'fr-m2',
+      { en: 'Grammar & Flow', jp: '文法と流れ' },
+      { en: 'Build sentences smoothly.', jp: '文を滑らかにつなぐ。' },
+      [
+        createLesson(
+          'fr-m2-l1',
+          { en: 'Verb Foundations', jp: '動詞の基礎' },
+          { en: 'Present tense basics', jp: '現在形の基本' }
+        ),
+        createLesson(
+          'fr-m2-l2',
+          { en: 'Connectors & Questions', jp: 'つなぎ言葉と疑問文' },
+          { en: 'Natural flow', jp: '自然な会話の流れ' }
+        )
+      ]
+    ),
+    createModule(
+      'fr-m3',
+      { en: 'Culture & Travel', jp: '文化と旅' },
+      { en: 'Use French in real scenes.', jp: '実際の場面で使う。' },
+      [
+        createLesson(
+          'fr-m3-l1',
+          { en: 'Café & City', jp: 'カフェと街' },
+          { en: 'Ordering and directions', jp: '注文と道案内' }
+        ),
+        createLesson(
+          'fr-m3-l2',
+          { en: 'Politeness & Nuance', jp: '丁寧さとニュアンス' },
+          { en: 'Cultural etiquette', jp: '文化的マナー' }
+        )
+      ]
+    ),
+    createModule(
+      'fr-m4',
+      { en: 'Conversation Studio', jp: '会話スタジオ' },
+      { en: 'Practice speaking and writing.', jp: '話す・書く練習をする。' },
+      [
+        createLesson(
+          'fr-m4-l1',
+          { en: 'Short Dialogues', jp: '短い対話' },
+          { en: 'Roleplay practice', jp: 'ロールプレイ練習' }
+        ),
+        createLesson(
+          'fr-m4-l2',
+          { en: 'Writing Postcards', jp: 'ポストカード作文' },
+          { en: 'Simple writing', jp: '短文ライティング' }
+        )
+      ]
+    )
+  ]
+);
+
+const KINTSUGI_DEMO_DATA: any = createDemoCourse(
+  'demo-kintsugi-001',
+  { en: 'Kintsugi Atelier: Repair as Design', jp: '金継ぎアトリエ：修復の美学' },
+  {
+    en: 'Explore the philosophy and practice of kintsugi in a modern context.',
+    jp: '金継ぎの哲学と実践を現代的に学びます。'
+  },
+  [
+    createModule(
+      'kin-m1',
+      { en: 'Philosophy & Aesthetics', jp: '哲学と美学' },
+      { en: 'Understand the worldview behind kintsugi.', jp: '金継ぎの世界観を理解する。' },
+      [
+        createLesson(
+          'kin-m1-l1',
+          { en: 'Wabi-Sabi Lens', jp: '侘び寂びの視点' },
+          { en: 'Imperfection as beauty', jp: '不完全さの美' }
+        ),
+        createLesson(
+          'kin-m1-l2',
+          { en: 'Kintsugi Stories', jp: '金継ぎの物語' },
+          { en: 'History and meaning', jp: '歴史と意味' }
+        )
+      ]
+    ),
+    createModule(
+      'kin-m2',
+      { en: 'Tools & Materials', jp: '道具と素材' },
+      { en: 'Know the essentials for safe practice.', jp: '安全に始めるための基礎。' },
+      [
+        createLesson(
+          'kin-m2-l1',
+          { en: 'Lacquer & Gold', jp: '漆と金粉' },
+          { en: 'Materials overview', jp: '素材の概要' }
+        ),
+        createLesson(
+          'kin-m2-l2',
+          { en: 'Workspace & Safety', jp: '作業環境と安全' },
+          { en: 'Preparation and care', jp: '準備と注意点' }
+        )
+      ]
+    ),
+    createModule(
+      'kin-m3',
+      { en: 'Repair Process', jp: '修復プロセス' },
+      { en: 'Learn the basic workflow.', jp: '基本の流れを学ぶ。' },
+      [
+        createLesson(
+          'kin-m3-l1',
+          { en: 'Break & Align', jp: '欠片の合わせ' },
+          { en: 'Fragment fitting', jp: '欠片のフィット' }
+        ),
+        createLesson(
+          'kin-m3-l2',
+          { en: 'Bond & Seal', jp: '接着と封止' },
+          { en: 'Layering steps', jp: '層を重ねる工程' }
+        )
+      ]
+    ),
+    createModule(
+      'kin-m4',
+      { en: 'Finishing', jp: '仕上げ' },
+      { en: 'Bring the piece to life.', jp: '作品として完成させる。' },
+      [
+        createLesson(
+          'kin-m4-l1',
+          { en: 'Gold Reveal', jp: '金の表現' },
+          { en: 'Decoration and polish', jp: '装飾と研磨' }
+        ),
+        createLesson(
+          'kin-m4-l2',
+          { en: 'Care & Display', jp: 'ケアと展示' },
+          { en: 'Long-term care', jp: '長期的な扱い方' }
+        )
+      ]
+    )
+  ]
+);
+
+const FOLK_MEDICINE_DEMO_DATA: any = createDemoCourse(
+  'demo-folk-medicine-001',
+  { en: 'Herbal Wisdom: Folk Medicine Basics', jp: '民間療法の知恵：基礎ガイド' },
+  {
+    en: 'Study folk medicine as cultural knowledge with safety and evidence in mind.',
+    jp: '文化的知識として民間療法を学び、安全性と根拠も意識します。'
+  },
+  [
+    createModule(
+      'folk-m1',
+      { en: 'Traditions & Ethics', jp: '伝統と倫理' },
+      { en: 'Understand origins and boundaries.', jp: '起源と向き合い方を知る。' },
+      [
+        createLesson(
+          'folk-m1-l1',
+          { en: 'Origins & Cultures', jp: '起源と文化' },
+          { en: 'Why folk medicine emerged', jp: '民間療法が生まれた背景' }
+        ),
+        createLesson(
+          'folk-m1-l2',
+          { en: 'Safety & Evidence', jp: '安全性とエビデンス' },
+          { en: 'Modern viewpoint', jp: '現代的な視点' }
+        )
+      ]
+    ),
+    createModule(
+      'folk-m2',
+      { en: 'Herbal Basics', jp: 'ハーブの基礎' },
+      { en: 'Learn common botanical themes.', jp: '代表的な植物知識。' },
+      [
+        createLesson(
+          'folk-m2-l1',
+          { en: 'Common Herbs', jp: '代表的なハーブ' },
+          { en: 'Aromatic plants', jp: '香りのある植物' }
+        ),
+        createLesson(
+          'folk-m2-l2',
+          { en: 'Preparation Methods', jp: '調整の方法' },
+          { en: 'Tea, tincture, salve', jp: 'お茶・チンキ・軟膏' }
+        )
+      ]
+    ),
+    createModule(
+      'folk-m3',
+      { en: 'Home Practices', jp: '日常の実践' },
+      { en: 'Focus on routines and care.', jp: '日々のケアを整える。' },
+      [
+        createLesson(
+          'folk-m3-l1',
+          { en: 'Rest & Ritual', jp: '休息と儀式' },
+          { en: 'Routine-based care', jp: '習慣としてのケア' }
+        ),
+        createLesson(
+          'folk-m3-l2',
+          { en: 'Mind-Body Links', jp: '心身のつながり' },
+          { en: 'Stress and recovery', jp: 'ストレスと回復' }
+        )
+      ]
+    ),
+    createModule(
+      'folk-m4',
+      { en: 'Research Literacy', jp: 'リサーチリテラシー' },
+      { en: 'Read claims critically.', jp: '主張を批判的に読む。' },
+      [
+        createLesson(
+          'folk-m4-l1',
+          { en: 'How to Read Studies', jp: '研究の読み方' },
+          { en: 'Claims vs evidence', jp: '主張と根拠' }
+        ),
+        createLesson(
+          'folk-m4-l2',
+          { en: 'Designing Safe Habits', jp: '安全な習慣設計' },
+          { en: 'Checklists and boundaries', jp: 'チェックリストと境界' }
+        )
+      ]
+    )
+  ]
+);
+
+const JAPANESE_HISTORY_DEMO_DATA: any = createDemoCourse(
+  'demo-jp-history-001',
+  { en: 'Chronicles of Japan', jp: '日本史クロニクル' },
+  {
+    en: 'Trace the major eras of Japanese history through key shifts and cultures.',
+    jp: '日本史の主要時代を流れと転換点で学びます。'
+  },
+  [
+    createModule(
+      'jph-m1',
+      { en: 'Origins & Classical', jp: '起源と古代' },
+      { en: 'From early cultures to court life.', jp: '古代文化から宮廷文化へ。' },
+      [
+        createLesson(
+          'jph-m1-l1',
+          { en: 'Jomon to Yayoi', jp: '縄文から弥生へ' },
+          { en: 'Early cultures', jp: '初期文化の特徴' }
+        ),
+        createLesson(
+          'jph-m1-l2',
+          { en: 'Nara & Heian', jp: '奈良・平安' },
+          { en: 'Court culture', jp: '宮廷文化の形成' }
+        )
+      ]
+    ),
+    createModule(
+      'jph-m2',
+      { en: 'Warrior Era', jp: '武士の時代' },
+      { en: 'Rise of samurai governments.', jp: '武家政権の成立。' },
+      [
+        createLesson(
+          'jph-m2-l1',
+          { en: 'Kamakura & Muromachi', jp: '鎌倉・室町' },
+          { en: 'Samurai rule', jp: '武士政権の展開' }
+        ),
+        createLesson(
+          'jph-m2-l2',
+          { en: 'Sengoku Dynamics', jp: '戦国の動態' },
+          { en: 'Warring states', jp: '戦国の勢力図' }
+        )
+      ]
+    ),
+    createModule(
+      'jph-m3',
+      { en: 'Tokugawa & Opening', jp: '江戸と開国' },
+      { en: 'Urban growth and modernization.', jp: '都市化と近代化の入口。' },
+      [
+        createLesson(
+          'jph-m3-l1',
+          { en: 'Edo Society', jp: '江戸の社会' },
+          { en: 'Urban life', jp: '都市文化の発展' }
+        ),
+        createLesson(
+          'jph-m3-l2',
+          { en: 'Meiji Transformation', jp: '明治の変革' },
+          { en: 'Modernization', jp: '近代化の進展' }
+        )
+      ]
+    ),
+    createModule(
+      'jph-m4',
+      { en: 'Modern Japan', jp: '近現代の日本' },
+      { en: 'From the 20th century to today.', jp: '20世紀から現代へ。' },
+      [
+        createLesson(
+          'jph-m4-l1',
+          { en: 'Taisho to Postwar', jp: '大正から戦後' },
+          { en: '20th-century shifts', jp: '20世紀の変動' }
+        ),
+        createLesson(
+          'jph-m4-l2',
+          { en: 'Contemporary Japan', jp: '現代日本' },
+          { en: 'Economy and culture', jp: '経済と文化' }
+        )
+      ]
+    )
+  ]
+);
+
+const WORLD_HISTORY_DEMO_DATA: any = createDemoCourse(
+  'demo-world-history-001',
+  { en: 'World Tapestry: Connected History', jp: '世界史タペストリー：文明のつながり' },
+  {
+    en: 'Explore global history through networks, ideas, and transformations.',
+    jp: 'ネットワーク・思想・変化の視点で世界史を学びます。'
+  },
+  [
+    createModule(
+      'wh-m1',
+      { en: 'First Civilizations', jp: '最初の文明' },
+      { en: 'Cities, rivers, and early states.', jp: '都市と河川文明を理解する。' },
+      [
+        createLesson(
+          'wh-m1-l1',
+          { en: 'Rivers & Cities', jp: '河川と都市' },
+          { en: 'Mesopotamia & Egypt', jp: 'メソポタミアとエジプト' }
+        ),
+        createLesson(
+          'wh-m1-l2',
+          { en: 'Classical Worlds', jp: '古典世界' },
+          { en: 'Greece, Rome, China', jp: 'ギリシャ・ローマ・中国' }
+        )
+      ]
+    ),
+    createModule(
+      'wh-m2',
+      { en: 'Networks & Faiths', jp: 'ネットワークと宗教' },
+      { en: 'Ideas and trade connect regions.', jp: '交易と思想の広がり。' },
+      [
+        createLesson(
+          'wh-m2-l1',
+          { en: 'Silk Road', jp: 'シルクロード' },
+          { en: 'Trade and exchange', jp: '交易と交流' }
+        ),
+        createLesson(
+          'wh-m2-l2',
+          { en: 'Religions & Ideas', jp: '宗教と思想' },
+          { en: 'Spread and impact', jp: '拡大と影響' }
+        )
+      ]
+    ),
+    createModule(
+      'wh-m3',
+      { en: 'Revolutions', jp: '革命と転換' },
+      { en: 'Science and industry reshape society.', jp: '科学と産業の変化。' },
+      [
+        createLesson(
+          'wh-m3-l1',
+          { en: 'Scientific Revolution', jp: '科学革命' },
+          { en: 'New methods', jp: '新しい方法論' }
+        ),
+        createLesson(
+          'wh-m3-l2',
+          { en: 'Industrial Age', jp: '産業時代' },
+          { en: 'Machines and society', jp: '機械と社会' }
+        )
+      ]
+    ),
+    createModule(
+      'wh-m4',
+      { en: 'Global Era', jp: 'グローバル時代' },
+      { en: 'Modern conflicts and connections.', jp: '現代の対立とつながり。' },
+      [
+        createLesson(
+          'wh-m4-l1',
+          { en: '20th Century', jp: '20世紀' },
+          { en: 'Wars and reforms', jp: '戦争と改革' }
+        ),
+        createLesson(
+          'wh-m4-l2',
+          { en: 'Globalization', jp: 'グローバル化' },
+          { en: 'Interconnected world', jp: '相互につながる世界' }
+        )
+      ]
+    )
+  ]
+);
+
+const AI_REVIEW_DEMO_DATA: any = createDemoCourse(
+  'demo-ai-review-001',
+  { en: 'Review Craft with AI', jp: 'AI活用レビュー論文の作成' },
+  {
+    en: 'Learn a practical workflow for creating review papers with AI assistance.',
+    jp: 'AIの力を借りてレビュー論文を仕上げる実践フローを学びます。'
+  },
+  [
+    createModule(
+      'rev-m1',
+      { en: 'Research Question', jp: '研究設計' },
+      { en: 'Define scope and objectives.', jp: 'スコープと目的を定める。' },
+      [
+        createLesson(
+          'rev-m1-l1',
+          { en: 'Scope & RQ', jp: 'スコープと研究質問' },
+          { en: 'Define the question', jp: '問いの定義' }
+        ),
+        createLesson(
+          'rev-m1-l2',
+          { en: 'Keywords & Search', jp: 'キーワードと検索' },
+          { en: 'Search strategy', jp: '検索戦略' }
+        )
+      ]
+    ),
+    createModule(
+      'rev-m2',
+      { en: 'Screen & Organize', jp: '抽出と整理' },
+      { en: 'Filter and manage literature.', jp: '文献を絞り整理する。' },
+      [
+        createLesson(
+          'rev-m2-l1',
+          { en: 'Inclusion Criteria', jp: '採用基準' },
+          { en: 'Filtering', jp: 'フィルタリング' }
+        ),
+        createLesson(
+          'rev-m2-l2',
+          { en: 'Citation Management', jp: '引用管理' },
+          { en: 'Reference workflow', jp: '文献管理フロー' }
+        )
+      ]
+    ),
+    createModule(
+      'rev-m3',
+      { en: 'Synthesis', jp: '統合と分析' },
+      { en: 'Structure the evidence.', jp: 'エビデンスを構造化する。' },
+      [
+        createLesson(
+          'rev-m3-l1',
+          { en: 'Thematic Mapping', jp: 'テーマ整理' },
+          { en: 'Cluster findings', jp: '知見の分類' }
+        ),
+        createLesson(
+          'rev-m3-l2',
+          { en: 'Evidence Tables', jp: 'エビデンステーブル' },
+          { en: 'Summaries', jp: '要約の作成' }
+        )
+      ]
+    ),
+    createModule(
+      'rev-m4',
+      { en: 'Writing & Review', jp: '執筆とレビュー' },
+      { en: 'Draft, revise, and check quality.', jp: 'ドラフトと品質確認。' },
+      [
+        createLesson(
+          'rev-m4-l1',
+          { en: 'Argument Flow', jp: '論旨の構成' },
+          { en: 'Narrative building', jp: 'ストーリー設計' }
+        ),
+        createLesson(
+          'rev-m4-l2',
+          { en: 'AI-Assisted Drafting', jp: 'AI支援の執筆' },
+          { en: 'Ethics and checks', jp: '倫理とチェック' }
+        )
+      ]
+    )
+  ]
+);
+
 // --- UTILS ---
 
 let activeDemoData = PYTHON_DEMO_DATA;
@@ -1501,6 +2215,22 @@ const selectDemoByPrompt = (message: string) => {
     activeDemoData = UNITY_DEMO_DATA;
   } else if (m.includes('agent') || m.includes('エージェント') || m.includes('startup')) {
     activeDemoData = AI_AGENTS_DEMO_DATA;
+  } else if (m.includes('english') || m.includes('英語')) {
+    activeDemoData = ENGLISH_DEMO_DATA;
+  } else if (m.includes('math') || m.includes('数学')) {
+    activeDemoData = MATH_DEMO_DATA;
+  } else if (m.includes('french') || m.includes('フランス')) {
+    activeDemoData = FRENCH_DEMO_DATA;
+  } else if (m.includes('kintsugi') || m.includes('金継ぎ')) {
+    activeDemoData = KINTSUGI_DEMO_DATA;
+  } else if (m.includes('folk') || m.includes('民間療法') || m.includes('herb') || m.includes('ハーブ')) {
+    activeDemoData = FOLK_MEDICINE_DEMO_DATA;
+  } else if (m.includes('日本史') || m.includes('japanese history')) {
+    activeDemoData = JAPANESE_HISTORY_DEMO_DATA;
+  } else if (m.includes('世界史') || m.includes('world history')) {
+    activeDemoData = WORLD_HISTORY_DEMO_DATA;
+  } else if (m.includes('review') || m.includes('論文') || m.includes('サーベイ')) {
+    activeDemoData = AI_REVIEW_DEMO_DATA;
   } else {
     activeDemoData = PYTHON_DEMO_DATA;
   }
@@ -1572,24 +2302,160 @@ const normalizeGeneratedCourse = (raw: any): GeneratedCourse => {
 export const fetchGeneratedCourses = async (): Promise<Course[]> => {
   if (USE_DEMO_MODE) {
     // Strictly return only demo courses when in demo mode
+    const getLessonCount = (demo: any) =>
+      (demo?.modules || []).reduce((sum: number, module: any) => sum + (module.lessons?.length || 0), 0);
     const demoItems = [
-      { id: PYTHON_DEMO_DATA.id, title: PYTHON_DEMO_DATA.title.jp, desc: PYTHON_DEMO_DATA.description.jp, img: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&q=80&w=800' },
-      { id: ART_DEMO_DATA.id, title: ART_DEMO_DATA.title.jp, desc: ART_DEMO_DATA.description.jp, img: 'https://images.unsplash.com/photo-1577720580479-7d839d829c73?auto=format&fit=crop&q=80&w=1000' },
-      { id: UNITY_DEMO_DATA.id, title: UNITY_DEMO_DATA.title.jp, desc: UNITY_DEMO_DATA.description.jp, img: 'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?auto=format&fit=crop&q=80&w=800' },
-      { id: AI_AGENTS_DEMO_DATA.id, title: AI_AGENTS_DEMO_DATA.title.jp, desc: AI_AGENTS_DEMO_DATA.description.jp, img: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=800' }
+      {
+        data: PYTHON_DEMO_DATA,
+        img: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&q=80&w=800',
+        category: 'AI・テック',
+        categoryKey: 'ai',
+        level: 'beginner',
+        durationMinutes: 240,
+        formats: ['doc', 'quiz'],
+        goals: ['career', 'research'],
+        tags: ['python', 'AI', 'データ']
+      },
+      {
+        data: ART_DEMO_DATA,
+        img: 'https://images.unsplash.com/photo-1577720580479-7d839d829c73?auto=format&fit=crop&q=80&w=1000',
+        category: 'アート',
+        categoryKey: 'art',
+        level: 'beginner',
+        durationMinutes: 240,
+        formats: ['doc', 'project'],
+        goals: ['culture', 'hobby'],
+        tags: ['美術史', 'デザイン', '文化']
+      },
+      {
+        data: UNITY_DEMO_DATA,
+        img: '/generated/img_ead6dc4b560895b4f1bcaccb3228f3d91ff5ae2c5f3257c7ec31193630213a5e.jpg',
+        category: 'ゲーム開発',
+        categoryKey: 'game',
+        level: 'intermediate',
+        durationMinutes: 300,
+        formats: ['project', 'doc'],
+        goals: ['career', 'hobby'],
+        tags: ['Unity', 'AI', 'ゲーム']
+      },
+      {
+        data: AI_AGENTS_DEMO_DATA,
+        img: '/generated/img_7d2e1114b497e75e541a491c179647f9878ff7a0b88b9438e122571a9710e37c.jpg',
+        category: 'AI・テック',
+        categoryKey: 'ai',
+        level: 'intermediate',
+        durationMinutes: 240,
+        formats: ['doc', 'project'],
+        goals: ['career', 'research'],
+        tags: ['Agent', 'スタートアップ', '自動化']
+      },
+      {
+        data: ENGLISH_DEMO_DATA,
+        img: '/generated/img_b13185e5d2e085460f239f5af9df1d30769766068a1d3111176d49398bed5335.jpg',
+        category: '言語',
+        categoryKey: 'language',
+        level: 'beginner',
+        durationMinutes: 180,
+        formats: ['doc', 'workshop'],
+        goals: ['travel', 'career'],
+        tags: ['English', '会話', '発音']
+      },
+      {
+        data: MATH_DEMO_DATA,
+        img: '/generated/img_68ebfb521a1294b80ff8c2e99f726d4ef62113ee7ce2888d70828647ed871e81.jpg',
+        category: '数学',
+        categoryKey: 'math',
+        level: 'intermediate',
+        durationMinutes: 210,
+        formats: ['doc', 'quiz'],
+        goals: ['career', 'academia'],
+        tags: ['数学', '論理', '関数']
+      },
+      {
+        data: FRENCH_DEMO_DATA,
+        img: '/generated/img_91f475df301142590b1df0e6914a2281b9ffc0c5cb8bd10c46fc0094eeea5323.jpg',
+        category: '言語',
+        categoryKey: 'language',
+        level: 'beginner',
+        durationMinutes: 180,
+        formats: ['doc', 'workshop'],
+        goals: ['travel', 'culture'],
+        tags: ['French', '会話', '文化']
+      },
+      {
+        data: KINTSUGI_DEMO_DATA,
+        img: '/generated/img_70a2df25457ce15a39e8fdd73f5d211b47a2322cdb0375f55b70bf1c2cd8967d.jpg',
+        category: 'クラフト',
+        categoryKey: 'craft',
+        level: 'beginner',
+        durationMinutes: 150,
+        formats: ['doc', 'project'],
+        goals: ['hobby', 'culture'],
+        tags: ['金継ぎ', '工芸', '美学']
+      },
+      {
+        data: FOLK_MEDICINE_DEMO_DATA,
+        img: '/generated/img_eedec592beafe7483e97c415e40682a3fe852eade2f9ec3a7a2eb9246bc02ad1.jpg',
+        category: 'ウェルネス',
+        categoryKey: 'wellness',
+        level: 'beginner',
+        durationMinutes: 150,
+        formats: ['doc'],
+        goals: ['wellness', 'culture'],
+        tags: ['民間療法', 'ハーブ', 'ケア']
+      },
+      {
+        data: JAPANESE_HISTORY_DEMO_DATA,
+        img: '/generated/img_027070a7fe5525d0cb7c7bcad88e91408ae5a400612305b1cb86b5ad6d972808.jpg',
+        category: '歴史',
+        categoryKey: 'history',
+        level: 'beginner',
+        durationMinutes: 210,
+        formats: ['doc', 'quiz'],
+        goals: ['culture', 'academia'],
+        tags: ['日本史', '時代', '文化']
+      },
+      {
+        data: WORLD_HISTORY_DEMO_DATA,
+        img: '/generated/img_425b852809811e1fecc1ced3e766e29e350df011ba2569df010c252a1dd9db05.jpg',
+        category: '歴史',
+        categoryKey: 'history',
+        level: 'beginner',
+        durationMinutes: 210,
+        formats: ['doc', 'quiz'],
+        goals: ['culture', 'academia'],
+        tags: ['世界史', '文明', '歴史']
+      },
+      {
+        data: AI_REVIEW_DEMO_DATA,
+        img: '/generated/img_606d0bd18ff5272a96605026415e64712f331feeab53379a49f0b2f5b53482ed.jpg',
+        category: '研究',
+        categoryKey: 'research',
+        level: 'advanced',
+        durationMinutes: 240,
+        formats: ['doc', 'project'],
+        goals: ['research', 'academia'],
+        tags: ['レビュー論文', 'AI', 'リサーチ']
+      }
     ];
 
     return demoItems.map(d => ({
-      id: d.id,
-      title: d.title,
-      description: d.desc,
-      category: 'AI Demo',
+      id: d.data.id,
+      title: d.data.title.jp,
+      description: d.data.description.jp,
+      category: d.category,
+      categoryKey: d.categoryKey,
       progress: 0,
-      totalLessons: 0,
+      totalLessons: getLessonCount(d.data),
       completedLessons: 0,
       thumbnail: d.img,
       color: 'bg-indigo-500',
-      source: 'generated'
+      source: 'generated',
+      level: d.level,
+      durationMinutes: d.durationMinutes,
+      formats: d.formats,
+      goals: d.goals,
+      tags: d.tags
     }));
   }
 
@@ -1625,6 +2491,14 @@ export const fetchGeneratedCourseById = async (id: string): Promise<GeneratedCou
     if (id === ART_DEMO_DATA.id) return normalizeGeneratedCourse(ART_DEMO_DATA);
     if (id === UNITY_DEMO_DATA.id) return normalizeGeneratedCourse(UNITY_DEMO_DATA);
     if (id === AI_AGENTS_DEMO_DATA.id) return normalizeGeneratedCourse(AI_AGENTS_DEMO_DATA);
+    if (id === ENGLISH_DEMO_DATA.id) return normalizeGeneratedCourse(ENGLISH_DEMO_DATA);
+    if (id === MATH_DEMO_DATA.id) return normalizeGeneratedCourse(MATH_DEMO_DATA);
+    if (id === FRENCH_DEMO_DATA.id) return normalizeGeneratedCourse(FRENCH_DEMO_DATA);
+    if (id === KINTSUGI_DEMO_DATA.id) return normalizeGeneratedCourse(KINTSUGI_DEMO_DATA);
+    if (id === FOLK_MEDICINE_DEMO_DATA.id) return normalizeGeneratedCourse(FOLK_MEDICINE_DEMO_DATA);
+    if (id === JAPANESE_HISTORY_DEMO_DATA.id) return normalizeGeneratedCourse(JAPANESE_HISTORY_DEMO_DATA);
+    if (id === WORLD_HISTORY_DEMO_DATA.id) return normalizeGeneratedCourse(WORLD_HISTORY_DEMO_DATA);
+    if (id === AI_REVIEW_DEMO_DATA.id) return normalizeGeneratedCourse(AI_REVIEW_DEMO_DATA);
     // If not a demo ID but in demo mode, fallback to Python demo
     return normalizeGeneratedCourse(PYTHON_DEMO_DATA);
   }
@@ -1705,6 +2579,15 @@ export const sendAiDecision = async (curriculumId: string, sessionId: string, st
     // Maintain active demo based on curriculumId
     if (curriculumId === ART_DEMO_DATA.id) activeDemoData = ART_DEMO_DATA;
     else if (curriculumId === UNITY_DEMO_DATA.id) activeDemoData = UNITY_DEMO_DATA;
+    else if (curriculumId === AI_AGENTS_DEMO_DATA.id) activeDemoData = AI_AGENTS_DEMO_DATA;
+    else if (curriculumId === ENGLISH_DEMO_DATA.id) activeDemoData = ENGLISH_DEMO_DATA;
+    else if (curriculumId === MATH_DEMO_DATA.id) activeDemoData = MATH_DEMO_DATA;
+    else if (curriculumId === FRENCH_DEMO_DATA.id) activeDemoData = FRENCH_DEMO_DATA;
+    else if (curriculumId === KINTSUGI_DEMO_DATA.id) activeDemoData = KINTSUGI_DEMO_DATA;
+    else if (curriculumId === FOLK_MEDICINE_DEMO_DATA.id) activeDemoData = FOLK_MEDICINE_DEMO_DATA;
+    else if (curriculumId === JAPANESE_HISTORY_DEMO_DATA.id) activeDemoData = JAPANESE_HISTORY_DEMO_DATA;
+    else if (curriculumId === WORLD_HISTORY_DEMO_DATA.id) activeDemoData = WORLD_HISTORY_DEMO_DATA;
+    else if (curriculumId === AI_REVIEW_DEMO_DATA.id) activeDemoData = AI_REVIEW_DEMO_DATA;
     else activeDemoData = PYTHON_DEMO_DATA;
 
     if (decision === 'revise') {

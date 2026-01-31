@@ -197,7 +197,7 @@ const LearningHub: React.FC<LearningHubProps> = ({ onNavigate }) => {
             color: 'text-yellow-500',
             bg: 'bg-yellow-50',
             borderColor: 'border-yellow-100',
-            image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=800",
+            image: "/generated/img_7d2e1114b497e75e541a491c179647f9878ff7a0b88b9438e122571a9710e37c.jpg",
             isActive: true,
             sortOrder: 20
         },

@@ -4,11 +4,17 @@ export interface Course {
   title: string;
   description: string;
   category: string;
+  categoryKey?: string;
   progress: number;
   totalLessons: number;
   completedLessons: number;
   thumbnail: string;
   color: string;
+  level?: 'beginner' | 'intermediate' | 'advanced';
+  durationMinutes?: number;
+  formats?: string[];
+  goals?: string[];
+  tags?: string[];
   source?: 'curated' | 'generated';
 }
 

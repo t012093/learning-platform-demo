@@ -28,3 +28,7 @@ dist-ssr
 .env.bak
 .env.local.bak
 public/uploads/
+*.pdf
+debug_*.js
+test_db_user.js
+serena_mcp_config.json.bak

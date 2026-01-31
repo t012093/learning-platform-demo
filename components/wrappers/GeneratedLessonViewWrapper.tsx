@@ -34,6 +34,12 @@ const GeneratedLessonViewWrapper: React.FC = () => {
       return;
     }
 
+    setCurriculum(null);
+    setCurrentLesson(null);
+    setLessonIndex({ module: 0, lesson: 0 });
+    setError(null);
+    setLoading(true);
+
     fetchGeneratedCourseById(courseId)
       .then((rawCourse) => {
         console.log('[LessonWrapper] Raw course data:', rawCourse);

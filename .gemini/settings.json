@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "serena": {
-      "command": "uvx",
+      "command": "/opt/homebrew/bin/uvx",
       "args": [
         "--from",
         "git+https://github.com/oraios/serena",
@@ -10,7 +10,7 @@
         "--project-from-cwd"
       ],
       "env": {
-        "PATH": "/usr/local/bin:/usr/bin:/bin:/home/codespace/.local/bin"
+        "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/home/codespace/.local/bin"
       }
     }
   }

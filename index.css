@@ -275,6 +275,43 @@
   animation: pageTransition 0.5s var(--dashboard-ease);
 }
 
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(48px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-48px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slide-in-right {
+  animation: slideInRight 0.55s var(--dashboard-ease);
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.55s var(--dashboard-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide-in-right,
+  .slide-in-left {
+    animation: none;
+  }
+}
+
 @keyframes portalCardIn {
   from {
     opacity: 0;

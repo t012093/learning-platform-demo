@@ -16,7 +16,6 @@ const GeneratedLessonView: React.FC<GeneratedLessonViewProps> = ({ course, onBac
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    const [audioMode, setAudioMode] = useState<'browser' | 'generated'>('browser');
     const [isMuted, setIsMuted] = useState(false);
     const [isAudioLoading, setIsAudioLoading] = useState(false);
     const audioRef = React.useRef<HTMLAudioElement | null>(null);
@@ -165,7 +164,6 @@ const GeneratedLessonView: React.FC<GeneratedLessonViewProps> = ({ course, onBac
     // --- Audio Logic ---
     React.useEffect(() => {
         if (!currentSlide || isMuted) {
-            window.speechSynthesis.cancel();
             if (audioRef.current) {
                 audioRef.current.pause();
                 audioRef.current.currentTime = 0;
@@ -173,46 +171,33 @@ const GeneratedLessonView: React.FC<GeneratedLessonViewProps> = ({ course, onBac
             return;
         }
 
-        const textToSpeak = currentSlide.speechScript || currentSlide.bullets.join('. ') || currentSlide.title;
+        // Generated Audio File
+        const audioPath = `/data/audio/${course.id}/${currentChapterIndex}_${currentSlideIndex}.mp3`;
+        if (audioRef.current) {
+            setIsAudioLoading(true);
+            audioRef.current.src = audioPath;
 
-        if (audioMode === 'browser') {
-            setIsAudioLoading(false);
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(textToSpeak);
-            utterance.lang = language === 'jp' ? 'ja-JP' : 'en-US';
-            utterance.rate = 1.0;
-            utterance.pitch = 1.0;
-            window.speechSynthesis.speak(utterance);
-        } else {
-            // Generated Audio File
-            const audioPath = `/data/audio/${course.id}/${currentChapterIndex}_${currentSlideIndex}.mp3`;
-            if (audioRef.current) {
-                setIsAudioLoading(true);
-                audioRef.current.src = audioPath;
-                
-                const playPromise = audioRef.current.play();
-                if (playPromise !== undefined) {
-                    playPromise
-                        .then(() => setIsAudioLoading(false))
-                        .catch(e => {
-                            console.log("Audio file not ready yet, retrying in 3s...");
-                            // 音声がまだ生成されていない場合、3秒後に再試行
-                            setTimeout(() => {
-                                if (audioMode === 'generated' && !isMuted) {
-                                    setIsAudioLoading(true);
-                                    if (audioRef.current) audioRef.current.load();
-                                }
-                            }, 3000);
-                        });
-                }
+            const playPromise = audioRef.current.play();
+            if (playPromise !== undefined) {
+                playPromise
+                    .then(() => setIsAudioLoading(false))
+                    .catch(() => {
+                        console.log("Audio file not ready yet, retrying in 3s...");
+                        // 音声がまだ生成されていない場合、3秒後に再試行
+                        setTimeout(() => {
+                            if (!isMuted) {
+                                setIsAudioLoading(true);
+                                if (audioRef.current) audioRef.current.load();
+                            }
+                        }, 3000);
+                    });
             }
         }
 
         return () => {
-            window.speechSynthesis.cancel();
             if (audioRef.current) audioRef.current.pause();
         };
-    }, [currentSlide, audioMode, isMuted, course.id, currentChapterIndex, currentSlideIndex]);
+    }, [currentSlide, isMuted, course.id, currentChapterIndex, currentSlideIndex]);
 
     const handleNext = () => {
         if (isLastChapter) {
@@ -274,23 +259,16 @@ const GeneratedLessonView: React.FC<GeneratedLessonViewProps> = ({ course, onBac
                     >
                         {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-0.5" />}
                     </button>
-                    <button
-                        onClick={() => setAudioMode(prev => prev === 'browser' ? 'generated' : 'browser')}
-                        className={`text-[10px] font-bold px-3 py-1.5 rounded-full transition-all border ${
-                            audioMode === 'browser'
-                                ? 'bg-white/5 hover:bg-white/10 border-white/5 text-slate-200'
-                                : 'bg-indigo-600/20 text-indigo-300 border-indigo-500/30'
-                        }`}
-                    >
-                        {isAudioLoading && audioMode === 'generated' ? (
+                    <div className="text-[10px] font-bold px-3 py-1.5 rounded-full border bg-indigo-600/20 text-indigo-300 border-indigo-500/30">
+                        {isAudioLoading ? (
                             <span className="flex items-center gap-2">
                                 <span className="w-2 h-2 bg-indigo-400 rounded-full animate-ping"></span>
                                 {t.preparing}
                             </span>
                         ) : (
-                            audioMode === 'browser' ? t.browserVoice : t.aiVoice
+                            t.aiVoice
                         )}
-                    </button>
+                    </div>
                 </div>
                 <button
                     onClick={() => setIsSidebarOpen(!isSidebarOpen)}

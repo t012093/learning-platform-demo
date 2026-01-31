@@ -1,14 +1,19 @@
-import React, { useState, useEffect, useRef, useId } from 'react';
+import React, { useState, useEffect, useRef, useId, useMemo } from 'react';
 import {
     ArrowLeft, BookOpen, List, Clock,
     ChevronRight, AlertTriangle, Info, Lightbulb, CheckCircle2,
-    Copy, Check, FileText, Brain, ChevronDown, ChevronLeft, ChevronUp
+    Copy, Check, FileText, Brain, ChevronDown, ChevronLeft, ChevronUp, Image, Play, Pause, Volume2, VolumeX
 } from 'lucide-react';
 import mermaid from 'mermaid';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
 import { DocChapter, DocSection, LocalizedDocBlock, LocalizedText, QuizData } from '../../../types';
 import { GeneratedLesson } from '../../../services/curriculumAdapter';
 import GlossaryText from '../../common/GlossaryText';
 import { generateImagePreview } from '../../../services/curriculumApi';
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 // Helper to handle both string (legacy/resolved) and LocalizedText
 const getText = (content: string | LocalizedText | undefined, lang: 'en' | 'jp'): string => {
@@ -30,6 +35,50 @@ interface GeneratedDocViewProps {
     hasPrev?: boolean;
 }
 
+type SlideDeck = {
+    type: 'images' | 'pdf';
+    title?: LocalizedText;
+    slides?: string[];
+    pdfUrl?: string;
+    narrations?: LocalizedText[];
+    audio?: string[];
+    audioDurations?: number[];
+};
+
+const SLIDE_DECKS: Record<string, SlideDeck & { slideTimestamps?: number[] }> = {
+    'm1-l1': {
+        type: 'pdf',
+        title: { en: 'Variables & Memory Slides', jp: '変数とメモリ管理スライド' },
+        pdfUrl: '/slides/variables-memory/variables-memory.pdf',
+        narrations: [
+            {
+                en: 'A variable is a label. It does not store a value directly, it points to an object in memory. Multiple labels can reference the same object.',
+                jp: '変数は箱ではなくラベルです。値を直接持たず、メモリ上のオブジェクトを指します。複数の名前が同じオブジェクトを参照できます。'
+            },
+            {
+                en: 'Every object has an identity. Mutable objects keep the same identity when changed, while immutable objects create new identities.',
+                jp: 'すべてのオブジェクトにはIDがあります。リストなどの可変オブジェクトは変更してもIDが同じですが、不変オブジェクトは変更時に新しいIDになります。'
+            },
+            {
+                en: 'Assignment copies references, not data. Use copy or slicing for shallow copies, and deepcopy when nested objects are involved.',
+                jp: '代入は参照をコピーするだけでデータは複製されません。浅いコピーは copy やスライス、ネスト構造は deepcopy が必要です。'
+            },
+            {
+                en: 'Mutable types like lists can change in place, while immutable types like strings cannot. This changes how data flows through variables.',
+                jp: '可変型（リストなど）はその場で変化し、不変型（文字列など）は新しいオブジェクトになります。これがデータの流れ方を左右します。'
+            },
+            {
+                en: 'Python reclaims memory when references drop to zero. A garbage collector also cleans up cycles.',
+                jp: '参照数が0になるとメモリが解放されます。循環参照はガーベジコレクタが回収します。'
+            }
+        ],
+        // Single master audio file for the entire deck
+        audio: ['/audio/slides/m1-l1/01.wav'], 
+        // Cumulative timestamps (seconds) when each slide should transition to the next
+        slideTimestamps: [10.87, 21.74, 32.61, 43.48, 54.37] 
+    }
+};
+
 const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
     lesson,
     onBack,
@@ -44,12 +93,117 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
 }) => {
     // Theme is handled by context
     const [activeSection, setActiveSection] = useState<string>('');
-    const [viewMode, setViewMode] = useState<'doc' | 'quiz'>('doc');
+    const [viewMode, setViewMode] = useState<'doc' | 'quiz' | 'slides'>('doc');
+    const [slideIndex, setSlideIndex] = useState(0);
+    const [isSlidePlaying, setIsSlidePlaying] = useState(false); // Default to paused
+    const [isSlideMuted, setIsSlideMuted] = useState(false);
+    const slideAudioRef = useRef<HTMLAudioElement | null>(null);
+    const [slideDirection, setSlideDirection] = useState<'next' | 'prev'>('next');
+    const [pdfPageCount, setPdfPageCount] = useState(0);
+    const [pdfPageWidth, setPdfPageWidth] = useState<number | null>(null);
+    const [pdfContainerEl, setPdfContainerEl] = useState<HTMLDivElement | null>(null);
+    const [audioProgress, setAudioProgress] = useState(0);
+    const pendingAudioSeek = useRef<number | null>(null);
     const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({});
     const [quizSubmitted, setQuizSubmitted] = useState(false);
     const observer = useRef<IntersectionObserver | null>(null);
     const hasQuiz = Boolean(lesson.quiz && lesson.quiz.questions && lesson.quiz.questions.length > 0);
-    const effectiveViewMode = viewMode === 'quiz' && !hasQuiz ? 'doc' : viewMode;
+    const slideDeck = SLIDE_DECKS[lesson.lesson_id];
+    const hasSlides = Boolean(
+        slideDeck &&
+        ((slideDeck.type === 'images' && slideDeck.slides && slideDeck.slides.length > 0) ||
+            (slideDeck.type === 'pdf' && slideDeck.pdfUrl))
+    );
+    const hasSlideAudio = Boolean(slideDeck?.audio && slideDeck.audio.length > 0);
+    const effectiveViewMode = (viewMode === 'quiz' && !hasQuiz) || (viewMode === 'slides' && !hasSlides) ? 'doc' : viewMode;
+    const totalSlides = slideDeck
+        ? slideDeck.type === 'pdf'
+            ? pdfPageCount || (slideDeck.slideTimestamps?.length || 0) || 0
+            : slideDeck.slides?.length || 0
+        : 0;
+    const currentSlideNumber = totalSlides > 0 ? Math.min(slideIndex + 1, totalSlides) : 0;
+    const canGoPrev = slideIndex > 0;
+    const canGoNext = totalSlides > 0 ? slideIndex < totalSlides - 1 : false;
+    const showSlideControls = hasSlides && (totalSlides > 1 || hasSlideAudio);
+
+    // Use master audio mode if only 1 audio file is provided but multiple slides exist
+    const isMasterAudioMode = hasSlideAudio && slideDeck.audio?.length === 1 && (totalSlides > 1 || (slideDeck.slideTimestamps?.length || 0) > 1);
+
+    // Dynamic duration handling to sync progress bar exactly with actual audio files
+    const [realDurations, setRealDurations] = useState<number[]>([]);
+    const [masterDuration, setMasterDuration] = useState(0);
+
+    useEffect(() => {
+        if (slideDeck?.audioDurations) {
+            setRealDurations(slideDeck.audioDurations);
+        }
+    }, [slideDeck]);
+
+    const audioTimeline = useMemo(() => {
+        if (!realDurations.length) return [];
+        let cursor = 0;
+        return realDurations.map((duration) => {
+            const start = cursor;
+            cursor += duration;
+            return { start, end: cursor, duration };
+        });
+    }, [realDurations]);
+    const totalAudioDuration = isMasterAudioMode ? masterDuration : (audioTimeline.length ? audioTimeline[audioTimeline.length - 1].end : 0);
+
+    // --- Audio Control Logic Refactored ---
+    
+    // 1. Determine the correct audio source URL
+    const currentAudioSrc = useMemo(() => {
+        if (!hasSlideAudio || !slideDeck?.audio) return null;
+        if (isMasterAudioMode) return slideDeck.audio[0];
+        // Ensure slideIndex is within bounds
+        const idx = Math.min(slideIndex, slideDeck.audio.length - 1);
+        return slideDeck.audio[idx];
+    }, [hasSlideAudio, slideDeck, isMasterAudioMode, slideIndex]);
+
+    const handleAudioTimeUpdate = (e: React.SyntheticEvent<HTMLAudioElement>) => {
+        const currentTime = e.currentTarget.currentTime;
+        
+        if (isMasterAudioMode && slideDeck.slideTimestamps) {
+            setAudioProgress(currentTime);
+            // Find which slide corresponds to the current time
+            let newIndex = 0;
+            for (let i = 0; i < slideDeck.slideTimestamps.length; i++) {
+                if (currentTime < slideDeck.slideTimestamps[i]) {
+                    newIndex = i;
+                    break;
+                }
+                if (i === slideDeck.slideTimestamps.length - 1) newIndex = i;
+            }
+            if (newIndex !== slideIndex) {
+                setSlideIndex(newIndex);
+            }
+        } else {
+            // Legacy behavior for split files
+            const base = audioTimeline[slideIndex]?.start || 0;
+            setAudioProgress(Math.min(base + currentTime, totalAudioDuration));
+        }
+    };
+
+    const handleAudioLoadedMetadata = (e: React.SyntheticEvent<HTMLAudioElement>) => {
+        const duration = e.currentTarget.duration;
+        if (Number.isFinite(duration) && duration > 0) {
+            if (isMasterAudioMode) {
+                setMasterDuration(duration);
+            } else {
+                setRealDurations(prev => {
+                    const next = [...prev];
+                    if (next.length <= slideIndex) while (next.length <= slideIndex) next.push(0);
+                    if (Math.abs(next[slideIndex] - duration) > 0.1) {
+                        next[slideIndex] = duration;
+                        return next;
+                    }
+                    return prev;
+                });
+            }
+        }
+        applyPendingSeek();
+    };
 
     // Debug: Log lesson data
     console.log('[GeneratedDocView] Rendering with lesson:', {
@@ -70,6 +224,7 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
             complete: "Complete",
             doc: "Doc",
             quiz: "Quiz",
+            slides: "Slides",
             nextLesson: "Next Lesson",
             prevLesson: "Previous",
             checkAnswers: "Check Answers",
@@ -86,6 +241,7 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
             complete: "完了",
             doc: "ドキュメント",
             quiz: "クイズ",
+            slides: "スライド",
             nextLesson: "次のレッスン",
             prevLesson: "前へ",
             checkAnswers: "回答を確認",
@@ -131,13 +287,209 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
         setViewMode('doc');
         setQuizAnswers({});
         setQuizSubmitted(false);
+        setSlideIndex(0);
+        setIsSlidePlaying(false); // Do not autoplay
+        setIsSlideMuted(false);
+        setSlideDirection('next');
+        setPdfPageCount(0);
+        setPdfPageWidth(null);
+        setPdfContainerEl(null);
+        setAudioProgress(0);
+        pendingAudioSeek.current = null;
     }, [lesson.lesson_id]);
 
     useEffect(() => {
-        if (!hasQuiz && viewMode === 'quiz') {
+        if ((!hasQuiz && viewMode === 'quiz') || (!hasSlides && viewMode === 'slides')) {
             setViewMode('doc');
         }
-    }, [hasQuiz, viewMode]);
+    }, [hasQuiz, hasSlides, viewMode]);
+
+    useEffect(() => {
+        if (effectiveViewMode !== 'slides') return;
+        if (!slideDeck || slideDeck.type !== 'pdf') return;
+        if (!pdfContainerEl) return;
+        if (typeof window === 'undefined' || typeof ResizeObserver === 'undefined') return;
+        const updateWidth = () => {
+            setPdfPageWidth(pdfContainerEl.clientWidth);
+        };
+        updateWidth();
+        const observer = new ResizeObserver(() => updateWidth());
+        observer.observe(pdfContainerEl);
+        return () => observer.disconnect();
+    }, [effectiveViewMode, slideDeck?.pdfUrl, pdfContainerEl]);
+
+    useEffect(() => {
+        if (!slideDeck || slideDeck.type !== 'pdf') return;
+        if (!pdfPageCount) return;
+        if (slideIndex >= pdfPageCount) {
+            setSlideIndex(Math.max(0, pdfPageCount - 1));
+        }
+    }, [pdfPageCount, slideDeck?.type, slideIndex]);
+
+    useEffect(() => {
+        if (!hasSlideAudio || !audioTimeline.length) return;
+        if (pendingAudioSeek.current !== null) return;
+        const startOffset = audioTimeline[slideIndex]?.start || 0;
+        setAudioProgress(startOffset);
+    }, [slideIndex, hasSlideAudio, audioTimeline]);
+
+    useEffect(() => {
+        if (effectiveViewMode !== 'slides') return;
+        if (!hasSlides || !slideDeck || slideDeck.type !== 'images') return;
+        if (hasSlideAudio) return;
+        if (!isSlidePlaying) return;
+        const total = slideDeck.slides?.length || 0;
+        if (!total) return;
+        const timer = window.setInterval(() => {
+            setSlideIndex((prev) => (prev + 1) % total);
+        }, 6500);
+        return () => window.clearInterval(timer);
+    }, [effectiveViewMode, hasSlides, slideDeck, isSlidePlaying]);
+
+    const goToNextSlide = (wrap = false) => {
+        if (!totalSlides) return;
+        setSlideDirection('next');
+        setSlideIndex((prev) => {
+            const next = prev + 1;
+            if (next >= totalSlides) return wrap ? 0 : prev;
+            return next;
+        });
+    };
+
+    const goToPrevSlide = (wrap = false) => {
+        if (!totalSlides) return;
+        setSlideDirection('prev');
+        setSlideIndex((prev) => {
+            const next = prev - 1;
+            if (next < 0) return wrap ? totalSlides - 1 : prev;
+            return next;
+        });
+    };
+
+    const handleSlideScrub = (value: number) => {
+        if (!totalSlides) return;
+        const nextIndex = Math.max(0, Math.min(totalSlides - 1, value));
+        if (nextIndex === slideIndex) return;
+        setSlideDirection(nextIndex > slideIndex ? 'next' : 'prev');
+        setSlideIndex(nextIndex);
+    };
+
+    const handleAudioScrub = (value: number) => {
+        if (!audioTimeline.length) return;
+        const clamped = Math.max(0, Math.min(totalAudioDuration, value));
+        let targetIndex = 0;
+        for (let i = 0; i < audioTimeline.length; i += 1) {
+            if (clamped < audioTimeline[i].end) {
+                targetIndex = i;
+                break;
+            }
+        }
+        const offset = clamped - (audioTimeline[targetIndex]?.start || 0);
+        if (targetIndex !== slideIndex) {
+            setSlideDirection(targetIndex > slideIndex ? 'next' : 'prev');
+            pendingAudioSeek.current = offset;
+            setSlideIndex(targetIndex);
+        } else if (slideAudioRef.current) {
+            slideAudioRef.current.currentTime = Math.max(0, offset);
+        }
+        setAudioProgress(clamped);
+        if (slideAudioRef.current && isSlidePlaying && !isSlideMuted) {
+            slideAudioRef.current.play().catch(() => {});
+        }
+    };
+
+    const handleSlidePlayToggle = () => {
+        console.log('[Audio] Play toggle clicked. Current state:', isSlidePlaying);
+        const nextState = !isSlidePlaying;
+        setIsSlidePlaying(nextState);
+        // The effect will handle the actual play/pause
+    };
+
+    const handleSlideMuteToggle = () => {
+        const nextMuted = !isSlideMuted;
+        setIsSlideMuted(nextMuted);
+        if (!hasSlideAudio || !slideDeck || !slideAudioRef.current) return;
+        if (nextMuted) {
+            slideAudioRef.current.pause();
+            return;
+        }
+        if (isSlidePlaying) {
+            slideAudioRef.current.play().catch(() => {
+                setIsSlidePlaying(false);
+            });
+        }
+    };
+
+    const applyPendingSeek = () => {
+        if (!slideAudioRef.current) return;
+        if (pendingAudioSeek.current === null) return;
+        const target = pendingAudioSeek.current;
+        const duration = slideAudioRef.current.duration || target;
+        slideAudioRef.current.currentTime = Math.min(target, duration);
+        pendingAudioSeek.current = null;
+    };
+
+    const formatTime = (value: number) => {
+        const safeValue = Number.isFinite(value) ? Math.max(0, value) : 0;
+        const minutes = Math.floor(safeValue / 60);
+        const seconds = Math.floor(safeValue % 60);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    };
+
+    // 2. Handle Audio Source Changes (Only update src when strictly necessary)
+    useEffect(() => {
+        const audioEl = slideAudioRef.current;
+        if (!audioEl) {
+            console.warn('[Audio] Element ref is missing');
+            return;
+        }
+        if (!currentAudioSrc) {
+            console.warn('[Audio] Source URL is missing');
+            return;
+        }
+
+        // Check if src actually needs updating to avoid reloading
+        const currentSrcAttr = audioEl.getAttribute('src');
+        const needsUpdate = !currentSrcAttr || !currentSrcAttr.endsWith(currentAudioSrc);
+
+        if (needsUpdate) {
+            console.log('[Audio] Changing source to:', currentAudioSrc);
+            audioEl.src = currentAudioSrc;
+            
+            if (!isMasterAudioMode) {
+                audioEl.currentTime = 0;
+            }
+        }
+
+        if (isSlidePlaying) {
+            console.log('[Audio] Attempting to play...');
+            audioEl.play()
+                .then(() => console.log('[Audio] Playback started'))
+                .catch(e => {
+                    console.error('[Audio] Autoplay/Play blocked:', e);
+                    setIsSlidePlaying(false);
+                });
+        }
+    }, [currentAudioSrc, isMasterAudioMode, isSlidePlaying]);
+
+    // 3. Handle Play/Pause State
+    useEffect(() => {
+        const audioEl = slideAudioRef.current;
+        if (!audioEl) return;
+
+        if (isSlidePlaying) {
+            if (audioEl.paused) audioEl.play().catch(() => setIsSlidePlaying(false));
+        } else {
+            if (!audioEl.paused) audioEl.pause();
+        }
+    }, [isSlidePlaying]);
+
+    // 4. Handle Mute State
+    useEffect(() => {
+        if (slideAudioRef.current) {
+            slideAudioRef.current.muted = isSlideMuted;
+        }
+    }, [isSlideMuted]);
 
     // Scroll Spy Logic
     useEffect(() => {
@@ -232,6 +584,19 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
                         {t.doc}
                     </button>
 
+                    {hasSlides && (
+                        <button
+                            onClick={() => setViewMode('slides')}
+                            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-bold transition-all ${effectiveViewMode === 'slides'
+                                ? 'bg-white text-purple-600 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700'
+                                }`}
+                        >
+                            <Image size={14} />
+                            {t.slides}
+                        </button>
+                    )}
+
                     {hasQuiz && (
                         <button
                             onClick={() => setViewMode('quiz')}
@@ -272,6 +637,19 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
                         <FileText size={14} />
                         {t.doc}
                     </button>
+
+                    {hasSlides && (
+                        <button
+                            onClick={() => setViewMode('slides')}
+                            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-bold transition-all ${effectiveViewMode === 'slides'
+                                ? 'bg-white text-purple-600 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700'
+                                }`}
+                        >
+                            <Image size={14} />
+                            {t.slides}
+                        </button>
+                    )}
 
                     {hasQuiz && (
                         <button
@@ -387,6 +765,241 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
                 </main>
             )}
 
+            {effectiveViewMode === 'slides' && hasSlides && slideDeck && (
+                <main className="pt-24 pb-20 max-w-6xl mx-auto px-4 sm:px-6">
+                    <div className="bg-white border border-slate-200 rounded-2xl shadow-lg overflow-hidden">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 sm:p-6 border-b border-slate-100">
+                            <div>
+                                <p className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">{t.slides}</p>
+                                <h2 className="text-xl font-bold text-slate-900">
+                                    {slideDeck.title ? getText(slideDeck.title, language) : getText(lesson.title, language)}
+                                </h2>
+                                {totalSlides > 0 && (
+                                    <p className="text-sm text-slate-500 mt-1">
+                                        {currentSlideNumber} / {totalSlides}
+                                    </p>
+                                )}
+                            </div>
+                            {showSlideControls && (
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={goToPrevSlide}
+                                        disabled={!canGoPrev}
+                                        className={`p-2 rounded-lg border transition ${canGoPrev ? 'border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50' : 'border-slate-200 text-slate-300 cursor-not-allowed opacity-50'}`}
+                                    >
+                                        <ChevronLeft size={18} />
+                                    </button>
+                                    {hasSlideAudio && (
+                                        <>
+                                            <button
+                                                onClick={handleSlidePlayToggle}
+                                                className={`p-2 rounded-lg border transition ${isSlidePlaying ? 'border-indigo-200 text-indigo-600 bg-indigo-50' : 'border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
+                                            >
+                                                {isSlidePlaying ? <Pause size={18} /> : <Play size={18} />}
+                                            </button>
+                                            <button
+                                                onClick={handleSlideMuteToggle}
+                                                className={`p-2 rounded-lg border transition ${isSlideMuted ? 'border-amber-200 text-amber-600 bg-amber-50' : 'border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
+                                            >
+                                                {isSlideMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                                            </button>
+                                        </>
+                                    )}
+                                    <button
+                                        onClick={goToNextSlide}
+                                        disabled={!canGoNext}
+                                        className={`p-2 rounded-lg border transition ${canGoNext ? 'border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50' : 'border-slate-200 text-slate-300 cursor-not-allowed opacity-50'}`}
+                                    >
+                                        <ChevronRight size={18} />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {slideDeck.type === 'images' && slideDeck.slides && (
+                            <div className="bg-slate-900/5 p-4 sm:p-6">
+                                <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-slate-900 shadow-inner">
+                                    <img
+                                        src={slideDeck.slides[slideIndex]}
+                                        alt={`Slide ${slideIndex + 1}`}
+                                        className="w-full h-full object-contain bg-black"
+                                    />
+                                    <audio
+                                        ref={slideAudioRef}
+                                        className="hidden"
+                                        onError={(e) => console.error('[Audio] Error loading media:', e.currentTarget.error, e.currentTarget.src)}
+                                        onLoadedMetadata={handleAudioLoadedMetadata}
+                                        onTimeUpdate={handleAudioTimeUpdate}
+                                        onEnded={() => {
+                                            if (!isSlidePlaying) return;
+                                            if (slideIndex >= totalSlides - 1) {
+                                                setIsSlidePlaying(false);
+                                                return;
+                                            }
+                                            goToNextSlide();
+                                        }}
+                                    />
+                                </div>
+                                {(hasSlideAudio && totalAudioDuration > 0) ? (
+                                    <div className="mt-4 space-y-2">
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsSlidePlaying((prev) => !prev)}
+                                                className={`h-9 w-9 rounded-full border flex items-center justify-center transition ${ 
+                                                    isSlidePlaying
+                                                        ? 'border-indigo-200 text-indigo-600 bg-indigo-50'
+                                                        : 'border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                                }`}
+                                                aria-label={isSlidePlaying ? 'Pause audio' : 'Play audio'}
+                                            >
+                                                {isSlidePlaying ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
+                                            </button>
+                                            <input
+                                                type="range"
+                                                min={0}
+                                                max={totalAudioDuration}
+                                                step={0.1}
+                                                value={audioProgress}
+                                                onChange={(event) => handleAudioScrub(Number(event.target.value))}
+                                                className="w-full accent-indigo-500"
+                                                aria-label="Audio timeline"
+                                            />
+                                        </div>
+                                        <div className="flex items-center justify-between text-[11px] text-slate-400">
+                                            <span>{formatTime(audioProgress)}</span>
+                                            <span>{formatTime(totalAudioDuration)}</span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    totalSlides > 1 && (
+                                        <div className="mt-4">
+                                            <input
+                                                type="range"
+                                                min={0}
+                                                max={totalSlides - 1}
+                                                step={1}
+                                                value={slideIndex}
+                                                onChange={(event) => handleSlideScrub(Number(event.target.value))}
+                                                className="w-full accent-indigo-500"
+                                                aria-label="Slide position"
+                                            />
+                                        </div>
+                                    )
+                                )}
+                            </div>
+                        )}
+
+                        {slideDeck.type === 'pdf' && slideDeck.pdfUrl && (
+                            <div className="bg-slate-900/5 p-4 sm:p-6">
+                                <div
+                                    ref={setPdfContainerEl}
+                                    className="relative w-full aspect-video rounded-xl overflow-hidden bg-white shadow-inner flex items-center justify-center"
+                                >
+                                    <Document
+                                        file={slideDeck.pdfUrl}
+                                        onLoadSuccess={({ numPages }) => setPdfPageCount(numPages)}
+                                        loading={
+                                            <div className="flex items-center gap-2 text-slate-400 text-sm">
+                                                <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                                                {language === 'jp' ? 'スライドを読み込み中...' : 'Loading slides...'}
+                                            </div>
+                                        }
+                                        error={
+                                            <div className="text-sm text-red-500 bg-red-50 border border-red-100 px-3 py-2 rounded-lg">
+                                                {language === 'jp' ? 'PDFの読み込みに失敗しました。' : 'Failed to load PDF.'}
+                                            </div>
+                                        }
+                                        className="w-full h-full flex items-center justify-center"
+                                    >
+                                        <div
+                                            className="w-full h-full flex items-center justify-center"
+                                        >
+                                            {(() => {
+                                                const zoom = 1.08;
+                                                const targetWidth = pdfPageWidth ? Math.ceil(pdfPageWidth * zoom) : undefined;
+                                                return (
+                                                    <Page
+                                                        pageNumber={Math.min(slideIndex + 1, Math.max(1, pdfPageCount || totalSlides || 1))}
+                                                        width={targetWidth}
+                                                        renderTextLayer={false}
+                                                        renderAnnotationLayer={false}
+                                                    />
+                                                );
+                                            })()}
+                                        </div>
+                                    </Document>
+                                </div>
+                                {hasSlideAudio && (
+                                    <audio
+                                        ref={slideAudioRef}
+                                        className="hidden"
+                                        onError={(e) => console.error('[Audio] Error loading media:', e.currentTarget.error, e.currentTarget.src)}
+                                        onLoadedMetadata={handleAudioLoadedMetadata}
+                                        onTimeUpdate={handleAudioTimeUpdate}
+                                        onEnded={() => {
+                                            if (!isSlidePlaying) return;
+                                            if (slideIndex >= totalSlides - 1) {
+                                                setIsSlidePlaying(false);
+                                                return;
+                                            }
+                                            goToNextSlide();
+                                        }}
+                                    />
+                                )}
+                                {(hasSlideAudio && totalAudioDuration > 0) ? (
+                                    <div className="mt-4 space-y-2">
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsSlidePlaying((prev) => !prev)}
+                                                className={`h-9 w-9 rounded-full border flex items-center justify-center transition ${ 
+                                                    isSlidePlaying
+                                                        ? 'border-indigo-200 text-indigo-600 bg-indigo-50'
+                                                        : 'border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                                }`}
+                                                aria-label={isSlidePlaying ? 'Pause audio' : 'Play audio'}
+                                            >
+                                                {isSlidePlaying ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
+                                            </button>
+                                            <input
+                                                type="range"
+                                                min={0}
+                                                max={totalAudioDuration}
+                                                step={0.1}
+                                                value={audioProgress}
+                                                onChange={(event) => handleAudioScrub(Number(event.target.value))}
+                                                className="w-full accent-indigo-500"
+                                                aria-label="Audio timeline"
+                                            />
+                                        </div>
+                                        <div className="flex items-center justify-between text-[11px] text-slate-400">
+                                            <span>{formatTime(audioProgress)}</span>
+                                            <span>{formatTime(totalAudioDuration)}</span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    totalSlides > 1 && (
+                                        <div className="mt-4">
+                                            <input
+                                                type="range"
+                                                min={0}
+                                                max={totalSlides - 1}
+                                                step={1}
+                                                value={slideIndex}
+                                                onChange={(event) => handleSlideScrub(Number(event.target.value))}
+                                                className="w-full accent-indigo-500"
+                                                aria-label="Slide position"
+                                            />
+                                        </div>
+                                    )
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </main>
+            )}
+
             {/* Quiz View */}
             {effectiveViewMode === 'quiz' && lesson.quiz && (
                 <main className="pt-24 pb-20 max-w-3xl mx-auto px-4 sm:px-6">
@@ -433,8 +1046,7 @@ const GeneratedDocView: React.FC<GeneratedDocViewProps> = ({
                                                 >
                                                     <div className="flex items-center gap-3">
                                                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-purple-500 bg-purple-500' : 'border-slate-300'
-                                                            }`}>
-                                                            {isSelected && <Check size={12} className="text-white" />}
+                                                            }`}> {isSelected && <Check size={12} className="text-white" />}
                                                         </div>
                                                         <span>{getText(option.text, language)}</span>
                                                     </div>
@@ -503,7 +1115,7 @@ type MermaidDiagramType = 'flowchart' | 'sequence' | 'er' | 'other';
 
 const detectMermaidType = (chart: string): MermaidDiagramType => {
     const stripped = chart
-        .replace(/%%\{[\s\S]*?\}%%/g, '')
+        .replace(/%%{[\s\S]*?}%%/g, '')
         .replace(/^%%.*$/gm, '')
         .trim();
     const firstLine = stripped.split('\n').find((line) => line.trim().length > 0)?.trim().toLowerCase() || '';
@@ -675,7 +1287,7 @@ const ImageBlock: React.FC<{ block: ImageDocBlock; language: 'en' | 'jp' }> = ({
 };
 
 const injectMermaidTheme = (chart: string, type: MermaidDiagramType) => {
-    if (/%%\{\s*init:/i.test(chart)) return chart;
+    if (/%%{\s*init:/i.test(chart)) return chart;
     const themeVariables = getMermaidThemeForType(type);
     if (!themeVariables) return chart;
     const directive = `%%{init: ${JSON.stringify({ theme: 'base', themeVariables })}}%%`;
@@ -700,7 +1312,7 @@ const injectFlowchartClasses = (chart: string) => {
         for (const match of chart.matchAll(pattern)) {
             const id = match[1];
             const rawLabel = match[2] || '';
-            const label = rawLabel.replace(/^["'`]|["'`]$/g, '').trim();
+            const label = rawLabel.replace(/^["'"]|["'"]$/g, '').trim();
             if (!label) continue;
             if (warningKeywords.some((r) => r.test(label))) {
                 warningNodes.add(id);

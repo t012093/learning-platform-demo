@@ -178,6 +178,11 @@ const CourseList: React.FC<CourseListProps> = ({ onSelectCourse }) => {
     return (t.categories as any)?.[key] || course.category;
   };
 
+  const resolveText = (text: string | { en: string; jp: string; fr?: string }) => {
+    if (typeof text === 'string') return text;
+    return text[language] || text.en;
+  };
+
   const getUniqueValues = (values: string[]) => Array.from(new Set(values.filter(Boolean)));
 
   const categoryOptions = React.useMemo(() => {
@@ -205,9 +210,12 @@ const CourseList: React.FC<CourseListProps> = ({ onSelectCourse }) => {
     return courses.filter(course => {
       const categoryKey = course.categoryKey || course.category;
       const tags = (course.tags || []).join(' ').toLowerCase();
+      const title = resolveText(course.title);
+      const description = resolveText(course.description);
+
       const haystack = [
-        course.title,
-        course.description,
+        title,
+        description,
         course.category,
         categoryKey,
         tags
@@ -236,7 +244,7 @@ const CourseList: React.FC<CourseListProps> = ({ onSelectCourse }) => {
 
       return true;
     });
-  }, [courses, query, selectedLevels, selectedDurations, selectedProgress, selectedCategories, selectedFormats, selectedGoals]);
+  }, [courses, query, selectedLevels, selectedDurations, selectedProgress, selectedCategories, selectedFormats, selectedGoals, language]);
 
   useEffect(() => {
     let isMounted = true;
@@ -430,6 +438,9 @@ const CourseList: React.FC<CourseListProps> = ({ onSelectCourse }) => {
           const durationLabel = formatDuration(course.durationMinutes);
           const levelLabel = course.level ? (t.levels as any)[course.level] : null;
           const categoryLabel = resolveCategoryLabel(course);
+          const title = resolveText(course.title);
+          const description = resolveText(course.description);
+
           return (
             <div 
               key={course.id} 
@@ -445,7 +456,7 @@ const CourseList: React.FC<CourseListProps> = ({ onSelectCourse }) => {
               <div className="relative h-40 sm:h-48 overflow-hidden">
                 <img 
                   src={course.thumbnail} 
-                  alt={course.title} 
+                  alt={title} 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute top-4 left-4">
@@ -456,8 +467,8 @@ const CourseList: React.FC<CourseListProps> = ({ onSelectCourse }) => {
               </div>
               
               <div className="p-5 flex-1 flex flex-col relative z-10 min-w-0">
-                <h3 className="font-bold text-lg text-slate-900 mb-2 break-words">{course.title}</h3>
-                <p className="text-slate-500 text-sm mb-4 flex-1 break-words line-clamp-3">{course.description}</p>
+                <h3 className="font-bold text-lg text-slate-900 mb-2 break-words">{title}</h3>
+                <p className="text-slate-500 text-sm mb-4 flex-1 break-words line-clamp-3">{description}</p>
                 
                 <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 font-medium mb-4">
                    <div className="flex items-center gap-1">

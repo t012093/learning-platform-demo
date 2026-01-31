@@ -51,8 +51,8 @@ export const DAILY_GRAMMAR: GrammarQuiz = {
 export const COURSES_DATA: Course[] = [
   {
     id: '1',
-    title: 'Survival English for Travel',
-    description: 'Essential phrases for airports, hotels, and restaurants.',
+    title: { en: 'Survival English for Travel', jp: '旅行のためのサバイバル英語' },
+    description: { en: 'Essential phrases for airports, hotels, and restaurants.', jp: '空港、ホテル、レストランで必須のフレーズ集。' },
     category: 'Beginner A1',
     progress: 80,
     totalLessons: 15,
@@ -62,8 +62,8 @@ export const COURSES_DATA: Course[] = [
   },
   {
     id: '2',
-    title: 'Daily Conversation Mastery',
-    description: 'Small talk, hobbies, and making friends.',
+    title: { en: 'Daily Conversation Mastery', jp: '日常会話マスター' },
+    description: { en: 'Small talk, hobbies, and making friends.', jp: '日常の雑談、趣味、友人作りについて。' },
     category: 'Elementary A2',
     progress: 45,
     totalLessons: 20,
@@ -73,8 +73,8 @@ export const COURSES_DATA: Course[] = [
   },
   {
     id: '3',
-    title: 'Business Communication',
-    description: 'Emails, presentations, and professional etiquette.',
+    title: { en: 'Business Communication', jp: 'ビジネスコミュニケーション' },
+    description: { en: 'Emails, presentations, and professional etiquette.', jp: 'メール、プレゼンテーション、プロフェッショナルなマナー。' },
     category: 'Intermediate B1',
     progress: 10,
     totalLessons: 25,
@@ -84,8 +84,8 @@ export const COURSES_DATA: Course[] = [
   },
   {
     id: '4',
-    title: 'Advanced Grammar Deep Dive',
-    description: 'Master complex tenses and subjunctive mood.',
+    title: { en: 'Advanced Grammar Deep Dive', jp: '上級英文法ディープダイブ' },
+    description: { en: 'Master complex tenses and subjunctive mood.', jp: '複雑な時制や仮定法をマスターする。' },
     category: 'Upper Int B2',
     progress: 0,
     totalLessons: 30,
@@ -95,8 +95,8 @@ export const COURSES_DATA: Course[] = [
   },
   {
     id: '5',
-    title: 'American Slang & Idioms',
-    description: 'Speak like a native with popular expressions.',
+    title: { en: 'American Slang & Idioms', jp: 'アメリカンスラングと慣用句' },
+    description: { en: 'Speak like a native with popular expressions.', jp: 'ネイティブのような自然な表現を学ぶ。' },
     category: 'Culture',
     progress: 0,
     totalLessons: 10,
@@ -106,8 +106,8 @@ export const COURSES_DATA: Course[] = [
   },
   {
     id: '6',
-    title: 'TOEIC Exam Preparation',
-    description: 'Practice tests and strategies for high scores.',
+    title: { en: 'TOEIC Exam Preparation', jp: 'TOEIC試験対策' },
+    description: { en: 'Practice tests and strategies for high scores.', jp: '高得点のための模擬試験と戦略。' },
     category: 'Test Prep',
     progress: 0,
     totalLessons: 40,

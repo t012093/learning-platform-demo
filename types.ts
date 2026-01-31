@@ -1,8 +1,8 @@
 
 export interface Course {
   id: string;
-  title: string;
-  description: string;
+  title: string | LocalizedText;
+  description: string | LocalizedText;
   category: string;
   categoryKey?: string;
   progress: number;
